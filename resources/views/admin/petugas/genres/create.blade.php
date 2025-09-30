@@ -8,5 +8,5 @@
         <div style="color: red;">{{ $message }}</div>
     @enderror
     <br><br>
-    <button type="submit">Simpan</button>
+    <button type="submit">buang</button>
 </form>
