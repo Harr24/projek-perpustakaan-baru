@@ -2,9 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Public\BookCatalogController;
 use App\Http\Controllers\Admin\Petugas\VerificationController;
 use App\Http\Controllers\Admin\Petugas\GenreController;
-use App\Http\Controllers\Admin\Petugas\BookController; // <-- TAMBAHKAN INI
+use App\Http\Controllers\Admin\Petugas\BookController;
+use App\Http\Controllers\Admin\Superadmin\SuperadminPetugasController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,18 +14,13 @@ use App\Http\Controllers\Admin\Petugas\BookController; // <-- TAMBAHKAN INI
 |--------------------------------------------------------------------------
 */
 
-// Arahkan halaman utama ke halaman login
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+// == RUTE PUBLIK & TAMU ==
+Route::get('/', [BookCatalogController::class, 'index'])->name('catalog.index');
+Route::get('/book/{book}', [BookCatalogController::class, 'show'])->name('catalog.show');
 
-// == RUTE UNTUK TAMU (YANG BELUM LOGIN) ==
 Route::middleware('guest')->group(function () {
-    // Menampilkan form
     Route::get('register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
-
-    // Memproses data form
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
 });
@@ -32,7 +29,7 @@ Route::middleware('guest')->group(function () {
 // == RUTE UNTUK PENGGUNA YANG SUDAH LOGIN ==
 Route::middleware('auth')->group(function () {
     
-    // Rute umum untuk semua role yang sudah login
+    // Rute umum (semua role bisa akses)
     Route::get('dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
@@ -41,22 +38,16 @@ Route::middleware('auth')->group(function () {
 
     // == RUTE KHUSUS UNTUK ROLE PETUGAS ==
     Route::middleware('role:petugas')->prefix('admin/petugas')->name('admin.petugas.')->group(function () {
-        
-        // Rute untuk verifikasi
         Route::get('/verifikasi-siswa', [VerificationController::class, 'index'])->name('verification.index');
         Route::post('/verifikasi-siswa/{user}/approve', [VerificationController::class, 'approve'])->name('verification.approve');
         Route::post('/verifikasi-siswa/{user}/reject', [VerificationController::class, 'reject'])->name('verification.reject');
-
-        // Rute untuk mengelola Genre
+        
         Route::resource('genres', GenreController::class);
-
-        // Rute untuk mengelola Buku
-        Route::resource('books', BookController::class); // <-- TAMBAHKAN INI
-
+        Route::resource('books', BookController::class);
     });
 
     // == RUTE KHUSUS UNTUK ROLE SUPERADMIN ==
-    // Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
-    //     // Rute untuk Superadmin
-    // });
+    Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
+        Route::resource('petugas', SuperadminPetugasController::class);
+    });
 });

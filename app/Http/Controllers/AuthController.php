@@ -33,13 +33,14 @@ class AuthController extends Controller
         // 2. Simpan file foto ke storage
         $path = $request->file('student_card_photo')->store('public/student_cards');
 
-        // 3. Buat user baru dengan status PENDING
+        // 3. Buat user baru dengan status PENDING dan role SISWA
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'student_card_photo' => $path, // Simpan path foto
-            'account_status' => 'pending', // Set status awal
+            'student_card_photo' => $path,
+            'role' => 'siswa', // <-- BARIS INI DITAMBAHKAN
+            'account_status' => 'pending',
         ]);
 
         // 4. Arahkan ke halaman login dengan pesan status
