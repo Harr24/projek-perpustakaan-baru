@@ -1,6 +1,10 @@
 <h1>Daftar Genre</h1>
-<a href="{{ route('admin.petugas.genres.create') }}">Tambah Genre Baru</a>
-<br><br>
+
+{{-- PERUBAHAN DI SINI --}}
+<div style="margin-bottom: 20px;">
+    <a href="{{ route('dashboard') }}">Kembali ke Dashboard</a> | 
+    <a href="{{ route('admin.petugas.genres.create') }}">Tambah Genre Baru</a>
+</div>
 
 @if(session('success'))
     <div style="color: green;">{{ session('success') }}</div>
