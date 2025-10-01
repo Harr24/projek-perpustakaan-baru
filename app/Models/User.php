@@ -9,6 +9,10 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
+    public function borrowings()
+{
+    return $this->hasMany(Borrowing::class);
+}
 
     /**
      * Kolom yang boleh diisi mass assignment

@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class BookCopy extends Model
 {
     use HasFactory;
+    // ... di dalam class BookCopy
+    public function borrowings()
+    {
+        return $this->hasMany(Borrowing::class);
+    }
 
     /**
      * The attributes that are mass assignable.

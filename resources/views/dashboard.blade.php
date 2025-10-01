@@ -182,6 +182,7 @@
             background:linear-gradient(90deg,var(--accent),var(--accent-600));
             border-color:transparent;
         }
+
         .nav-item .meta{font-size:0.9rem;color:var(--muted);font-weight:500}
         .summary{
             display:flex;
@@ -215,6 +216,34 @@
             .nav-item{padding:12px}
             .logout-btn{padding:9px 12px}
         }
+
+        .nav-item-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .badge {
+            background-color: #ffffff;
+            color: var(--accent-600);
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            line-height: 1.2;
+            min-width: 22px;
+            height: 22px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--accent);
+        }
+        .nav-item:hover .badge {
+            background-color: var(--accent);
+            color: #fff;
+            border-color: #fff;
+        }
+
     </style>
 </head>
 <body>
@@ -260,33 +289,50 @@
                             
                             @if(Auth::user()->role == 'superadmin')
                                 <a class="nav-item" href="{{ route('admin.superadmin.petugas.index') }}">
-                                    <span>Kelola Akun Petugas</span>
+                                    <div class="nav-item-main">
+                                        <span>Kelola Akun Petugas</span>
+                                    </div>
                                     <span class="meta">Manajemen Staf</span>
                                 </a>
                                 <a class="nav-item" href="{{ route('admin.superadmin.profile.edit') }}">
-                                    <span>Edit Profil Saya</span>
+                                    <div class="nav-item-main">
+                                        <span>Edit Profil Saya</span>
+                                    </div>
                                     <span class="meta">Akun</span>
                                 </a>
                             @endif
 
                             @if(Auth::user()->role == 'petugas')
                                 <a class="nav-item" href="{{ route('admin.petugas.genres.index') }}">
-                                    <span>Kelola Genre</span>
+                                    <div class="nav-item-main">
+                                        <span>Kelola Genre</span>
+                                    </div>
                                     <span class="meta">Data Master</span>
                                 </a>
                                 <a class="nav-item" href="{{ route('admin.petugas.books.index') }}">
-                                    <span>Kelola Buku</span>
+                                    <div class="nav-item-main">
+                                        <span>Kelola Buku</span>
+                                    </div>
                                     <span class="meta">Data Master</span>
                                 </a>
+                                
                                 <a class="nav-item" href="{{ route('admin.petugas.verification.index') }}">
-                                    <span>Verifikasi Siswa</span>
+                                    <div class="nav-item-main">
+                                        <span>Verifikasi Siswa</span>
+                                        @if(isset($pendingStudentsCount) && $pendingStudentsCount > 0)
+                                            <span class="badge">{{ $pendingStudentsCount }}</span>
+                                        @endif
+                                    </div>
                                     <span class="meta">Anggota</span>
                                 </a>
                             @endif
 
                             @if(Auth::user()->role == 'siswa' || Auth::user()->role == 'guru')
-                                <a class="nav-item" href="#">
-                                    <span>Lihat Riwayat Peminjaman</span>
+                                {{-- === PERUBAHAN DI SINI === --}}
+                                <a class="nav-item" href="{{ route('borrow.history') }}">
+                                    <div class="nav-item-main">
+                                        <span>Lihat Riwayat Peminjaman</span>
+                                    </div>
                                     <span class="meta">Riwayat</span>
                                 </a>
                             @endif
@@ -332,3 +378,4 @@
     </script>
 </body>
 </html>
+

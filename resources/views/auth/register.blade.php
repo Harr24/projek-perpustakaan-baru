@@ -147,6 +147,10 @@
         .input-group input:hover {
             border-color: #f87171;
         }
+        
+        .input-group input.is-invalid {
+            border-color: #dc2626;
+        }
 
         button {
             width: 100%;
@@ -189,7 +193,7 @@
             transform: translateY(0);
         }
 
-        .error-message {
+        .error-message-box {
             color: #991b1b;
             background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
             border: 2px solid #fca5a5;
@@ -197,10 +201,13 @@
             padding: 14px 18px;
             margin-bottom: 24px;
             font-size: 14px;
-            text-align: center;
             font-weight: 500;
         }
         
+        .error-message-box ul {
+            list-style-position: inside;
+        }
+
         .input-error-message {
             color: #dc2626;
             font-size: 13px;
@@ -265,46 +272,54 @@
             <p class="register-subtitle">Lengkapi data diri Anda</p>
         </div>
 
-        <!-- Error message dari session -->
-        <div class="error-message" style="display: none;" id="sessionError">
-            <!-- Pesan error dari session akan muncul di sini -->
-        </div>
+        <!-- Menampilkan semua error validasi di bagian atas -->
+        @if ($errors->any())
+            <div class="error-message-box">
+                <p><strong>Oops! Terjadi kesalahan:</strong></p>
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-        <form method="POST" action="/register" enctype="multipart/form-data">
-            <!-- CSRF token -->
-            <input type="hidden" name="_token" value="csrf_token_here">
+        {{-- PERUBAHAN 1: Menggunakan route helper dan menambahkan @csrf --}}
+        <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
+            @csrf
 
             <div class="input-group">
                 <label for="name">Nama Lengkap</label>
-                <input id="name" type="text" name="name" value="" required autofocus placeholder="Masukkan nama lengkap">
-                <div class="input-error-message" style="display: none;" id="nameError">
-                    <!-- Pesan error nama akan muncul di sini -->
-                </div>
+                {{-- PERUBAHAN 2: Menambahkan old() dan @error --}}
+                <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus placeholder="Masukkan nama lengkap" class="@error('name') is-invalid @enderror">
+                @error('name')
+                    <div class="input-error-message">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="input-group">
                 <label for="email">Alamat Email</label>
-                <input id="email" type="email" name="email" value="" required placeholder="nama@email.com">
-                <div class="input-error-message" style="display: none;" id="emailError">
-                    <!-- Pesan error email akan muncul di sini -->
-                </div>
+                <input id="email" type="email" name="email" value="{{ old('email') }}" required placeholder="nama@email.com" class="@error('email') is-invalid @enderror">
+                @error('email')
+                    <div class="input-error-message">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="input-group">
                 <label for="student_card_photo">Foto Kartu Pelajar</label>
-                <input id="student_card_photo" type="file" name="student_card_photo" accept="image/*" required>
+                <input id="student_card_photo" type="file" name="student_card_photo" accept="image/*" required class="@error('student_card_photo') is-invalid @enderror">
                 <p class="file-info">Format: JPG, PNG, atau JPEG (Maks. 2MB)</p>
-                <div class="input-error-message" style="display: none;" id="photoError">
-                    <!-- Pesan error foto akan muncul di sini -->
-                </div>
+                @error('student_card_photo')
+                    <div class="input-error-message">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="input-group">
                 <label for="password">Password</label>
-                <input id="password" type="password" name="password" required placeholder="Minimal 8 karakter">
-                <div class="input-error-message" style="display: none;" id="passwordError">
-                    <!-- Pesan error password akan muncul di sini -->
-                </div>
+                <input id="password" type="password" name="password" required placeholder="Minimal 8 karakter" class="@error('password') is-invalid @enderror">
+                @error('password')
+                    <div class="input-error-message">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="input-group">
@@ -316,8 +331,9 @@
         </form>
 
         <div class="register-footer">
-            Sudah punya akun? <a href="/login">Login di sini</a>
+            Sudah punya akun? <a href="{{ route('login') }}">Login di sini</a>
         </div>
     </div>
 </body>
 </html>
+

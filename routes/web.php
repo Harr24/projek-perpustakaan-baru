@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\Petugas\VerificationController;
 use App\Http\Controllers\Admin\Petugas\GenreController;
 use App\Http\Controllers\Admin\Petugas\BookController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminPetugasController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BorrowingController; // Pastikan ini ada
 
 /*
 |--------------------------------------------------------------------------
@@ -30,11 +32,15 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     
     // Rute umum (semua role bisa akses)
-    Route::get('dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
-
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+
+    // ===================================================
+    // PERUBAHAN DI SINI: RUTE UNTUK PEMINJAMAN BUKU
+    // ===================================================
+    Route::get('/riwayat-peminjaman', [BorrowingController::class, 'index'])->name('borrow.history');
+    Route::post('/pinjam/{book_copy}', [BorrowingController::class, 'store'])->name('borrow.store');
+
 
     // == RUTE KHUSUS UNTUK ROLE PETUGAS ==
     Route::middleware('role:petugas')->prefix('admin/petugas')->name('admin.petugas.')->group(function () {
@@ -55,3 +61,4 @@ Route::middleware('auth')->group(function () {
         Route::put('/profile', [SuperadminPetugasController::class, 'updateProfile'])->name('profile.update');
     });
 });
+
