@@ -39,14 +39,22 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'student_card_photo' => $path,
-            'role' => 'siswa', // <-- BARIS INI DITAMBAHKAN
+            'role' => 'siswa',
             'account_status' => 'pending',
         ]);
 
-        // 4. Arahkan ke halaman login dengan pesan status
-        return redirect()->route('login')
-                         ->with('status', 'Pendaftaran berhasil! Akun Anda sedang menunggu verifikasi oleh petugas.');
+        // 4. Arahkan ke halaman sukses
+        return redirect()->route('register.success');
     }
+
+    /**
+     * Menampilkan halaman sukses setelah registrasi.
+     */
+    public function registrationSuccess()
+    {
+        return view('auth.registration-success');
+    }
+
 
     /**
      * Menampilkan halaman form login.
