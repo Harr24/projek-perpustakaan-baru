@@ -40,7 +40,7 @@
     <br>
     <div>
         <label>Kode Buku Pertama (Contoh: B001-AGM):</label><br>
-        <input type="text" name="first_copy_code" value="{{ old('first_copy_code') }}" required>
+        <input type="text" name="book_code" value="{{ old('book_code') }}" required>
     </div>
     <br>
     <div>

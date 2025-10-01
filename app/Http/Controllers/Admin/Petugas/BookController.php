@@ -25,42 +25,34 @@ class BookController extends Controller
 
     public function store(Request $request)
     {
-        // ... (kode store dari langkah sebelumnya, tidak perlu diubah)
-        $request->validate([
+        // PERBAIKAN 1: Validasi disederhanakan dan disesuaikan
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'genre_id' => 'required|exists:genres,id',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'first_copy_code' => 'required|string|max:255|unique:book_copies,copy_code',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'book_code' => 'required|string|max:255', // Menggunakan 'book_code'
             'stock' => 'required|integer|min:1',
         ]);
 
-        $path = null;
+        // Handle upload gambar sampul jika ada
         if ($request->hasFile('cover_image')) {
-            $path = $request->file('cover_image')->store('public/covers');
+            // Menghapus path 'public/' agar bisa diakses via Storage::url()
+            $path = $request->file('cover_image')->store('covers', 'public');
+            $validated['cover_image'] = $path;
         }
 
-        $book = Book::create([
-            'title' => $request->title,
-            'author' => $request->author,
-            'genre_id' => $request->genre_id,
-            'cover_image' => $path,
-        ]);
-        
-        preg_match('/(.*?)(-|\/)?(\d*)$/', $request->first_copy_code, $matches);
-        $prefix = $matches[1] ?? $request->first_copy_code;
-        $separator = $matches[2] ?? '-';
-        $startNumberStr = $matches[3] ?? '1';
-        $startNumber = (int)$startNumberStr;
-        $padding = strlen($startNumberStr);
+        // PERBAIKAN 2: Simpan semua data tervalidasi ke buku utama
+        $book = Book::create($validated);
 
-        for ($i = 0; $i < $request->stock; $i++) {
-            $currentNumber = $startNumber + $i;
-            $copyCode = $prefix . $separator . str_pad($currentNumber, $padding, '0', STR_PAD_LEFT);
-            
+        // PERBAIKAN 3: Logika pembuatan kode unik disederhanakan
+        for ($i = 1; $i <= $validated['stock']; $i++) {
+            // Buat kode unik untuk setiap salinan, misal: M001-HTR-1, M001-HTR-2, dst.
+            $uniqueCode = $validated['book_code'] . '-' . $i;
+
             BookCopy::create([
                 'book_id' => $book->id,
-                'copy_code' => $copyCode,
+                'book_code' => $uniqueCode, // Menggunakan 'book_code' yang benar
             ]);
         }
         
@@ -70,40 +62,34 @@ class BookController extends Controller
 
     public function show(Book $book)
     {
-        // Untuk sekarang tidak kita gunakan
+        $book->load('copies');
+        return view('admin.petugas.books.show', compact('book'));
     }
 
     public function edit(Book $book)
     {
-        $genres = Genre::all(); // Ambil semua genre untuk dropdown
+        $genres = Genre::all();
         return view('admin.petugas.books.edit', compact('book', 'genres'));
     }
 
     public function update(Request $request, Book $book)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'genre_id' => 'required|exists:genres,id',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $path = $book->cover_image;
         if ($request->hasFile('cover_image')) {
-            // Hapus gambar lama jika ada
-            if ($path) {
-                Storage::delete($path);
+            if ($book->cover_image) {
+                Storage::disk('public')->delete($book->cover_image);
             }
-            // Simpan gambar baru
-            $path = $request->file('cover_image')->store('public/covers');
+            $path = $request->file('cover_image')->store('covers', 'public');
+            $validated['cover_image'] = $path;
         }
 
-        $book->update([
-            'title' => $request->title,
-            'author' => $request->author,
-            'genre_id' => $request->genre_id,
-            'cover_image' => $path,
-        ]);
+        $book->update($validated);
 
         return redirect()->route('admin.petugas.books.index')
                          ->with('success', 'Data buku berhasil diperbarui.');
@@ -111,13 +97,10 @@ class BookController extends Controller
 
     public function destroy(Book $book)
     {
-        // Hapus gambar dari storage jika ada
         if ($book->cover_image) {
-            Storage::delete($book->cover_image);
+            Storage::disk('public')->delete($book->cover_image);
         }
 
-        // Hapus data buku dari database
-        // (Semua book_copies yang terhubung akan ikut terhapus karena onDelete('cascade'))
         $book->delete();
 
         return redirect()->route('admin.petugas.books.index')

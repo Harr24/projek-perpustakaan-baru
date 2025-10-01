@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Genre extends Model
 {
+    // PASTIKAN BARIS INI ADA
     use HasFactory;
 
     /**
@@ -16,5 +17,7 @@ class Genre extends Model
      */
     protected $fillable = [
         'name',
+        'genre_code',
     ];
 }
+

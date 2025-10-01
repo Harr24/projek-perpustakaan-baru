@@ -8,22 +8,55 @@ use Illuminate\Http\Request;
 
 class GenreController extends Controller
 {
+    /**
+     * Menampilkan daftar semua genre.
+     */
     public function index()
     {
-        $genres = Genre::all();
+        // PERUBAHAN DI SINI: dari latest() menjadi oldest()
+        $genres = Genre::oldest()->get(); 
         return view('admin.petugas.genres.index', compact('genres'));
     }
 
+    /**
+     * Menampilkan form untuk membuat genre baru.
+     */
     public function create()
     {
         return view('admin.petugas.genres.create');
     }
 
+    /**
+     * Menyimpan genre baru dengan kode otomatis.
+     */
     public function store(Request $request)
     {
-        $request->validate(['name' => 'required|string|unique:genres|max:255']);
-        Genre::create($request->all());
-        return redirect()->route('admin.petugas.genres.index')->with('success', 'Genre berhasil ditambahkan.');
+        // 1. Validasi nama genre dari input user
+        $request->validate([
+            'name' => 'required|string|max:255|unique:genres,name',
+        ]);
+
+        // 2. Logika untuk membuat kode genre otomatis
+        $latestGenre = Genre::latest('id')->first();
+        $newCodeNumber = 1; // Default jika ini genre pertama
+
+        if ($latestGenre) {
+            $lastCode = (int) $latestGenre->genre_code;
+            $newCodeNumber = $lastCode + 1;
+        }
+
+        // 3. Format angka menjadi 2 digit dengan awalan nol (01, 02, ..., 10, 11)
+        $newGenreCode = str_pad($newCodeNumber, 2, '0', STR_PAD_LEFT);
+
+        // 4. Simpan genre baru dengan nama dari user dan kode yang dibuat otomatis
+        Genre::create([
+            'name' => $request->name,
+            'genre_code' => $newGenreCode,
+        ]);
+
+        // 5. Kembali ke halaman index dengan pesan sukses
+        return redirect()->route('admin.petugas.genres.index')
+                         ->with('success', 'Genre baru berhasil ditambahkan.');
     }
 
     /**
@@ -39,9 +72,15 @@ class GenreController extends Controller
      */
     public function update(Request $request, Genre $genre)
     {
-        $request->validate(['name' => 'required|string|max:255|unique:genres,name,' . $genre->id]);
-        $genre->update($request->all());
-        return redirect()->route('admin.petugas.genres.index')->with('success', 'Genre berhasil diperbarui.');
+        // Kode update hanya mengubah nama, tidak mengubah kode genre
+        $request->validate([
+            'name' => 'required|string|max:255|unique:genres,name,' . $genre->id
+        ]);
+        
+        $genre->update($request->only('name'));
+
+        return redirect()->route('admin.petugas.genres.index')
+                         ->with('success', 'Genre berhasil diperbarui.');
     }
 
     /**
@@ -50,6 +89,8 @@ class GenreController extends Controller
     public function destroy(Genre $genre)
     {
         $genre->delete();
-        return redirect()->route('admin.petugas.genres.index')->with('success', 'Genre berhasil dihapus.');
+        return redirect()->route('admin.petugas.genres.index')
+                         ->with('success', 'Genre berhasil dihapus.');
     }
 }
+

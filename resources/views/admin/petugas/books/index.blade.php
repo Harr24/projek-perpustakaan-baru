@@ -1,6 +1,10 @@
 <h1>Daftar Buku</h1>
-<a href="{{ route('admin.petugas.books.create') }}">Tambah Buku Baru</a>
-<br><br>
+
+{{-- Menambahkan link kembali ke dashboard & merapikan navigasi --}}
+<div style="margin-bottom: 20px;">
+    <a href="{{ route('dashboard') }}">Kembali ke Dashboard</a> | 
+    <a href="{{ route('admin.petugas.books.create') }}">Tambah Buku Baru</a>
+</div>
 
 @if(session('success'))
     <div style="color: green;">{{ session('success') }}</div>
@@ -31,10 +35,22 @@
                 </td>
                 <td>{{ $book->title }}</td>
                 <td>{{ $book->author }}</td>
-                <td>{{ $book->genre->name }}</td>
+                {{-- Menambahkan fallback jika genre tidak ada --}}
+                <td>{{ $book->genre->name ?? 'N/A' }}</td> 
                 <td>
-                    <a href="#">Edit</a>
-                    <a href="#">Hapus</a>
+                    {{-- PERUBAHAN DI SINI --}}
+                    
+                    <a href="{{ route('admin.petugas.books.show', $book->id) }}">Lihat Detail</a> |
+
+                    <a href="{{ route('admin.petugas.books.edit', $book->id) }}">Edit</a> |
+                    
+                    <form action="{{ route('admin.petugas.books.destroy', $book->id) }}" method="POST" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" onclick="return confirm('Apakah Anda yakin ingin menghapus buku ini?')" style="color:red; border:none; background:none; cursor:pointer; padding:0; font-family:inherit; font-size:inherit;">
+                            Hapus
+                        </button>
+                    </form>
                 </td>
             </tr>
         @empty
