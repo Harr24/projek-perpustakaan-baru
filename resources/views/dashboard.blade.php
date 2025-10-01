@@ -221,7 +221,13 @@
     <div class="page">
         <header class="header" role="banner">
             <div class="brand">
-                <div class="logo" aria-hidden="true">LP</div>
+                <div class="logo" aria-hidden="true">
+                    @if(Auth::user()->profile_photo)
+                        <img src="{{ Storage::url(Auth::user()->profile_photo) }}" alt="Foto Profil" style="width:100%; height:100%; object-fit:cover; border-radius:10px;">
+                    @else
+                        LP
+                    @endif
+                </div>
                 <div class="title">
                     <h1>Selamat Datang, {{ Auth::user()->name }}!</h1>
                     <p class="muted">Dashboard {{ ucfirst(Auth::user()->role) }}</p>
@@ -255,7 +261,11 @@
                             @if(Auth::user()->role == 'superadmin')
                                 <a class="nav-item" href="{{ route('admin.superadmin.petugas.index') }}">
                                     <span>Kelola Akun Petugas</span>
-                                    <span class="meta">Superadmin</span>
+                                    <span class="meta">Manajemen Staf</span>
+                                </a>
+                                <a class="nav-item" href="{{ route('admin.superadmin.profile.edit') }}">
+                                    <span>Edit Profil Saya</span>
+                                    <span class="meta">Akun</span>
                                 </a>
                             @endif
 
@@ -274,7 +284,7 @@
                                 </a>
                             @endif
 
-                            @if(Auth::user()->role == 'siswa')
+                            @if(Auth::user()->role == 'siswa' || Auth::user()->role == 'guru')
                                 <a class="nav-item" href="#">
                                     <span>Lihat Riwayat Peminjaman</span>
                                     <span class="meta">Riwayat</span>

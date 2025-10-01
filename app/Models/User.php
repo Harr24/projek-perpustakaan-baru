@@ -19,6 +19,13 @@ class User extends Authenticatable
         'password',
         'role',
         'account_status',
+        'profile_photo', // <-- Ditambahkan
+        'student_card_photo', // <-- Ditambahkan
+        'nis',
+        'class',
+        'major',
+        'phone_number',
+        'subject',
     ];
 
     /**

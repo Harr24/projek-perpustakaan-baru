@@ -49,5 +49,9 @@ Route::middleware('auth')->group(function () {
     // == RUTE KHUSUS UNTUK ROLE SUPERADMIN ==
     Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
         Route::resource('petugas', SuperadminPetugasController::class);
+
+        // Rute untuk Edit Profil Superadmin
+        Route::get('/profile', [SuperadminPetugasController::class, 'showProfileForm'])->name('profile.edit');
+        Route::put('/profile', [SuperadminPetugasController::class, 'updateProfile'])->name('profile.update');
     });
 });

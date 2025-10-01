@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 
@@ -85,5 +86,52 @@ class SuperadminPetugasController extends Controller
 
         return redirect()->route('admin.superadmin.petugas.index')
                          ->with('success', 'Akun berhasil dihapus.');
+    }
+
+    // --- METHOD BARU UNTUK PROFIL ---
+
+    /**
+     * Menampilkan form untuk mengedit profil superadmin yang sedang login.
+     */
+    public function showProfileForm()
+    {
+        return view('admin.superadmin.profile.edit', ['superadmin' => Auth::user()]);
+    }
+
+    /**
+     * Mengupdate data profil superadmin yang sedang login.
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'profile_photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+        ]);
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        // Handle upload foto profil
+        if ($request->hasFile('profile_photo')) {
+            // Hapus foto lama jika ada
+            if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
+                Storage::disk('public')->delete($user->profile_photo);
+            }
+            // Simpan foto baru
+            $path = $request->file('profile_photo')->store('profile-photos', 'public');
+            $user->profile_photo = $path;
+        }
+
+        $user->save();
+
+        return redirect()->back()->with('success', 'Profil berhasil diperbarui.');
     }
 }
