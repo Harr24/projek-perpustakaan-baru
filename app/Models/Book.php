@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
-// WAJIB ADA: Import model-model yang berelasi
-use App\Models\Genre;
 use App\Models\BookCopy;
+use App\Models\Genre;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,7 +21,7 @@ class Book extends Model
         'author',
         'genre_id',
         'cover_image',
-        'book_code',
+        // 'book_code', // <-- HAPUS BARIS INI
         'stock',
     ];
 
@@ -35,7 +34,6 @@ class Book extends Model
     }
 
     /**
-     * WAJIB ADA: Fungsi ini yang hilang dari kode Anda.
      * Get all of the copies for the Book.
      */
     public function copies()

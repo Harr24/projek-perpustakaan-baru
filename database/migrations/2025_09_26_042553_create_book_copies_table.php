@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('book_copies', function (Blueprint $table) {
             $table->id();
             $table->foreignId('book_id')->constrained('books')->onDelete('cascade');
-            $table->string('copy_code')->unique();
-            $table->enum('status', ['tersedia', 'dipinjam'])->default('tersedia');
+            $table->string('book_code')->unique(); // <-- GANTI NAMA KOLOM DI SINI
+            $table->enum('status', ['tersedia', 'dipinjam', 'hilang'])->default('tersedia');
             $table->timestamps();
         });
     }

@@ -28,7 +28,9 @@
         <select name="genre_id" required>
             <option value="">-- Pilih Genre --</option>
             @foreach ($genres as $genre)
-                <option value="{{ $genre->id }}">{{ $genre->name }}</option>
+                <option value="{{ $genre->id }}" {{ old('genre_id') == $genre->id ? 'selected' : '' }}>
+                    {{ $genre->name }}
+                </option>
             @endforeach
         </select>
     </div>
@@ -36,11 +38,6 @@
     <div>
         <label>Sampul Buku (Cover):</label><br>
         <input type="file" name="cover_image">
-    </div>
-    <br>
-    <div>
-        <label>Kode Buku Pertama (Contoh: B001-AGM):</label><br>
-        <input type="text" name="book_code" value="{{ old('book_code') }}" required>
     </div>
     <br>
     <div>

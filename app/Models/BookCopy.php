@@ -9,12 +9,20 @@ class BookCopy extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
         'book_id',
         'book_code',
-        'status',
+        'status', // Sebaiknya sertakan status juga
     ];
 
+    /**
+     * Get the book that owns the copy.
+     */
     public function book()
     {
         return $this->belongsTo(Book::class);

@@ -8,6 +8,7 @@ use App\Models\BookCopy;
 use App\Models\Genre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str; // WAJIB DITAMBAHKAN
 
 class BookController extends Controller
 {
@@ -23,43 +24,72 @@ class BookController extends Controller
         return view('admin.petugas.books.create', compact('genres'));
     }
 
+    /**
+     * FUNGSI BARU: Untuk mengambil inisial dari judul buku.
+     */
+    private function getTitleInitials(string $title): string
+    {
+        $words = preg_split("/\s+/", trim($title)); // Memecah kata dengan lebih baik
+        $initials = '';
+
+        if (count($words) >= 2) {
+            // Ambil huruf pertama dari dua kata pertama
+            $initials = Str::upper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+        } elseif (count($words) === 1 && !empty($words[0])) {
+            // Jika hanya satu kata, ambil dua huruf pertama
+            $initials = Str::upper(substr($words[0], 0, 2));
+        }
+
+        return $initials;
+    }
+
+    /**
+     * PERUBAHAN UTAMA DI SINI
+     * Menyimpan buku baru dengan kode yang dibuat otomatis sesuai format.
+     */
     public function store(Request $request)
     {
-        // PERBAIKAN 1: Validasi disederhanakan dan disesuaikan
+        // 1. Validasi (tanpa book_code)
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'genre_id' => 'required|exists:genres,id',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'book_code' => 'required|string|max:255', // Menggunakan 'book_code'
             'stock' => 'required|integer|min:1',
         ]);
-
-        // Handle upload gambar sampul jika ada
+        
+        // Handle upload gambar
         if ($request->hasFile('cover_image')) {
-            // Menghapus path 'public/' agar bisa diakses via Storage::url()
             $path = $request->file('cover_image')->store('covers', 'public');
             $validated['cover_image'] = $path;
         }
 
-        // PERBAIKAN 2: Simpan semua data tervalidasi ke buku utama
+        // 2. Simpan buku utama (tanpa kolom 'book_code' lagi)
         $book = Book::create($validated);
 
-        // PERBAIKAN 3: Logika pembuatan kode unik disederhanakan
+        // 3. Persiapan untuk membuat kode unik
+        $genre = Genre::find($validated['genre_id']);
+        $genreCode = $genre->genre_code; // Mengambil kode genre (misal: "01")
+        $titleInitials = $this->getTitleInitials($validated['title']); // Mengambil inisial judul (misal: "AQ")
+        
+        // 4. Loop untuk membuat setiap salinan buku
         for ($i = 1; $i <= $validated['stock']; $i++) {
-            // Buat kode unik untuk setiap salinan, misal: M001-HTR-1, M001-HTR-2, dst.
-            $uniqueCode = $validated['book_code'] . '-' . $i;
+            // Format nomor urut menjadi 2 digit (01, 02, ..., 10)
+            $copyNumber = str_pad($i, 2, '0', STR_PAD_LEFT);
 
+            // Gabungkan semua bagian menjadi kode final: KodeGenre-InisialJudul-NoUrut
+            $uniqueCode = $genreCode . $titleInitials . $copyNumber;
+            
             BookCopy::create([
                 'book_id' => $book->id,
-                'book_code' => $uniqueCode, // Menggunakan 'book_code' yang benar
+                'book_code' => $uniqueCode,
             ]);
         }
         
         return redirect()->route('admin.petugas.books.index')
                          ->with('success', 'Buku dan semua salinannya berhasil ditambahkan.');
     }
-
+    
     public function show(Book $book)
     {
         $book->load('copies');
@@ -107,3 +137,4 @@ class BookController extends Controller
                          ->with('success', 'Buku berhasil dihapus.');
     }
 }
+

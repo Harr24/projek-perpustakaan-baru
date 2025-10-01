@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('author');
             $table->string('cover_image')->nullable();
             $table->foreignId('genre_id')->constrained('genres')->onDelete('cascade');
+            $table->integer('stock'); // <-- TAMBAHKAN BARIS INI
             $table->timestamps();
         });
     }
