@@ -189,7 +189,7 @@
         
         <div class="info-box">
             <p><strong>📋 Langkah Selanjutnya:</strong><br>
-            Silakan tunggu konfirmasi verifikasi melalui email. Anda akan dapat login setelah akun diaktifkan oleh admin.</p>
+            Silakan tunggu konfirmasi dengan konfirmasi ke petugas yang berada di perpus untuk melakukan acc konfirmasai pendaftaran akun.</p>
         </div>
         
         <a href="{{ route('login') }}" class="btn">Kembali ke Login</a>

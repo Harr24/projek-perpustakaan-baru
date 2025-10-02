@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Petugas\BookController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminPetugasController;
 use App\Http\Controllers\ProfileController; // Pastikan ini ada
 use App\Http\Controllers\BorrowingController; // Pastikan ini ada
+use App\Http\Controllers\Admin\Superadmin\MemberController;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,6 +51,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/verifikasi-siswa', [VerificationController::class, 'index'])->name('verification.index');
         Route::post('/verifikasi-siswa/{user}/approve', [VerificationController::class, 'approve'])->name('verification.approve');
         Route::post('/verifikasi-siswa/{user}/reject', [VerificationController::class, 'reject'])->name('verification.reject');
+        Route::get('/verifikasi-siswa/lihat-kartu/{user}', [VerificationController::class, 'showStudentCard'])->name('verification.showCard');
         
         Route::resource('genres', GenreController::class);
         Route::resource('books', BookController::class);
@@ -58,5 +60,11 @@ Route::middleware('auth')->group(function () {
     // == RUTE KHUSUS UNTUK ROLE SUPERADMIN ==
     Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
         Route::resource('petugas', SuperadminPetugasController::class);
+        Route::resource('members', MemberController::class)->except(['create', 'store']);
+
     });
+
 });
+
+
+

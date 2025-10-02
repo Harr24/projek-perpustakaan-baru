@@ -27,7 +27,7 @@ class VerificationController extends Controller
      */
     public function approve(User $user)
     {
-        // Pengecekan keamanan: Pastikan user adalah siswa yang statusnya pending
+        // Pastikan hanya siswa dengan status pending yang bisa di-approve
         if ($user->role === 'siswa' && $user->account_status === 'pending') {
             $user->account_status = 'active';
             $user->save();
@@ -35,7 +35,6 @@ class VerificationController extends Controller
             return redirect()->back()->with('success', 'Akun siswa berhasil diaktifkan.');
         }
 
-        // Beri pesan error jika aksi tidak valid (misal: user sudah di-acc)
         return redirect()->back()->with('error', 'Aksi tidak valid atau akun sudah diproses.');
     }
 
@@ -44,21 +43,50 @@ class VerificationController extends Controller
      */
     public function reject(User $user)
     {
-        // Pengecekan keamanan: Pastikan user adalah siswa yang statusnya pending
+        // Pastikan hanya siswa dengan status pending yang bisa ditolak
         if ($user->role === 'siswa' && $user->account_status === 'pending') {
-            // Hapus file foto dari storage sebelum menghapus data user
-            if ($user->student_card_photo) {
-                // Menggunakan Storage::disk('public') adalah praktik terbaik
-                Storage::disk('public')->delete($user->student_card_photo);
+            
+            // Hapus file foto kartu pelajar dari storage (jika ada)
+            // Catatan: Storage::disk('public') tidak diperlukan jika default filesystem Anda sudah 'public'
+            if (!empty($user->student_card_photo)) {
+                Storage::delete($user->student_card_photo);
             }
 
+            // Hapus data user
             $user->delete();
 
             return redirect()->back()->with('success', 'Pendaftaran siswa berhasil ditolak.');
         }
         
-        // Beri pesan error jika aksi tidak valid
         return redirect()->back()->with('error', 'Aksi tidak valid atau akun sudah diproses.');
     }
-}
 
+    // ==========================================================
+    // TAMBAHAN: Method untuk menampilkan foto kartu pelajar
+    // ==========================================================
+    /**
+     * Menampilkan foto kartu pelajar dari storage.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function showStudentCard(User $user)
+    {
+        // Ambil path foto dari database
+        $path = $user->student_card_photo;
+
+        // Pastikan path ada dan file-nya benar-benar ada di storage
+        if (!$path || !Storage::exists($path)) {
+            abort(404, 'File tidak ditemukan.');
+        }
+
+        // Baca file dari storage
+        $file = Storage::get($path);
+        
+        // Dapatkan tipe mime file (contoh: image/jpeg)
+        $type = Storage::mimeType($path);
+
+        // Kirim response ke browser dengan isi file dan header yang benar
+        return response($file)->header('Content-Type', $type);
+    }
+}

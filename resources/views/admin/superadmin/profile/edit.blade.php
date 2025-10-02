@@ -36,7 +36,10 @@
 
     {{-- Form Edit Profil --}}
     <div class="bg-white shadow-md rounded-lg p-6 max-w-2xl">
-        <form action="{{ route('admin.superadmin.profile.update') }}" method="POST" enctype="multipart/form-data">
+        {{-- ====================================================== --}}
+        {{-- PERUBAHAN DI SINI: ganti nama route menjadi 'profile.update' --}}
+        {{-- ====================================================== --}}
+        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 

@@ -294,7 +294,18 @@
                                     </div>
                                     <span class="meta">Manajemen Staf</span>
                                 </a>
-                                <a class="nav-item" href="{{ route('admin.superadmin.profile.edit') }}">
+
+                                {{-- ========================================================== --}}
+                                {{-- TAMBAHAN: Link untuk Kelola Anggota (Siswa & Guru) --}}
+                                {{-- ========================================================== --}}
+                                <a class="nav-item" href="{{ route('admin.superadmin.members.index') }}">
+                                    <div class="nav-item-main">
+                                        <span>Kelola Anggota</span>
+                                    </div>
+                                    <span class="meta">Siswa & Guru</span>
+                                </a>
+                                
+                                <a class="nav-item" href="{{ route('profile.edit') }}">
                                     <div class="nav-item-main">
                                         <span>Edit Profil Saya</span>
                                     </div>
@@ -328,7 +339,6 @@
                             @endif
 
                             @if(Auth::user()->role == 'siswa' || Auth::user()->role == 'guru')
-                                {{-- === PERUBAHAN DI SINI === --}}
                                 <a class="nav-item" href="{{ route('borrow.history') }}">
                                     <div class="nav-item-main">
                                         <span>Lihat Riwayat Peminjaman</span>
@@ -378,4 +388,3 @@
     </script>
 </body>
 </html>
-
