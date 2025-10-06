@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\Superadmin\MemberController;
 use App\Http\Controllers\Admin\Petugas\TeacherController;
 use App\Http\Controllers\Admin\Petugas\LoanApprovalController;
 use App\Http\Controllers\Admin\Petugas\ReturnController;
+use App\Http\Controllers\Admin\Petugas\FineController;
 
 /*
 |--------------------------------------------------------------------------
@@ -76,6 +77,9 @@ Route::middleware('auth')->group(function () {
         // ==========================================================
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
         Route::post('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store');
+        // Denda
+        Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
+        Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
     });
 
     // == RUTE KHUSUS UNTUK ROLE SUPERADMIN ==

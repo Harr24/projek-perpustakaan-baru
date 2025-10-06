@@ -23,11 +23,15 @@
     <div class="nav-item-main"><span>Kelola Pengajuan Pinjaman</span></div>
     <span class="meta">Peminjaman</span>
 </a>
-
-
-{{-- TAMBAHAN: Link untuk Manajemen Pengembalian --}}
-
 <a class="nav-item" href="{{ route('admin.petugas.returns.index') }}">
     <div class="nav-item-main"><span>Manajemen Peminjaman</span></div>
     <span class="meta">Pengembalian</span>
+</a>
+
+{{-- ========================================================== --}}
+{{-- TAMBAHAN: Link untuk Manajemen Denda --}}
+{{-- ========================================================== --}}
+<a class="nav-item" href="{{ route('admin.petugas.fines.index') }}">
+    <div class="nav-item-main"><span>Manajemen Denda</span></div>
+    <span class="meta">Keuangan</span>
 </a>
