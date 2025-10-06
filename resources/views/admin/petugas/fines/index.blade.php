@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manajemen Denda</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
@@ -18,7 +19,15 @@
             <h1 class="h3 fw-bold mb-0">Manajemen Denda</h1>
             <p class="text-muted mb-0">Daftar denda keterlambatan yang belum lunas.</p>
         </div>
-        <a href="{{ route('dashboard') }}" class="btn btn-outline-danger">Kembali ke Dashboard</a>
+        {{-- =============================================== --}}
+        {{-- PERUBAHAN DI SINI: Menambahkan tombol Riwayat  --}}
+        {{-- =============================================== --}}
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.petugas.fines.history') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-clock-history"></i> Lihat Riwayat Denda
+            </a>
+            <a href="{{ route('dashboard') }}" class="btn btn-outline-danger">Kembali ke Dashboard</a>
+        </div>
     </div>
 
     @if(session('success'))

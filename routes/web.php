@@ -80,6 +80,9 @@ Route::middleware('auth')->group(function () {
         // Denda
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
+
+        //
+        Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
     });
 
     // == RUTE KHUSUS UNTUK ROLE SUPERADMIN ==
