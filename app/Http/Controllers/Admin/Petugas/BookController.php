@@ -24,9 +24,6 @@ class BookController extends Controller
         return view('admin.petugas.books.create', compact('genres'));
     }
 
-    /**
-     * PERUBAHAN UTAMA ADA DI SINI
-     */
     public function store(Request $request)
     {
         // 1. Validasi input dari form
@@ -40,28 +37,25 @@ class BookController extends Controller
         ]);
         
         if ($request->hasFile('cover_image')) {
-            $path = $request->file('cover_image')->store('public/covers');
+            // ==========================================================
+            // PERBAIKAN: Menggunakan 'covers' sebagai folder dan 'public' sebagai disk
+            // ==========================================================
+            $path = $request->file('cover_image')->store('covers', 'public');
             $validated['cover_image'] = $path;
         }
 
         // 2. Simpan data buku utama
         $book = Book::create($validated);
 
-        // ==========================================================
-        // LOGIKA BARU UNTUK MEMBUAT KODE UNIK
-        // ==========================================================
-        
         // 3. Ambil data genre untuk mendapatkan 'genre_code'
         $genre = Genre::find($validated['genre_id']);
-        $genreCode = $genre->genre_code; // Contoh: "01"
-        $initialCode = Str::upper($validated['initial_code']); // Contoh: "NN"
+        $genreCode = $genre->genre_code;
+        $initialCode = Str::upper($validated['initial_code']);
 
-        // 4. Loop untuk membuat data eksemplar/kopi buku
+        // 4. Loop untuk membuat data eksemplar/kopi buku dengan kode unik
         for ($i = 1; $i <= $validated['stock']; $i++) {
-            $copyNumber = str_pad($i, 3, '0', STR_PAD_LEFT); // Contoh: "001"
-
-            // Gabungkan menjadi kode unik final, format: Genre-Inisial-Nomor
-            $uniqueBookCode = $genreCode . '-' . $initialCode . '-' . $copyNumber; // Hasil: "01-NN-001"
+            $copyNumber = str_pad($i, 3, '0', STR_PAD_LEFT);
+            $uniqueBookCode = $genreCode . '-' . $initialCode . '-' . $copyNumber;
             
             BookCopy::create([
                 'book_id' => $book->id,
@@ -74,7 +68,6 @@ class BookController extends Controller
                          ->with('success', 'Buku "' . $book->title . '" dan ' . $validated['stock'] . ' salinannya berhasil ditambahkan.');
     }
     
-    // Method show(), edit(), update(), destroy() tidak perlu diubah
     public function show(Book $book)
     {
         $book->load('genre', 'copies');
@@ -97,10 +90,13 @@ class BookController extends Controller
         ]);
 
         if ($request->hasFile('cover_image')) {
+            // Hapus gambar lama jika ada
             if ($book->cover_image) {
-                Storage::delete($book->cover_image);
+                // PERBAIKAN: Gunakan Storage::disk('public') untuk menghapus
+                Storage::disk('public')->delete($book->cover_image);
             }
-            $path = $request->file('cover_image')->store('public/covers');
+            // PERBAIKAN: Simpan gambar baru dengan cara yang benar
+            $path = $request->file('cover_image')->store('covers', 'public');
             $validated['cover_image'] = $path;
         }
 
@@ -112,7 +108,8 @@ class BookController extends Controller
     public function destroy(Book $book)
     {
         if ($book->cover_image) {
-            Storage::delete($book->cover_image);
+            // PERBAIKAN: Gunakan Storage::disk('public') untuk menghapus
+            Storage::disk('public')->delete($book->cover_image);
         }
         $book->delete();
         return redirect()->route('admin.petugas.books.index')->with('success', 'Buku dan semua salinannya berhasil dihapus.');

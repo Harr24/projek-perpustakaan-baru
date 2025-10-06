@@ -64,8 +64,8 @@
                                     {{-- Cek apakah ada salinan yang tersedia --}}
                                     @if($book->copies->isNotEmpty())
                                         <form action="{{ route('borrow.store', $book->copies->first()) }}" method="POST">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-danger w-100">Pinjam</button>
+                                            <!-- @csrf
+                                            <button type="submit" class="btn btn-sm btn-danger w-100">Pinjam</button> -->
                                         </form>
                                     @else
                                         <button class="btn btn-sm btn-secondary w-100" disabled>Stok Habis</button>
