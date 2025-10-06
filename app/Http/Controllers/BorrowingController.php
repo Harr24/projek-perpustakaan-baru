@@ -16,49 +16,69 @@ class BorrowingController extends Controller
     public function index()
     {
         $userId = Auth::id();
-
-        // Ambil data peminjaman milik user, urutkan dari yang terbaru
-        // Eager load relasi untuk menghindari N+1 query problem
         $borrowings = Borrowing::where('user_id', $userId)
-                               ->with('bookCopy.book.genre') // Memuat relasi bertingkat
-                               ->latest('borrowed_at')
-                               ->get();
+                                ->with('bookCopy.book.genre')
+                                ->latest('borrowed_at')
+                                ->get();
 
         return view('borrowings.index', compact('borrowings'));
     }
 
     /**
-     * Menyimpan data peminjaman baru.
+     * Menampilkan halaman konfirmasi pengajuan pinjaman.
      */
-    public function store(Request $request, BookCopy $book_copy)
+    public function create(BookCopy $book_copy)
     {
-        $user = Auth::user();
-
-        // 1. Pengecekan Keamanan dan Validasi
-        // Pastikan user sudah di-approve
-        if ($user->account_status !== 'active') {
-            return redirect()->back()->with('error', 'Akun Anda belum aktif. Tidak dapat meminjam buku.');
-        }
-
-        // Pastikan salinan buku tersedia
         if ($book_copy->status !== 'tersedia') {
-            return redirect()->back()->with('error', 'Buku ini sedang tidak tersedia untuk dipinjam.');
+            return redirect()->back()->with('error', 'Eksemplar buku ini sedang tidak tersedia.');
         }
 
-        // 2. Buat data peminjaman baru
-        Borrowing::create([
-            'user_id' => $user->id,
-            'book_copy_id' => $book_copy->id,
-            'borrowed_at' => Carbon::now(),
-            'due_at' => Carbon::now()->addDays(7), // Batas waktu peminjaman 7 hari
+        $borrowDate = Carbon::now();
+        $dueDate = Carbon::now();
+        $daysAdded = 0;
+        while ($daysAdded < 7) {
+            $dueDate->addDay();
+            if (!$dueDate->isSaturday() && !$dueDate->isSunday()) {
+                $daysAdded++;
+            }
+        }
+
+        return view('borrowings.create', compact('book_copy', 'borrowDate', 'dueDate'));
+    }
+
+    /**
+     * Menyimpan pengajuan peminjaman baru dengan status 'pending'.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'book_copy_id' => 'required|exists:book_copies,id',
+            'due_at' => 'required|date',
         ]);
 
-        // 3. Update status salinan buku menjadi 'dipinjam'
-        $book_copy->status = 'dipinjam';
-        $book_copy->save();
+        $user = Auth::user();
+        $bookCopy = BookCopy::find($request->input('book_copy_id'));
 
-        // 4. Redirect ke halaman riwayat dengan pesan sukses
-        return redirect()->route('borrow.history')->with('success', 'Buku berhasil dipinjam!');
+        if ($user->account_status !== 'active' || $bookCopy->status !== 'tersedia') {
+            return redirect()->route('catalog.index')->with('error', 'Gagal mengajukan pinjaman. Akun Anda mungkin belum aktif atau buku sudah dalam proses pinjam.');
+        }
+
+        // ===============================================
+        // PERUBAHAN DI SINI
+        // ===============================================
+        // 1. Ubah status buku menjadi 'pending' untuk mengunci
+        $bookCopy->status = 'pending';
+        $bookCopy->save();
+
+        // 2. Buat pengajuan peminjaman dengan status 'pending'
+        Borrowing::create([
+            'user_id' => $user->id,
+            'book_copy_id' => $bookCopy->id,
+            'borrowed_at' => Carbon::now(),
+            'due_at' => new Carbon($request->input('due_at')),
+            'status' => 'pending',
+        ]);
+
+        return redirect()->route('borrow.history')->with('success', 'Pengajuan pinjaman berhasil dikirim. Menunggu konfirmasi dari petugas.');
     }
 }
-

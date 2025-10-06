@@ -16,7 +16,7 @@ class VerificationController extends Controller
     {
         $pendingUsers = User::where('role', 'siswa')
                             ->where('account_status', 'pending')
-                            ->orderBy('created_at', 'asc') // Urutkan dari yang paling lama mendaftar
+                            ->orderBy('created_at', 'asc')
                             ->get();
         
         return view('admin.petugas.verification.index', compact('pendingUsers'));
@@ -27,7 +27,6 @@ class VerificationController extends Controller
      */
     public function approve(User $user)
     {
-        // Pastikan hanya siswa dengan status pending yang bisa di-approve
         if ($user->role === 'siswa' && $user->account_status === 'pending') {
             $user->account_status = 'active';
             $user->save();
@@ -43,16 +42,13 @@ class VerificationController extends Controller
      */
     public function reject(User $user)
     {
-        // Pastikan hanya siswa dengan status pending yang bisa ditolak
         if ($user->role === 'siswa' && $user->account_status === 'pending') {
             
-            // Hapus file foto kartu pelajar dari storage (jika ada)
-            // Catatan: Storage::disk('public') tidak diperlukan jika default filesystem Anda sudah 'public'
             if (!empty($user->student_card_photo)) {
+                // Gunakan Storage::delete() untuk konsistensi
                 Storage::delete($user->student_card_photo);
             }
 
-            // Hapus data user
             $user->delete();
 
             return redirect()->back()->with('success', 'Pendaftaran siswa berhasil ditolak.');
@@ -61,32 +57,5 @@ class VerificationController extends Controller
         return redirect()->back()->with('error', 'Aksi tidak valid atau akun sudah diproses.');
     }
 
-    // ==========================================================
-    // TAMBAHAN: Method untuk menampilkan foto kartu pelajar
-    // ==========================================================
-    /**
-     * Menampilkan foto kartu pelajar dari storage.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Http\Response
-     */
-    public function showStudentCard(User $user)
-    {
-        // Ambil path foto dari database
-        $path = $user->student_card_photo;
-
-        // Pastikan path ada dan file-nya benar-benar ada di storage
-        if (!$path || !Storage::exists($path)) {
-            abort(404, 'File tidak ditemukan.');
-        }
-
-        // Baca file dari storage
-        $file = Storage::get($path);
-        
-        // Dapatkan tipe mime file (contoh: image/jpeg)
-        $type = Storage::mimeType($path);
-
-        // Kirim response ke browser dengan isi file dan header yang benar
-        return response($file)->header('Content-Type', $type);
-    }
+    // Method showStudentCard telah dihapus dari sini.
 }

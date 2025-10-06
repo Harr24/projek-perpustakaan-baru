@@ -15,27 +15,31 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Inisialisasi variabel hitungan notifikasi.
-        $pendingStudentsCount = 0;
-
         // Ambil user yang sedang login.
         $user = Auth::user();
 
+        // Inisialisasi variabel-variabel yang akan dikirim ke view.
+        $pendingStudentsCount = 0;
+        $hasBorrowings = false;
+
         // Hanya hitung notifikasi jika yang login adalah 'petugas'.
         if ($user && $user->role == 'petugas') {
-            
-            // PERUBAHAN UTAMA DI SINI:
-            // Mengubah logika untuk menghitung siswa berdasarkan 'account_status'.
             $pendingStudentsCount = User::where('role', 'siswa')
-                                          ->where('account_status', 'pending') // Menggunakan logika baru
-                                          ->count();
+                                        ->where('account_status', 'pending')
+                                        ->count();
+        }
+        
+        // ==========================================================
+        // TAMBAHAN: Cek riwayat peminjaman jika user adalah siswa atau guru
+        // ==========================================================
+        if ($user && in_array($user->role, ['siswa', 'guru'])) {
+            $hasBorrowings = $user->borrowings()->exists();
         }
 
-        // Kirim data hitungan ke view 'dashboard'.
-        // Variabel $pendingStudentsCount sekarang bisa diakses di dashboard.blade.php
+        // Kirim semua data yang relevan ke view 'dashboard'.
         return view('dashboard', [
-            'pendingStudentsCount' => $pendingStudentsCount
+            'pendingStudentsCount' => $pendingStudentsCount,
+            'hasBorrowings' => $hasBorrowings
         ]);
     }
 }
-

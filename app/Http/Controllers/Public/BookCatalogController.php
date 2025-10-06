@@ -5,30 +5,39 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BookCatalogController extends Controller
 {
-    /**
-     * Menampilkan halaman utama katalog buku untuk publik.
-     */
     public function index()
     {
-        // Ambil semua buku beserta relasi genrenya untuk ditampilkan
-        $books = Book::with('genre')->latest()->get();
+        // ==========================================================
+        // PERUBAHAN DI SINI: Memuat relasi 'copies' yang statusnya 'tersedia'
+        // ==========================================================
+        $books = Book::with(['genre', 'copies' => function ($query) {
+            // Kita hanya ambil data salinan yang statusnya 'tersedia'
+            $query->where('status', 'tersedia');
+        }])->latest()->paginate(12);
         
-        // Ganti 'catalog.index' dengan nama view yang sesuai jika berbeda
         return view('public.catalog.index', compact('books'));
     }
 
-    /**
-     * Menampilkan halaman detail satu buku untuk publik.
-     */
     public function show(Book $book)
     {
-        // Eager load relasi yang dibutuhkan
         $book->load('genre', 'copies');
-        
-        // Ganti 'catalog.show' dengan nama view yang sesuai jika berbeda
-        return view('public.catalog.show', compact('book'));
+        $availableCopiesCount = $book->copies->where('status', 'tersedia')->count();
+        $firstAvailableCopy = $book->copies->where('status', 'tersedia')->first();
+        return view('public.catalog.show', compact('book', 'availableCopiesCount', 'firstAvailableCopy'));
+    }
+
+    public function showCover(Book $book)
+    {
+        $path = $book->cover_image;
+        if (!$path || !Storage::exists($path)) {
+            abort(404, 'Gambar tidak ditemukan.');
+        }
+        $file = Storage::get($path);
+        $type = Storage::mimeType($path);
+        return response($file)->header('Content-Type', $type);
     }
 }

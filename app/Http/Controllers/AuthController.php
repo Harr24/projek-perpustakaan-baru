@@ -26,12 +26,13 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'student_card_photo' => 'required|image|mimes:jpeg,png,jpg|max:2048', // Wajib gambar, maks 2MB
+            'student_card_photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        // 2. Simpan file foto ke storage
-        $path = $request->file('student_card_photo')->store('public/student_cards');
+        // --- PERUBAHAN DI SINI ---
+        // 2. Simpan file foto ke disk 'public' di dalam folder 'student_cards'
+        $path = $request->file('student_card_photo')->store('student_cards', 'public');
 
         // 3. Buat user baru dengan status PENDING dan role SISWA
         $user = User::create([
@@ -69,32 +70,25 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        // Validasi input
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        // Coba lakukan autentikasi
         if (Auth::attempt($credentials)) {
             
-            // Tambahan: Cek Status Akun
             if (Auth::user()->account_status !== 'active') {
-                // Jika akun tidak aktif, paksa logout lagi
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                // Kembalikan ke login dengan pesan error spesifik
                 return back()->with('error', 'Akun Anda belum aktif. Mohon tunggu verifikasi dari petugas.');
             }
 
-            // Jika berhasil dan aktif, regenerate session dan arahkan ke dashboard
             $request->session()->regenerate();
             return redirect()->intended('dashboard');
         }
 
-        // Jika email/password salah
         return back()->with('error', 'Login gagal! Email atau password salah.');
     }
 
@@ -104,11 +98,8 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
-
         return redirect('/login');
     }
 }

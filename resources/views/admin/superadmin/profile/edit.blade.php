@@ -5,7 +5,7 @@
 
     {{-- Judul Halaman --}}
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Edit Profil Super Admin</h1>
+        <h1 class="text-3xl font-bold text-gray-800">Edit Profil Saya</h1>
         <p class="text-gray-500 mt-1">Perbarui informasi profil dan password Anda.</p>
     </div>
 
@@ -36,47 +36,53 @@
 
     {{-- Form Edit Profil --}}
     <div class="bg-white shadow-md rounded-lg p-6 max-w-2xl">
-        {{-- ====================================================== --}}
-        {{-- PERUBAHAN DI SINI: ganti nama route menjadi 'profile.update' --}}
-        {{-- ====================================================== --}}
         <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
+            {{-- ====================================================== --}}
+            {{-- PERUBAHAN DI SINI: ganti semua '$superadmin' menjadi '$user' --}}
+            {{-- ====================================================== --}}
+
             <div class="mb-4">
                 <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Nama:</label>
-                <input type="text" id="name" name="name" value="{{ old('name', $superadmin->name) }}" 
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
             </div>
 
             <div class="mb-4">
                 <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
-                <input type="email" id="email" name="email" value="{{ old('email', $superadmin->email) }}" 
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
+            </div>
+            
+            <hr class="my-6">
+
+            <div class="mb-6">
+                <label for="profile_photo" class="block text-gray-700 text-sm font-bold mb-2">Foto Profil (Max 2MB):</label>
+                @if($user->profile_photo)
+                    <div class="mb-2">
+                        <img src="{{ Storage::url($user->profile_photo) }}" alt="Foto Profil" class="w-24 h-24 object-cover rounded-full border border-gray-300">
+                        <p class="text-xs text-gray-500 mt-1">Foto saat ini</p>
+                    </div>
+                @endif
+                <input type="file" id="profile_photo" name="profile_photo" accept="image/*"
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
             </div>
 
+            <hr class="my-6">
+            <p class="text-gray-600 text-sm mb-4">Isi bagian di bawah ini hanya jika Anda ingin mengubah password.</p>
+            
             <div class="mb-4">
-                <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password Baru (kosongkan jika tidak diubah):</label>
+                <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password Baru:</label>
                 <input type="password" id="password" name="password" 
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
             </div>
 
             <div class="mb-6">
                 <label for="password_confirmation" class="block text-gray-700 text-sm font-bold mb-2">Konfirmasi Password Baru:</label>
                 <input type="password" id="password_confirmation" name="password_confirmation" 
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            </div>
-
-            <div class="mb-6">
-                <label for="profile_photo" class="block text-gray-700 text-sm font-bold mb-2">Foto Profil (Max 2MB):</label>
-                @if($superadmin->profile_photo)
-                    <div class="mb-2">
-                        <img src="{{ Storage::url($superadmin->profile_photo) }}" alt="Foto Profil" class="w-24 h-24 object-cover rounded-full border border-gray-300">
-                        <p class="text-xs text-gray-500 mt-1">Foto saat ini</p>
-                    </div>
-                @endif
-                <input type="file" id="profile_photo" name="profile_photo" accept="image/*"
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
             </div>
 
             <div class="flex items-center justify-between">

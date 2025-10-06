@@ -15,6 +15,7 @@ class Borrowing extends Model
         'borrowed_at',
         'due_at',
         'returned_at',
+        'status', // <-- TAMBAHKAN INI
     ];
 
     // Relasi ke User (peminjam)

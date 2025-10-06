@@ -48,13 +48,11 @@
         <div class="card">
             <div class="card-body p-lg-5">
                 <div class="row">
-                    {{-- Kolom Kiri: Gambar Sampul --}}
                     <div class="col-md-4 text-center mb-4 mb-md-0">
                         <img src="{{ $book->cover_image ? route('book.cover', $book) : 'https://via.placeholder.com/300x400.png?text=No+Cover' }}" 
                              class="cover-image" alt="Sampul {{ $book->title }}">
                     </div>
 
-                    {{-- Kolom Kanan: Detail Buku --}}
                     <div class="col-md-8">
                         <h1 class="h2 fw-bold">{{ $book->title }}</h1>
                         <p class="text-muted">oleh {{ $book->author }}</p>
@@ -78,6 +76,9 @@
                                     <th style="width: 20%;">Aksi</th>
                                 </tr>
                             </thead>
+                            {{-- =============================================== --}}
+                            {{-- PERUBAHAN DI SINI: Logika status dan tombol baru --}}
+                            {{-- =============================================== --}}
                             <tbody>
                                 @forelse ($book->copies as $copy)
                                     <tr>
@@ -85,18 +86,17 @@
                                         <td>
                                             @if($copy->status == 'tersedia')
                                                 <span class="badge bg-success">Tersedia</span>
+                                            @elseif($copy->status == 'pending')
+                                                <span class="badge bg-warning text-dark">Sedang Diajukan</span>
                                             @else
                                                 <span class="badge bg-secondary">Dipinjam</span>
                                             @endif
                                         </td>
                                         <td>
                                             @if($copy->status == 'tersedia')
-                                                {{-- =============================================== --}}
-                                                {{-- PERUBAHAN DI SINI: Menggunakan route 'borrow.create' --}}
-                                                {{-- =============================================== --}}
                                                 <a href="{{ route('borrow.create', $copy) }}" class="btn btn-danger btn-sm">Ajukan Pinjaman</a>
                                             @else
-                                                <span>-</span>
+                                                <button class="btn btn-secondary btn-sm" disabled>Tidak Tersedia</button>
                                             @endif
                                         </td>
                                     </tr>
