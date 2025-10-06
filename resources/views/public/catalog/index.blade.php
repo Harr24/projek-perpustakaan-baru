@@ -14,6 +14,11 @@
             border: 1px solid #dee2e6;
             display: flex;
             flex-direction: column;
+            transition: box-shadow .2s ease-in-out, transform .2s ease-in-out;
+        }
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         }
         .book-cover { height: 300px; object-fit: cover; }
         .card-body { flex-grow: 1; }
@@ -48,29 +53,20 @@
             @forelse ($books as $book)
                 <div class="col">
                     <div class="card h-100 book-card">
-                        <img src="{{ $book->cover_image ? route('book.cover', $book) : 'https://via.placeholder.com/300x400.png?text=No+Cover' }}" 
+                        
+                        {{-- ========================================================== --}}
+                        {{-- PERBAIKAN: Menggunakan Storage::url() untuk menampilkan gambar --}}
+                        {{-- ========================================================== --}}
+                        <img src="{{ $book->cover_image ? Storage::url($book->cover_image) : 'https://via.placeholder.com/300x400.png?text=No+Cover' }}" 
                              class="card-img-top book-cover" alt="Sampul {{ $book->title }}">
+                        
                         <div class="card-body">
-                            <h6 class="card-title fw-bold text-truncate">{{ $book->title }}</h6>
+                            <h6 class="card-title fw-bold text-truncate" title="{{ $book->title }}">{{ $book->title }}</h6>
                             <p class="card-text small text-muted mb-0">{{ $book->author }}</p>
                         </div>
-                        {{-- =============================================== --}}
-                        {{-- TAMBAHAN: Tombol Aksi di bagian bawah kartu   --}}
-                        {{-- =============================================== --}}
                         <div class="card-footer bg-white border-top-0 p-3">
                             <div class="d-grid gap-2">
                                 <a href="{{ route('catalog.show', $book) }}" class="btn btn-sm btn-outline-secondary">Lihat Detail</a>
-                                @auth
-                                    {{-- Cek apakah ada salinan yang tersedia --}}
-                                    @if($book->copies->isNotEmpty())
-                                        <form action="{{ route('borrow.store', $book->copies->first()) }}" method="POST">
-                                            <!-- @csrf
-                                            <button type="submit" class="btn btn-sm btn-danger w-100">Pinjam</button> -->
-                                        </form>
-                                    @else
-                                        <button class="btn btn-sm btn-secondary w-100" disabled>Stok Habis</button>
-                                    @endif
-                                @endauth
                                 @guest
                                     <a href="{{ route('login') }}" class="btn btn-sm btn-danger w-100">Login untuk Pinjam</a>
                                 @endguest

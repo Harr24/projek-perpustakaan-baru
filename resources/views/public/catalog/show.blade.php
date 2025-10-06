@@ -4,11 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $book->title }} - Katalog Perpustakaan</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
     <style>
         :root { --brand-red: #c62828; }
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
@@ -50,7 +48,11 @@
                 <div class="row">
                     {{-- Kolom Kiri: Gambar Sampul --}}
                     <div class="col-md-4 text-center mb-4 mb-md-0">
-                        <img src="{{ $book->cover_image ? route('book.cover', $book) : 'https://via.placeholder.com/300x400.png?text=No+Cover' }}" 
+
+                        {{-- ========================================================== --}}
+                        {{-- PERBAIKAN: Menggunakan Storage::url() untuk menampilkan gambar --}}
+                        {{-- ========================================================== --}}
+                        <img src="{{ $book->cover_image ? Storage::url($book->cover_image) : 'https://via.placeholder.com/300x400.png?text=No+Cover' }}" 
                              class="cover-image" alt="Sampul {{ $book->title }}">
                     </div>
 
@@ -91,9 +93,6 @@
                                         </td>
                                         <td>
                                             @if($copy->status == 'tersedia')
-                                                {{-- =============================================== --}}
-                                                {{-- PERUBAHAN DI SINI: Menggunakan route 'borrow.create' --}}
-                                                {{-- =============================================== --}}
                                                 <a href="{{ route('borrow.create', $copy) }}" class="btn btn-danger btn-sm">Ajukan Pinjaman</a>
                                             @else
                                                 <span>-</span>
@@ -111,7 +110,7 @@
                 @endauth
 
                 @guest
-                    <div class="alert alert-warning">
+                    <div class="alert alert-info">
                         Anda harus <a href="{{ route('login') }}" class="alert-link">login</a> atau <a href="{{ route('register') }}" class="alert-link">mendaftar</a> untuk dapat meminjam buku.
                     </div>
                 @endguest
