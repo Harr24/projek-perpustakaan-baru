@@ -73,11 +73,7 @@
                                 <td class="px-3 fw-bold">{{ $dueDate->format('d M Y') }}</td>
                                 <td class="px-3">
                                     @if($isOverdue)
-                                        {{-- =============================================== --}}
-                                        {{-- PERBAIKAN DI SINI: Menggunakan logika yang benar --}}
-                                        {{-- =============================================== --}}
                                         @php
-                                            // Hitung hari kerja yang terlewat
                                             $lateWeekdays = $dueDate->diffInDaysFiltered(function($date) {
                                                 return !$date->isSaturday() && !$date->isSunday();
                                             }, now());
@@ -112,14 +108,40 @@
 
 {{-- Modal Konfirmasi Pengembalian --}}
 <div class="modal fade" id="returnConfirmModal" tabindex="-1" aria-labelledby="returnConfirmModalLabel" aria-hidden="true">
-    {{-- ... Kode modal Anda tetap sama ... --}}
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="returnConfirmModalLabel">Konfirmasi Pengembalian Buku</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Pastikan buku yang dikembalikan dan kode buku sudah sesuai.
+                <br><br>
+                Jika sudah, klik "Konfirmasi Pengembalian".
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form id="returnForm" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-success">Konfirmasi Pengembalian</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-    {{-- ... Kode JavaScript modal Anda tetap sama ... --}}
+    const returnConfirmModal = document.getElementById('returnConfirmModal');
+    if (returnConfirmModal) {
+        returnConfirmModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const formAction = button.getAttribute('data-form-action');
+            const returnForm = document.getElementById('returnForm');
+            returnForm.setAttribute('action', formAction);
+        });
+    }
 </script>
 
 </body>

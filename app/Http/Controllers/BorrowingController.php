@@ -51,26 +51,37 @@ class BorrowingController extends Controller
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+
+        // ==========================================================
+        // FITUR BARU: Cek Denda yang Belum Lunas
+        // ==========================================================
+        // Cek apakah user punya denda dari peminjaman sebelumnya yang belum lunas
+        $hasUnpaidFines = Borrowing::where('user_id', $user->id)
+                                    ->where('fine_amount', '>', 0)
+                                    ->where('fine_status', 'unpaid')
+                                    ->exists();
+        
+        if ($hasUnpaidFines) {
+            // Jika punya, batalkan proses dan beri pesan error
+            return redirect()->route('catalog.index')->with('error', 'Anda memiliki denda yang belum lunas. Mohon selesaikan pembayaran sebelum meminjam buku baru.');
+        }
+        // ==========================================================
+
         $request->validate([
             'book_copy_id' => 'required|exists:book_copies,id',
             'due_at' => 'required|date',
         ]);
-
-        $user = Auth::user();
+        
         $bookCopy = BookCopy::find($request->input('book_copy_id'));
 
         if ($user->account_status !== 'active' || $bookCopy->status !== 'tersedia') {
             return redirect()->route('catalog.index')->with('error', 'Gagal mengajukan pinjaman. Akun Anda mungkin belum aktif atau buku sudah dalam proses pinjam.');
         }
 
-        // ===============================================
-        // PERUBAHAN DI SINI
-        // ===============================================
-        // 1. Ubah status buku menjadi 'pending' untuk mengunci
         $bookCopy->status = 'pending';
         $bookCopy->save();
 
-        // 2. Buat pengajuan peminjaman dengan status 'pending'
         Borrowing::create([
             'user_id' => $user->id,
             'book_copy_id' => $bookCopy->id,
