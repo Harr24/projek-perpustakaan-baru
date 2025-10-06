@@ -9,6 +9,7 @@ use App\Models\Genre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException; // <-- Pastikan ini ada
 
 class BookController extends Controller
 {
@@ -26,7 +27,6 @@ class BookController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validasi input dari form
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
@@ -35,27 +35,35 @@ class BookController extends Controller
             'stock' => 'required|integer|min:1|max:100',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
-        
+
+        // ==========================================================
+        // FITUR BARU: Validasi Keunikan Kode Buku
+        // ==========================================================
+        $genre = Genre::find($validated['genre_id']);
+        $prefix = $genre->genre_code . '-' . Str::upper($validated['initial_code']) . '-';
+
+        // Cek apakah awalan kode ini sudah pernah digunakan
+        $prefixExists = BookCopy::where('book_code', 'LIKE', $prefix . '%')->exists();
+
+        if ($prefixExists) {
+            // Jika sudah ada, kirim notifikasi error dan hentikan proses
+            throw ValidationException::withMessages([
+               'initial_code' => 'Kombinasi Kode Awal dan Genre ini sudah digunakan. Silakan gunakan Kode Awal yang lain.',
+            ]);
+        }
+        // ==========================================================
+
         if ($request->hasFile('cover_image')) {
-            // ==========================================================
-            // PERBAIKAN: Menggunakan 'covers' sebagai folder dan 'public' sebagai disk
-            // ==========================================================
             $path = $request->file('cover_image')->store('covers', 'public');
             $validated['cover_image'] = $path;
         }
 
-        // 2. Simpan data buku utama
         $book = Book::create($validated);
-
-        // 3. Ambil data genre untuk mendapatkan 'genre_code'
-        $genre = Genre::find($validated['genre_id']);
-        $genreCode = $genre->genre_code;
-        $initialCode = Str::upper($validated['initial_code']);
-
-        // 4. Loop untuk membuat data eksemplar/kopi buku dengan kode unik
+        
+        // Karena kita sudah pastikan unik, looping bisa dimulai dari 1
         for ($i = 1; $i <= $validated['stock']; $i++) {
             $copyNumber = str_pad($i, 3, '0', STR_PAD_LEFT);
-            $uniqueBookCode = $genreCode . '-' . $initialCode . '-' . $copyNumber;
+            $uniqueBookCode = $prefix . $copyNumber;
             
             BookCopy::create([
                 'book_id' => $book->id,
@@ -65,7 +73,7 @@ class BookController extends Controller
         }
         
         return redirect()->route('admin.petugas.books.index')
-                         ->with('success', 'Buku "' . $book->title . '" dan ' . $validated['stock'] . ' salinannya berhasil ditambahkan.');
+                         ->with('success', 'Buku "' . $book->title . '" berhasil ditambahkan.');
     }
     
     public function show(Book $book)
@@ -90,25 +98,20 @@ class BookController extends Controller
         ]);
 
         if ($request->hasFile('cover_image')) {
-            // Hapus gambar lama jika ada
             if ($book->cover_image) {
-                // PERBAIKAN: Gunakan Storage::disk('public') untuk menghapus
                 Storage::disk('public')->delete($book->cover_image);
             }
-            // PERBAIKAN: Simpan gambar baru dengan cara yang benar
             $path = $request->file('cover_image')->store('covers', 'public');
             $validated['cover_image'] = $path;
         }
 
         $book->update($validated);
-
         return redirect()->route('admin.petugas.books.index')->with('success', 'Data buku berhasil diperbarui.');
     }
 
     public function destroy(Book $book)
     {
         if ($book->cover_image) {
-            // PERBAIKAN: Gunakan Storage::disk('public') untuk menghapus
             Storage::disk('public')->delete($book->cover_image);
         }
         $book->delete();
