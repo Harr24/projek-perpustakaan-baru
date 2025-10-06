@@ -13,6 +13,7 @@ use App\Http\Controllers\BorrowingController;
 use App\Http\Controllers\Admin\Superadmin\MemberController;
 use App\Http\Controllers\Admin\Petugas\TeacherController;
 use App\Http\Controllers\Admin\Petugas\LoanApprovalController;
+use App\Http\Controllers\Admin\Petugas\ReturnController;
 
 /*
 |--------------------------------------------------------------------------
@@ -68,11 +69,13 @@ Route::middleware('auth')->group(function () {
         // Rute untuk konfirmasi peminjaman
         Route::get('/approvals', [LoanApprovalController::class, 'index'])->name('approvals.index');
         Route::post('/approvals/{borrowing}/approve', [LoanApprovalController::class, 'approve'])->name('approvals.approve');
+        Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
         
         // ==========================================================
-        // TAMBAHAN: Rute untuk menolak peminjaman
+        // Rute untuk Manajemen Pengembalian
         // ==========================================================
-        Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
+        Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
+        Route::post('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store');
     });
 
     // == RUTE KHUSUS UNTUK ROLE SUPERADMIN ==
