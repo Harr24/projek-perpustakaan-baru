@@ -4,17 +4,16 @@ namespace App\Http\Controllers\Admin\Petugas;
 
 use App\Http\Controllers\Controller;
 use App\Models\Book;
-use App\Models\BookCopy; // <-- WAJIB DITAMBAHKAN
+use App\Models\BookCopy;
 use App\Models\Genre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str; // <-- WAJIB DITAMBAHKAN
+use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
     public function index()
     {
-        // Menambahkan eager loading untuk relasi genre dan menghitung total salinan
         $books = Book::with('genre')->withCount('copies')->latest()->get();
         return view('admin.petugas.books.index', compact('books'));
     }
@@ -26,44 +25,48 @@ class BookController extends Controller
     }
 
     /**
-     * ==========================================================
-     * PERUBAHAN UTAMA DI METHOD STORE INI
-     * ==========================================================
+     * PERUBAHAN UTAMA ADA DI SINI
      */
     public function store(Request $request)
     {
-        // 1. Validasi input dari form, termasuk input baru kita
+        // 1. Validasi input dari form
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'genre_id' => 'required|exists:genres,id',
-            'initial_code' => 'required|string|max:10|alpha_num', // Validasi untuk kode awal
-            'stock' => 'required|integer|min:1|max:100', // Batasi max stock per input
+            'initial_code' => 'required|string|max:10|alpha_num',
+            'stock' => 'required|integer|min:1|max:100',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
         
-        // 2. Handle upload gambar cover
         if ($request->hasFile('cover_image')) {
             $path = $request->file('cover_image')->store('public/covers');
             $validated['cover_image'] = $path;
         }
 
-        // 3. Simpan data buku utama ke tabel 'books'
+        // 2. Simpan data buku utama
         $book = Book::create($validated);
 
-        // 4. Loop untuk membuat data eksemplar/kopi buku
-        $initialCode = Str::upper($validated['initial_code']);
-        for ($i = 1; $i <= $validated['stock']; $i++) {
-            // Membuat nomor urut dengan 3 digit (001, 002, ..., 010, dst.)
-            $copyNumber = str_pad($i, 3, '0', STR_PAD_LEFT);
+        // ==========================================================
+        // LOGIKA BARU UNTUK MEMBUAT KODE UNIK
+        // ==========================================================
+        
+        // 3. Ambil data genre untuk mendapatkan 'genre_code'
+        $genre = Genre::find($validated['genre_id']);
+        $genreCode = $genre->genre_code; // Contoh: "01"
+        $initialCode = Str::upper($validated['initial_code']); // Contoh: "NN"
 
-            // Gabungkan menjadi kode unik final, contoh: AGAMA-001
-            $uniqueBookCode = $initialCode . '-' . $copyNumber;
+        // 4. Loop untuk membuat data eksemplar/kopi buku
+        for ($i = 1; $i <= $validated['stock']; $i++) {
+            $copyNumber = str_pad($i, 3, '0', STR_PAD_LEFT); // Contoh: "001"
+
+            // Gabungkan menjadi kode unik final, format: Genre-Inisial-Nomor
+            $uniqueBookCode = $genreCode . '-' . $initialCode . '-' . $copyNumber; // Hasil: "01-NN-001"
             
             BookCopy::create([
                 'book_id' => $book->id,
-                'book_code' => $uniqueBookCode, // Menggunakan nama kolom dari migrasi Anda
-                'status' => 'tersedia',      // Menggunakan status dari migrasi Anda
+                'book_code' => $uniqueBookCode,
+                'status' => 'tersedia',
             ]);
         }
         
@@ -71,9 +74,9 @@ class BookController extends Controller
                          ->with('success', 'Buku "' . $book->title . '" dan ' . $validated['stock'] . ' salinannya berhasil ditambahkan.');
     }
     
+    // Method show(), edit(), update(), destroy() tidak perlu diubah
     public function show(Book $book)
     {
-        // Eager load relasi untuk efisiensi
         $book->load('genre', 'copies');
         return view('admin.petugas.books.show', compact('book'));
     }
@@ -86,8 +89,6 @@ class BookController extends Controller
 
     public function update(Request $request, Book $book)
     {
-        // Note: Logika update hanya untuk data master buku, tidak untuk stok.
-        // Manajemen stok (tambah/kurang) adalah fitur terpisah.
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
@@ -105,8 +106,7 @@ class BookController extends Controller
 
         $book->update($validated);
 
-        return redirect()->route('admin.petugas.books.index')
-                         ->with('success', 'Data buku berhasil diperbarui.');
+        return redirect()->route('admin.petugas.books.index')->with('success', 'Data buku berhasil diperbarui.');
     }
 
     public function destroy(Book $book)
@@ -114,11 +114,7 @@ class BookController extends Controller
         if ($book->cover_image) {
             Storage::delete($book->cover_image);
         }
-
-        // Karena ada onDelete('cascade') di migrasi, semua book_copies terkait akan terhapus otomatis.
         $book->delete();
-
-        return redirect()->route('admin.petugas.books.index')
-                         ->with('success', 'Buku dan semua salinannya berhasil dihapus.');
+        return redirect()->route('admin.petugas.books.index')->with('success', 'Buku dan semua salinannya berhasil dihapus.');
     }
 }
