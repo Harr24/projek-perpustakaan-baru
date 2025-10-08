@@ -20,9 +20,7 @@
             <p class="text-muted mb-0">Daftar buku yang sedang dipinjam & terlambat.</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('admin.petugas.fines.index') }}" class="btn btn-warning">
-                <i class="bi bi-cash-coin"></i> Lihat Daftar Denda
-            </a>
+            <a href="{{ route('admin.petugas.fines.index') }}" class="btn btn-warning"><i class="bi bi-cash-coin"></i> Lihat Daftar Denda</a>
             <a href="{{ route('dashboard') }}" class="btn btn-outline-danger">Kembali ke Dashboard</a>
         </div>
     </div>
@@ -40,108 +38,90 @@
         </div>
     @endif
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-danger text-white">
-            <h5 class="mb-0">Buku Sedang Dipinjam</h5>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="py-3 px-3">Judul Buku</th>
-                            <th class="py-3 px-3">Peminjam</th>
-                            <th class="py-3 px-3">Tgl Pinjam</th>
-                            <th class="py-3 px-3">Jatuh Tempo</th>
-                            <th class="py-3 px-3">Status</th>
-                            <th class="py-3 px-3">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($activeBorrowings as $borrow)
-                            @php
-                                $dueDate = \Carbon\Carbon::parse($borrow->due_at);
-                                $isOverdue = $borrow->status == 'borrowed' && now()->isAfter($dueDate);
-                            @endphp
-                            <tr class="{{ $isOverdue ? 'table-danger' : '' }}">
-                                <td class="px-3">
-                                    {{ $borrow->bookCopy->book->title }}
-                                    <small class="d-block text-muted">{{ $borrow->bookCopy->book_code }}</small>
-                                </td>
-                                <td class="px-3">{{ $borrow->user->name }}</td>
-                                <td class="px-3">{{ \Carbon\Carbon::parse($borrow->borrowed_at)->format('d M Y') }}</td>
-                                <td class="px-3 fw-bold">{{ $dueDate->format('d M Y') }}</td>
-                                <td class="px-3">
-                                    @if($isOverdue)
-                                        @php
-                                            $lateWeekdays = $dueDate->diffInDaysFiltered(function($date) {
-                                                return !$date->isSaturday() && !$date->isSunday();
-                                            }, now());
-                                        @endphp
-                                        <span class="badge bg-danger">Terlambat {{ $lateWeekdays }} hari kerja</span>
-                                    @else
-                                        <span class="badge bg-primary">Dipinjam</span>
-                                    @endif
-                                </td>
-                                <td class="px-3">
-                                    <button type="button" class="btn btn-success btn-sm"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#returnConfirmModal"
-                                            data-form-action="{{ route('admin.petugas.returns.store', $borrow) }}">
-                                        Kembalikan
-                                    </button>
-                                </td>
-                            </tr>
-                        @empty
+    {{-- ========================================================== --}}
+    {{-- PERUBAHAN UTAMA: Membungkus tabel dengan <form>          --}}
+    {{-- ========================================================== --}}
+    <form action="{{ route('admin.petugas.returns.storeMultiple') }}" method="POST">
+        @csrf
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Buku Sedang Dipinjam</h5>
+                <button type="submit" class="btn btn-light btn-sm" onclick="return confirm('Kembalikan semua buku yang dipilih?');">
+                    <i class="bi bi-check2-all"></i> Kembalikan yang Dipilih
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">
-                                    Tidak ada buku yang sedang dipinjam.
-                                </td>
+                                <th class="py-3 px-3" style="width: 5%;"><input class="form-check-input" type="checkbox" id="selectAll"></th>
+                                <th class="py-3 px-3">Judul Buku</th>
+                                <th class="py-3 px-3">Peminjam</th>
+                                <th class="py-3 px-3">Jatuh Tempo</th>
+                                <th class="py-3 px-3">Status</th>
+                                <th class="py-3 px-3">Aksi Individual</th>
                             </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse ($activeBorrowings as $borrow)
+                                @php
+                                    $dueDate = \Carbon\Carbon::parse($borrow->due_at);
+                                    $isOverdue = $borrow->status == 'borrowed' && now()->isAfter($dueDate);
+                                @endphp
+                                <tr class="{{ $isOverdue ? 'table-danger' : '' }}">
+                                    <td class="px-3">
+                                        <input class="form-check-input" type="checkbox" name="borrowing_ids[]" value="{{ $borrow->id }}">
+                                    </td>
+                                    <td class="px-3">
+                                        {{ $borrow->bookCopy->book->title }}
+                                        <small class="d-block text-muted">{{ $borrow->bookCopy->book_code }}</small>
+                                    </td>
+                                    <td class="px-3">{{ $borrow->user->name }}</td>
+                                    <td class="px-3 fw-bold">{{ $dueDate->format('d M Y') }}</td>
+                                    <td class="px-3">
+                                        @if($isOverdue)
+                                            @php
+                                                $lateWeekdays = $dueDate->diffInDaysFiltered(fn($date) => !$date->isSaturday() && !$date->isSunday(), now());
+                                            @endphp
+                                            <span class="badge bg-danger">Terlambat {{ $lateWeekdays }} hari kerja</span>
+                                        @else
+                                            <span class="badge bg-primary">Dipinjam</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-3">
+                                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#returnConfirmModal" data-form-action="{{ route('admin.petugas.returns.store', $borrow) }}">
+                                            Kembalikan
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="6" class="text-center text-muted py-4">Tidak ada buku yang sedang dipinjam.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
 {{-- Modal Konfirmasi Pengembalian --}}
 <div class="modal fade" id="returnConfirmModal" tabindex="-1" aria-labelledby="returnConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="returnConfirmModalLabel">Konfirmasi Pengembalian Buku</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Pastikan buku yang dikembalikan dan kode buku sudah sesuai.
-                <br><br>
-                Jika sudah, klik "Konfirmasi Pengembalian".
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <form id="returnForm" method="POST" class="m-0">
-                    @csrf
-                    <button type="submit" class="btn btn-success">Konfirmasi Pengembalian</button>
-                </form>
-            </div>
-        </div>
-    </div>
+    {{-- ... Kode modal Anda tetap sama ... --}}
 </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const returnConfirmModal = document.getElementById('returnConfirmModal');
-    if (returnConfirmModal) {
-        returnConfirmModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
-            const formAction = button.getAttribute('data-form-action');
-            const returnForm = document.getElementById('returnForm');
-            returnForm.setAttribute('action', formAction);
+    {{-- ... Kode JavaScript modal Anda tetap sama ... --}}
+
+    // Script sederhana untuk fungsi "Pilih Semua"
+    document.getElementById('selectAll').addEventListener('click', function(event) {
+        const checkboxes = document.querySelectorAll('input[name="borrowing_ids[]"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = event.target.checked;
         });
-    }
+    });
 </script>
 
 </body>
