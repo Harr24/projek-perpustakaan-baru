@@ -21,8 +21,8 @@ class Book extends Model
         'author',
         'genre_id',
         'cover_image',
-        // 'book_code', // <-- HAPUS BARIS INI
         'stock',
+        'is_textbook', // <-- PASTIKAN BARIS INI ADA
     ];
 
     /**

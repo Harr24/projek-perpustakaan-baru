@@ -12,17 +12,12 @@ use Illuminate\Support\Facades\Storage;
 
 class BookCatalogController extends Controller
 {
-    /**
-     * Menampilkan halaman utama katalog buku, dengan logika pencarian dan filter.
-     */
     public function index(Request $request)
     {
-        // Query dasar untuk buku
         $query = Book::with(['genre', 'copies' => function ($q) {
             $q->where('status', 'tersedia');
         }]);
 
-        // Logika untuk memproses pencarian
         if ($request->filled('search')) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
@@ -31,21 +26,24 @@ class BookCatalogController extends Controller
             });
         }
 
-        // ==========================================================
-        // TAMBAHAN: Logika untuk memproses filter genre
-        // ==========================================================
         if ($request->filled('genre')) {
             $genreSlug = $request->genre;
-            // Mencari buku yang memiliki relasi genre dengan slug yang cocok
             $query->whereHas('genre', function($q) use ($genreSlug) {
-                $q->where('name', $genreSlug); // Asumsi kita filter berdasarkan nama genre
+                $q->where('name', 'like', '%' . $genreSlug . '%');
             });
         }
 
         $books = $query->latest()->paginate(12);
         
         $genres = Genre::take(6)->get();
-        $topBorrowers = Borrowing::whereMonth('created_at', now()->month)
+
+        // ==========================================================
+        // PERUBAHAN DI SINI: Hanya mencari peminjaman oleh 'siswa'
+        // ==========================================================
+        $topBorrowers = Borrowing::whereHas('user', function ($query) {
+                                    $query->where('role', 'siswa');
+                                 })
+                                 ->whereMonth('created_at', now()->month)
                                  ->whereYear('created_at', now()->year)
                                  ->select('user_id', DB::raw('count(*) as loans_count'))
                                  ->groupBy('user_id')
@@ -57,9 +55,7 @@ class BookCatalogController extends Controller
         return view('public.catalog.index', compact('books', 'genres', 'topBorrowers'));
     }
 
-    /**
-     * Menampilkan halaman detail satu buku.
-     */
+    // ... sisa method (show, showCover) tidak perlu diubah ...
     public function show(Book $book)
     {
         $book->load('genre', 'copies');
@@ -68,9 +64,6 @@ class BookCatalogController extends Controller
         return view('public.catalog.show', compact('book', 'availableCopiesCount', 'firstAvailableCopy'));
     }
 
-    /**
-     * Menampilkan gambar sampul buku.
-     */
     public function showCover(Book $book)
     {
         $path = $book->cover_image;

@@ -9,7 +9,7 @@ use App\Models\Genre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException; // <-- Pastikan ini ada
+use Illuminate\Validation\ValidationException;
 
 class BookController extends Controller
 {
@@ -34,46 +34,37 @@ class BookController extends Controller
             'initial_code' => 'required|string|max:10|alpha_num',
             'stock' => 'required|integer|min:1|max:100',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'is_textbook' => 'nullable|boolean',
         ]);
 
-        // ==========================================================
-        // FITUR BARU: Validasi Keunikan Kode Buku
-        // ==========================================================
         $genre = Genre::find($validated['genre_id']);
         $prefix = $genre->genre_code . '-' . Str::upper($validated['initial_code']) . '-';
 
-        // Cek apakah awalan kode ini sudah pernah digunakan
         $prefixExists = BookCopy::where('book_code', 'LIKE', $prefix . '%')->exists();
 
         if ($prefixExists) {
-            // Jika sudah ada, kirim notifikasi error dan hentikan proses
             throw ValidationException::withMessages([
                'initial_code' => 'Kombinasi Kode Awal dan Genre ini sudah digunakan. Silakan gunakan Kode Awal yang lain.',
             ]);
         }
-        // ==========================================================
-
+        
         if ($request->hasFile('cover_image')) {
             $path = $request->file('cover_image')->store('covers', 'public');
             $validated['cover_image'] = $path;
         }
 
+        // KUNCI PERBAIKAN ADA DI SINI
+        $validated['is_textbook'] = $request->has('is_textbook');
+
         $book = Book::create($validated);
         
-        // Karena kita sudah pastikan unik, looping bisa dimulai dari 1
         for ($i = 1; $i <= $validated['stock']; $i++) {
             $copyNumber = str_pad($i, 3, '0', STR_PAD_LEFT);
             $uniqueBookCode = $prefix . $copyNumber;
-            
-            BookCopy::create([
-                'book_id' => $book->id,
-                'book_code' => $uniqueBookCode,
-                'status' => 'tersedia',
-            ]);
+            BookCopy::create([ 'book_id' => $book->id, 'book_code' => $uniqueBookCode, 'status' => 'tersedia' ]);
         }
         
-        return redirect()->route('admin.petugas.books.index')
-                         ->with('success', 'Buku "' . $book->title . '" berhasil ditambahkan.');
+        return redirect()->route('admin.petugas.books.index')->with('success', 'Buku berhasil ditambahkan.');
     }
     
     public function show(Book $book)
@@ -95,17 +86,20 @@ class BookController extends Controller
             'author' => 'required|string|max:255',
             'genre_id' => 'required|exists:genres,id',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'is_textbook' => 'nullable|boolean',
         ]);
 
         if ($request->hasFile('cover_image')) {
-            if ($book->cover_image) {
-                Storage::disk('public')->delete($book->cover_image);
-            }
+            if ($book->cover_image) { Storage::disk('public')->delete($book->cover_image); }
             $path = $request->file('cover_image')->store('covers', 'public');
             $validated['cover_image'] = $path;
         }
+        
+        // KUNCI PERBAIKAN ADA DI SINI JUGA
+        $validated['is_textbook'] = $request->has('is_textbook');
 
         $book->update($validated);
+
         return redirect()->route('admin.petugas.books.index')->with('success', 'Data buku berhasil diperbarui.');
     }
 

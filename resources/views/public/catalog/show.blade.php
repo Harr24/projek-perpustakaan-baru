@@ -16,6 +16,9 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+        .border-dashed {
+            border-style: dashed !important;
+        }
     </style>
 </head>
 <body>
@@ -48,11 +51,8 @@
                 <div class="row">
                     {{-- Kolom Kiri: Gambar Sampul --}}
                     <div class="col-md-4 text-center mb-4 mb-md-0">
-
-                        {{-- ========================================================== --}}
-                        {{-- PERBAIKAN: Menggunakan Storage::url() untuk menampilkan gambar --}}
-                        {{-- ========================================================== --}}
-                        <img src="{{ $book->cover_image ? Storage::url($book->cover_image) : 'https://via.placeholder.com/300x400.png?text=No+Cover' }}" 
+                        {{-- Memastikan gambar menggunakan route() --}}
+                        <img src="{{ $book->cover_image ? route('book.cover', $book) : 'https://via.placeholder.com/300x400.png?text=No+Cover' }}" 
                              class="cover-image" alt="Sampul {{ $book->title }}">
                     </div>
 
@@ -60,7 +60,12 @@
                     <div class="col-md-8">
                         <h1 class="h2 fw-bold">{{ $book->title }}</h1>
                         <p class="text-muted">oleh {{ $book->author }}</p>
-                        <span class="badge bg-danger mb-3">{{ $book->genre->name }}</span>
+                        <div>
+                            <span class="badge bg-danger mb-3">{{ $book->genre->name }}</span>
+                            @if($book->is_textbook)
+                                <span class="badge bg-info mb-3">Buku Paket</span>
+                            @endif
+                        </div>
                         @if($book->description)
                             <p>{{ $book->description }}</p>
                         @endif
@@ -70,7 +75,29 @@
                 <hr class="my-4">
 
                 @auth
-                    <h3 class="h5 fw-bold">Daftar Salinan Buku</h3>
+                    {{-- ========================================================== --}}
+                    {{-- FITUR BARU: Form Pinjam Massal untuk Guru --}}
+                    {{-- ========================================================== --}}
+                    @if(Auth::user()->role == 'guru' && $book->is_textbook)
+                        <div class="card bg-light border-2 border-dashed mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold">Pinjam Massal (Khusus Guru)</h5>
+                                <p class="card-text text-muted mb-2">Stok tersedia: <strong>{{ $availableCopiesCount }}</strong></p>
+                                <form action="{{ route('borrow.store.bulk') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="book_id" value="{{ $book->id }}">
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="quantity" placeholder="Jumlah" min="1" max="{{ $availableCopiesCount }}" required>
+                                        <button class="btn btn-danger" type="submit" {{ $availableCopiesCount < 1 ? 'disabled' : '' }}>
+                                            Ajukan Pinjaman Massal
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    @endif
+
+                    <h3 class="h5 fw-bold mt-4">Daftar Salinan Buku (Pinjam Satuan)</h3>
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped">
                             <thead class="table-light">
@@ -87,6 +114,8 @@
                                         <td>
                                             @if($copy->status == 'tersedia')
                                                 <span class="badge bg-success">Tersedia</span>
+                                            @elseif($copy->status == 'pending')
+                                                <span class="badge bg-warning text-dark">Sedang Diajukan</span>
                                             @else
                                                 <span class="badge bg-secondary">Dipinjam</span>
                                             @endif
@@ -95,7 +124,7 @@
                                             @if($copy->status == 'tersedia')
                                                 <a href="{{ route('borrow.create', $copy) }}" class="btn btn-danger btn-sm">Ajukan Pinjaman</a>
                                             @else
-                                                <span>-</span>
+                                                <button class="btn btn-secondary btn-sm" disabled>Tidak Tersedia</button>
                                             @endif
                                         </td>
                                     </tr>
@@ -110,7 +139,7 @@
                 @endauth
 
                 @guest
-                    <div class="alert alert-info">
+                    <div class="alert alert-warning">
                         Anda harus <a href="{{ route('login') }}" class="alert-link">login</a> atau <a href="{{ route('register') }}" class="alert-link">mendaftar</a> untuk dapat meminjam buku.
                     </div>
                 @endguest

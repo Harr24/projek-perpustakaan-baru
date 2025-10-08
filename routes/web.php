@@ -50,6 +50,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/borrow/request/{book_copy}', [BorrowingController::class, 'create'])->name('borrow.create');
     Route::post('/borrow/request', [BorrowingController::class, 'store'])->name('borrow.store');
     Route::get('/my-borrowings', [BorrowingController::class, 'index'])->name('borrow.history');
+    
+    // ==========================================================
+    // TAMBAHAN: Rute untuk Pinjam Massal (Bulk Borrow)
+    // ==========================================================
+    Route::post('/borrow/bulk', [BorrowingController::class, 'storeBulk'])->name('borrow.store.bulk');
 
 
     // == RUTE KHUSUS UNTUK ROLE PETUGAS ==
@@ -72,16 +77,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/approvals/{borrowing}/approve', [LoanApprovalController::class, 'approve'])->name('approvals.approve');
         Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
         
-        // ==========================================================
         // Rute untuk Manajemen Pengembalian
-        // ==========================================================
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
         Route::post('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store');
+
         // Denda
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
-
-        //
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
     });
 
