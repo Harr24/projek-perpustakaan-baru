@@ -1,4 +1,4 @@
-@extends('layouts.app') {{-- Sesuaikan dengan layout utama Anda --}}
+@extends('layouts.app')
 
 @section('content')
 <div class="p-6 bg-gray-50 min-h-screen">
@@ -41,10 +41,50 @@
                 <input type="password" id="password_confirmation" name="password_confirmation" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700" required>
             </div>
             <div class="flex items-center justify-between">
-                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Buat Akun</button>
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" style="background-color: #dc2626 !important; color: white !important;">
+                    Buat Akun
+                </button>
                 <a href="{{ route('admin.petugas.teachers.index') }}" class="text-gray-600 hover:text-gray-800">Kembali</a>
             </div>
         </form>
     </div>
 </div>
+
+{{-- Inline CSS untuk memastikan tombol terlihat --}}
+<style>
+    /* Memastikan button terlihat dengan inline style */
+    button[type="submit"] {
+        background-color: #dc2626 !important;
+        color: white !important;
+        font-weight: bold;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    button[type="submit"]:hover {
+        background-color: #b91c1c !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+    }
+    
+    /* Memastikan input terlihat */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+        border: 1px solid #d1d5db;
+        background-color: white;
+        color: #374151;
+    }
+    
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+        outline: none;
+        border-color: #dc2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+</style>
 @endsection
