@@ -14,9 +14,46 @@ class BookCatalogController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Book::with(['genre', 'copies' => function ($q) {
-            $q->where('status', 'tersedia');
-        }]);
+        $genres = Genre::take(6)->get();
+
+        $nonTextbookQuery = Book::where('is_textbook', 0);
+
+        $favoriteBooks = (clone $nonTextbookQuery)
+            ->withCount([
+                'copies',
+                'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia')
+            ])
+            ->orderByDesc('available_copies_count')
+            ->limit(10)
+            ->get();
+        
+        $latestBooks = (clone $nonTextbookQuery)
+            ->withCount([
+                'copies',
+                'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia')
+            ])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        $topBorrowers = Borrowing::whereHas('user', function ($query) {
+            $query->where('role', 'siswa');
+        })
+        ->whereMonth('created_at', now()->month)
+        ->whereYear('created_at', now()->year)
+        ->select('user_id', DB::raw('count(*) as loans_count'))
+        ->groupBy('user_id')
+        ->orderBy('loans_count', 'desc')
+        ->limit(3)
+        ->with('user')
+        ->get();
+
+        return view('public.catalog.index', compact('genres', 'favoriteBooks', 'latestBooks', 'topBorrowers'));
+    }
+
+    public function allBooks(Request $request)
+    {
+        $query = Book::query();
 
         if ($request->filled('search')) {
             $searchTerm = $request->search;
@@ -27,35 +64,31 @@ class BookCatalogController extends Controller
         }
 
         if ($request->filled('genre')) {
-            $genreSlug = $request->genre;
-            $query->whereHas('genre', function($q) use ($genreSlug) {
-                $q->where('name', 'like', '%' . $genreSlug . '%');
+            $genreName = $request->genre;
+            $query->whereHas('genre', function($q) use ($genreName) {
+                $q->where('name', 'like', '%' . $genreName . '%');
             });
         }
-
-        $books = $query->latest()->paginate(12);
         
-        $genres = Genre::take(6)->get();
+        $query->withCount([
+            'copies',
+            'copies as available_copies_count' => function ($query) {
+                $query->where('status', 'tersedia');
+            }
+        ]);
 
-        // ==========================================================
-        // PERUBAHAN DI SINI: Hanya mencari peminjaman oleh 'siswa'
-        // ==========================================================
-        $topBorrowers = Borrowing::whereHas('user', function ($query) {
-                                    $query->where('role', 'siswa');
-                                 })
-                                 ->whereMonth('created_at', now()->month)
-                                 ->whereYear('created_at', now()->year)
-                                 ->select('user_id', DB::raw('count(*) as loans_count'))
-                                 ->groupBy('user_id')
-                                 ->orderBy('loans_count', 'desc')
-                                 ->limit(3)
-                                 ->with('user')
-                                 ->get();
+        $sort = $request->input('sort', 'latest');
+        if ($sort === 'popular') {
+            $query->orderByDesc('available_copies_count');
+        } else {
+            $query->latest();
+        }
 
-        return view('public.catalog.index', compact('books', 'genres', 'topBorrowers'));
+        $books = $query->paginate(12)->withQueryString();
+        
+        return view('public.catalog.all_books', compact('books'));
     }
-
-    // ... sisa method (show, showCover) tidak perlu diubah ...
+    
     public function show(Book $book)
     {
         $book->load('genre', 'copies');
@@ -75,3 +108,4 @@ class BookCatalogController extends Controller
         return response($file)->header('Content-Type', $type);
     }
 }
+

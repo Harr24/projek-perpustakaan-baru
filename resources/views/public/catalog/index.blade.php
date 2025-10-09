@@ -4,169 +4,199 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Katalog Buku - Perpustakaan Multicomp</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --brand-red: #c62828; }
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        .book-card { border: 1px solid #dee2e6; display: flex; flex-direction: column; transition: all .2s ease-in-out; }
+        
+        /* Navbar Styling */
+        .navbar-brand { font-size: 1.25rem; }
+        
+        /* Book Card */
+        .book-card { border: 1px solid #dee2e6; display: flex; flex-direction: column; transition: all .2s ease-in-out; border-radius: 8px; overflow: hidden; }
         .book-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        .book-cover { height: 300px; object-fit: cover; }
-        .card-body { flex-grow: 1; }
-        .pagination .page-item.active .page-link { background-color: var(--brand-red); border-color: var(--brand-red); }
-        .pagination .page-link { color: var(--brand-red); }
+        .book-cover { height: 300px; object-fit: cover; width: 100%; }
+        .card-body { flex-grow: 1; display: flex; flex-direction: column; }
+        .card-footer { border-top: 1px dashed #e9ecef !important; }
+
+        /* Carousel overrides */
+        .carousel-control-prev-icon, .carousel-control-next-icon { background-color: rgba(0, 0, 0, 0.4); padding: 10px; border-radius: 50%; }
+
+        /* Genre Card */
         .subject-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; border-radius: 12px; background-color: #fff; border: 1px solid #e9ecef; text-decoration: none; color: #212529; transition: all 0.2s ease-in-out; }
         .subject-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); border-color: var(--brand-red); }
         .subject-code { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #fce4ec, #f8bbd0); color: var(--brand-red); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; }
-        .subject-name { font-weight: 600; text-align: center; }
+        
+        /* Top Borrowers */
         .top-borrowers-section { border-top: 1px solid #dee2e6; }
-        .borrower-card { border: none; transition: all 0.3s ease; }
+        .borrower-card { border: none; transition: all 0.3s ease; border-radius: 12px; }
         .borrower-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important; }
         .avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #fce4ec, #f8bbd0); color: #c62828; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 600; }
+
+        /* Responsive adjustments for cover image height */
+        @media (max-width: 768px) {
+            .book-cover { height: 250px; }
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ route('catalog.index') }}" style="color: var(--brand-red);">Perpustakaan Multicomp</a>
-            <div>
+            <a class="navbar-brand fw-bold" href="{{ route('catalog.index') }}" style="color: var(--brand-red);">
+                <i class="bi bi-book-half me-2"></i> Perpustakaan Multicomp
+            </a>
+            <div class="d-flex align-items-center">
+                {{-- Tombol Lihat Semua Buku di Navbar untuk layar kecil --}}
+                <a href="{{ route('catalog.all') }}" class="btn btn-sm btn-outline-secondary d-lg-none me-3">
+                    <i class="bi bi-grid-3x3-gap-fill"></i> Semua
+                </a>
+
+                {{-- Form Pencarian Cepat di Navbar (Hanya untuk layar besar) --}}
+                <form action="{{ route('catalog.all') }}" method="GET" class="d-none d-lg-block me-3">
+                    <div class="input-group input-group-sm">
+                        <input type="search" name="search" class="form-control" placeholder="Cari buku..." value="{{ request('search') }}" aria-label="Cari buku cepat">
+                        <button class="btn btn-outline-danger" type="submit"><i class="bi bi-search"></i></button>
+                    </div>
+                </form>
+                
                 @auth
-                    <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-secondary">Dashboard</a>
+                    <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-grid-fill"></i> Dashboard
+                    </a>
                 @else
-                    <a href="{{ route('login') }}" class="btn btn-sm btn-danger">Login</a>
+                    <a href="{{ route('login') }}" class="btn btn-sm btn-danger">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
                 @endauth
             </div>
         </div>
     </nav>
 
     <main>
-        <div class="container my-5">
-            <div class="text-center mb-4">
-                <h2 class="fw-bold">Pilih Subjek yang Menarik</h2>
-                <p class="text-muted">Jelajahi koleksi kami berdasarkan kategori.</p>
+        {{-- =============================================== --}}
+        {{-- SECTION 1: Kategori/Genre --}}
+        {{-- =============================================== --}}
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold display-6">Jelajahi Berdasarkan Kategori</h2>
+                <p class="lead text-muted">Temukan koleksi buku favorit Anda berdasarkan subjek.</p>
             </div>
-            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-3">
+            
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
                 @forelse ($genres as $genre)
                     <div class="col">
-                        <a href="{{ route('catalog.index', ['genre' => $genre->name]) }}" class="subject-card h-100">
-                            <div class="subject-code">{{ $genre->genre_code }}</div>
-                            <div class="subject-name">{{ $genre->name }}</div>
+                        <a href="{{ route('catalog.all', ['genre' => $genre->name]) }}" class="subject-card h-100">
+                            {{-- Menggunakan kode genre 2 digit pertama sebagai pengganti ikon --}}
+                            <div class="subject-code">{{ strtoupper(substr($genre->name, 0, 2)) }}</div>
+                            <div class="subject-name small fw-bolder text-truncate">{{ $genre->name }}</div>
                         </a>
                     </div>
                 @empty
-                    <p class="text-center text-muted">Genre belum ditambahkan.</p>
+                    <div class="col-12 text-center">
+                        <p class="text-muted">Genre belum ditambahkan ke sistem.</p>
+                    </div>
                 @endforelse
             </div>
         </div>
 
-        <div class="container my-4">
-            <div class="text-center mb-4">
-                <h2 class="display-5 fw-bold">Katalog Buku</h2>
-                <p class="lead text-muted">Temukan dan pinjam buku favorit Anda di sini.</p>
-            </div>
-
-            <div class="row justify-content-center mb-4">
-                <div class="col-md-8">
-                    <form action="{{ route('catalog.index') }}" method="GET">
-                        <div class="input-group">
-                            <input type="text" name="search" class="form-control" placeholder="Cari berdasarkan judul atau penulis..." value="{{ request('search') }}">
-                            <button class="btn btn-danger" type="submit">Cari</button>
-                        </div>
-                    </form>
+        {{-- =============================================== --}}
+        {{-- SECTION 2: Buku Favorit (Carousel) --}}
+        {{-- =============================================== --}}
+        <div class="bg-white py-5 mb-5 shadow-sm">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold mb-0 text-danger"><i class="bi bi-heart-fill me-2"></i> 10 Buku Favorit</h3>
                 </div>
+
+                @if($favoriteBooks->isNotEmpty())
+                    <div id="favoriteBooksCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            @foreach ($favoriteBooks->chunk(4) as $index => $chunk)
+                                <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                                    <div class="row row-cols-2 row-cols-md-4 g-4">
+                                        @foreach ($chunk as $book)
+                                            <div class="col">
+                                                @include('public.catalog.partials._book_card', ['book' => $book])
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#favoriteBooksCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#favoriteBooksCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                @else
+                    <div class="alert alert-info text-center">Belum ada data peminjaman untuk menentukan buku favorit.</div>
+                @endif
+            </div>
+        </div>
+
+        {{-- =============================================== --}}
+        {{-- SECTION 3: Buku Terbaru (Grid) --}}
+        {{-- =============================================== --}}
+        <div class="container py-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold mb-0"><i class="bi bi-arrow-down-up me-2"></i> 10 Buku Terbaru</h3>
+                <a href="{{ route('catalog.all', ['sort' => 'latest']) }}" class="btn btn-outline-danger btn-sm">
+                    Lihat Semua Buku <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
             
-            {{-- =============================================== --}}
-            {{-- PERUBAHAN DI SINI: Notifikasi Filter Aktif    --}}
-            {{-- =============================================== --}}
-            @if(request('genre') || request('search'))
-                <div class="alert alert-info d-flex justify-content-between align-items-center">
-                    <span>
-                        @if(request('genre'))
-                            Menampilkan buku untuk genre: <strong>{{ request('genre') }}</strong>
-                        @endif
-                        @if(request('search'))
-                            Hasil pencarian untuk: <strong>"{{ request('search') }}"</strong>
-                        @endif
-                    </span>
-                    <a href="{{ route('catalog.index') }}" class="btn btn-danger btn-sm">
-                        Hapus Filter &times;
-                    </a>
-                </div>
-            @endif
-
-            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
-                @forelse ($books as $book)
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4">
+                @forelse ($latestBooks as $book)
                     <div class="col">
-                        <div class="card h-100 book-card">
-                            <img src="{{ $book->cover_image ? route('book.cover', $book) : 'https://via.placeholder.com/300x400.png?text=No+Cover' }}" 
-                                 class="card-img-top book-cover" alt="Sampul {{ $book->title }}">
-                            <div class="card-body">
-                                <h6 class="card-title fw-bold text-truncate" title="{{ $book->title }}">{{ $book->title }}</h6>
-                                <p class="card-text small text-muted mb-0">{{ $book->author }}</p>
-                            </div>
-                            <div class="card-footer bg-white border-top-0 p-3">
-                                <div class="d-grid gap-2">
-                                    <a href="{{ route('catalog.show', $book) }}" class="btn btn-sm btn-outline-secondary">Lihat Detail</a>
-                                    @auth
-                                        @if($book->copies->isNotEmpty())
-                                            <a href="{{ route('borrow.create', $book->copies->first()) }}" class="btn btn-sm btn-danger w-100">Ajukan Pinjaman</a>
-                                        @else
-                                            <button class="btn btn-sm btn-secondary w-100" disabled>Stok Habis</button>
-                                        @endif
-                                    @endauth
-                                    @guest
-                                        <a href="{{ route('login') }}" class="btn btn-sm btn-danger w-100">Login untuk Pinjam</a>
-                                    @endguest
-                                </div>
-                            </div>
-                        </div>
+                        @include('public.catalog.partials._book_card', ['book' => $book])
                     </div>
                 @empty
-                    <div class="col-12">
-                        <div class="alert alert-warning text-center">
-                            @if(request('search'))
-                                Buku dengan kata kunci "{{ request('search') }}" tidak ditemukan.
-                            @elseif(request('genre'))
-                                Tidak ada buku untuk genre "{{ request('genre') }}".
-                            @else
-                                Belum ada buku di dalam katalog.
-                            @endif
-                        </div>
+                    <div class="col-12 text-center">
+                        <div class="alert alert-warning">Belum ada buku baru yang ditambahkan ke koleksi.</div>
                     </div>
                 @endforelse
             </div>
-
-            <div class="d-flex justify-content-center mt-4">
-                {{ $books->appends(request()->query())->links() }}
+            
+            <div class="text-center mt-5">
+                 <a href="{{ route('catalog.all') }}" class="btn btn-lg btn-danger shadow-lg">
+                    <i class="bi bi-grid-3x3-gap-fill me-2"></i> Lihat Semua Buku di Katalog
+                </a>
             </div>
         </div>
 
-        <div class="top-borrowers-section mt-5 py-5 bg-white">
+        {{-- =============================================== --}}
+        {{-- SECTION 4: Peminjam Teratas --}}
+        {{-- =============================================== --}}
+        <div class="top-borrowers-section mt-5 py-5 bg-white shadow-lg">
             <div class="container">
-                <div class="text-center mb-4">
-                    <h2 class="fw-bold">Peminjam Teratas Bulan Ini</h2>
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold display-6">Peminjam Teratas Bulan Ini</h2>
                     <p class="lead text-muted">Apresiasi bagi para penikmat koleksi kami. Jadilah salah satunya!</p>
                 </div>
                 <div class="row g-4 justify-content-center">
                     @forelse ($topBorrowers as $borrower)
                         <div class="col-md-6 col-lg-4">
                             <div class="card text-center h-100 shadow-sm borrower-card">
-                                <div class="card-body">
+                                <div class="card-body p-4">
                                     <div class="avatar mx-auto mb-3">{{ strtoupper(substr($borrower->user->name, 0, 2)) }}</div>
-                                    <h5 class="card-title fw-bold">{{ $borrower->user->name }}</h5>
-                                    <p class="text-muted mb-3">
-                                        @if($borrower->user->class && $borrower->user->major)
+                                    <h5 class="card-title fw-bold text-danger">{{ $borrower->user->name }}</h5>
+                                    <p class="text-muted mb-3 small">
+                                        @if(isset($borrower->user->class) && isset($borrower->user->major))
                                             Siswa Kelas {{ $borrower->user->class }} {{ $borrower->user->major }}
                                         @else
                                             Anggota Perpustakaan
                                         @endif
                                     </p>
-                                    <div class="stats d-flex justify-content-center gap-4">
+                                    <div class="stats d-flex justify-content-center gap-4 border-top pt-3">
                                         <div>
-                                            <div class="fw-bold fs-5">{{ $borrower->loans_count }}</div>
-                                            <div class="small text-muted">Peminjaman</div>
+                                            <div class="fw-bolder fs-4 text-primary">{{ $borrower->loans_count }}</div>
+                                            <div class="small text-muted">Buku Dipinjam</div>
                                         </div>
                                     </div>
                                 </div>
@@ -182,6 +212,13 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Footer Sederhana --}}
+    <footer class="text-center py-4 text-muted small mt-5">
+        <div class="container">
+            &copy; {{ date('Y') }} Perpustakaan Multicomp. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

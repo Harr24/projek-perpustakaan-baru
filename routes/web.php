@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+// ==========================================================
+// PERBAIKAN: Tambahkan import untuk BookCatalogController
+// ==========================================================
 use App\Http\Controllers\Public\BookCatalogController;
 use App\Http\Controllers\Admin\Petugas\VerificationController;
 use App\Http\Controllers\Admin\Petugas\GenreController;
@@ -23,7 +26,11 @@ use App\Http\Controllers\Admin\Petugas\FineController;
 */
 
 // == RUTE PUBLIK & TAMU ==
+// ==========================================================
+// PERBAIKAN: Menggunakan sintaks array modern yang lebih aman dan cepat
+// ==========================================================
 Route::get('/', [BookCatalogController::class, 'index'])->name('catalog.index');
+Route::get('/catalog/all', [BookCatalogController::class, 'allBooks'])->name('catalog.all');
 Route::get('/book/{book}', [BookCatalogController::class, 'show'])->name('catalog.show');
 Route::get('/book-cover/{book}', [BookCatalogController::class, 'showCover'])->name('book.cover');
 
@@ -74,17 +81,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
         Route::post('/approvals/approve-multiple', [LoanApprovalController::class, 'approveMultiple'])->name('approvals.approveMultiple');
 
-        // ==========================================================
         // Rute untuk Manajemen Pengembalian
-        // ==========================================================
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
-        Route::post('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store');
-        Route::post('/returns-multiple', [ReturnController::class, 'storeMultiple'])->name('returns.storeMultiple');
+        Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store'); 
+        Route::put('/returns-multiple', [ReturnController::class, 'storeMultiple'])->name('returns.storeMultiple');
+        
         // Denda
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
-
-        //
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
     });
 
@@ -95,3 +99,4 @@ Route::middleware('auth')->group(function () {
     });
 
 });
+

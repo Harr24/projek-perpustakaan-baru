@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Borrowing;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB; // <-- Jangan lupa import DB
 
 class ReturnController extends Controller
 {
@@ -14,10 +15,15 @@ class ReturnController extends Controller
      */
     public function index()
     {
-        $activeBorrowings = Borrowing::whereIn('status', ['borrowed', 'overdue'])
-                                    ->with('user', 'bookCopy.book')
-                                    ->latest('borrowed_at')
-                                    ->get();
+        // ==========================================================
+        // PERBAIKAN UTAMA: Mencari status 'approved' yang sudah kita set
+        // saat menyetujui peminjaman. Status 'overdue' juga tetap dicari.
+        // ==========================================================
+        $activeBorrowings = Borrowing::whereIn('status', ['approved', 'overdue'])
+                                        ->with('user', 'bookCopy.book')
+                                        // PERBAIKAN KECIL: Urutkan berdasarkan tanggal disetujui
+                                        ->latest('approved_at')
+                                        ->get();
 
         return view('admin.petugas.returns.index', compact('activeBorrowings'));
     }
@@ -25,45 +31,52 @@ class ReturnController extends Controller
     /**
      * Memproses pengembalian buku tunggal.
      */
-    public function store(Request $request, Borrowing $borrowing)
+    public function store(Borrowing $borrowing) // Hapus Request $request karena tidak dipakai
     {
-        if (!in_array($borrowing->status, ['borrowed', 'overdue'])) {
+        // PERBAIKAN: Validasi juga harus mencari status 'approved'
+        if (!in_array($borrowing->status, ['approved', 'overdue'])) {
             return redirect()->back()->with('error', 'Peminjaman ini tidak dalam status aktif.');
         }
 
-        $dueDate = Carbon::parse($borrowing->due_at);
-        $returnDate = Carbon::now();
-        $lateDays = 0;
+        // BEST PRACTICE: Bungkus dengan transaction untuk keamanan data
+        DB::transaction(function () use ($borrowing) {
+            $dueDate = Carbon::parse($borrowing->due_date); // Pastikan nama kolom 'due_date'
+            $returnDate = Carbon::now();
+            $lateDays = 0;
 
-        if ($returnDate->isAfter($dueDate)) {
-            $lateDays = $dueDate->diffInDaysFiltered(function (Carbon $date) {
-                return !$date->isSaturday() && !$date->isSunday();
-            }, $returnDate);
-        }
+            if ($returnDate->isAfter($dueDate)) {
+                $lateDays = $dueDate->diffInDaysFiltered(function (Carbon $date) {
+                    return !$date->isSaturday() && !$date->isSunday();
+                }, $returnDate);
+            }
 
-        $fine = $lateDays * 1000;
+            $fine = $lateDays * 1000; // Asumsi denda 1000 per hari
 
-        $borrowing->status = 'returned';
-        $borrowing->returned_at = $returnDate;
-        $borrowing->fine_amount = $fine;
-        $borrowing->late_days = $lateDays;
-        $borrowing->save();
+            // Update record peminjaman
+            $borrowing->status = 'returned';
+            $borrowing->returned_at = $returnDate;
+            $borrowing->fine_amount = $fine;
+            $borrowing->late_days = $lateDays;
+            $borrowing->save();
 
-        $bookCopy = $borrowing->bookCopy;
-        $bookCopy->status = 'tersedia';
-        $bookCopy->save();
-
+            // Update status salinan buku
+            $bookCopy = $borrowing->bookCopy;
+            $bookCopy->status = 'tersedia';
+            $bookCopy->save();
+        });
+        
+        // Buat pesan dinamis setelah transaction berhasil
         $message = 'Buku berhasil dikembalikan.';
-        if ($fine > 0) {
-            $message .= ' Denda keterlambatan sebesar Rp ' . number_format($fine, 0, ',', '.') . ' (terlambat ' . $lateDays . ' hari kerja) tercatat.';
+        if ($borrowing->fine_amount > 0) {
+            $message .= ' Denda keterlambatan sebesar Rp ' . number_format($borrowing->fine_amount, 0, ',', '.') . ' (terlambat ' . $borrowing->late_days . ' hari kerja) tercatat.';
         }
 
         return redirect()->back()->with('success', $message);
     }
 
-    // ==========================================================
-    // TAMBAHAN: Method baru untuk pengembalian massal
-    // ==========================================================
+    /**
+     * Memproses pengembalian buku massal.
+     */
     public function storeMultiple(Request $request)
     {
         $request->validate([
@@ -72,7 +85,8 @@ class ReturnController extends Controller
         ]);
 
         $borrowingIds = $request->input('borrowing_ids');
-        $borrowingsToReturn = Borrowing::whereIn('id', $borrowingIds)->whereIn('status', ['borrowed', 'overdue'])->get();
+        // PERBAIKAN: Cari juga status 'approved'
+        $borrowingsToReturn = Borrowing::whereIn('id', $borrowingIds)->whereIn('status', ['approved', 'overdue'])->get();
 
         if ($borrowingsToReturn->isEmpty()) {
             return redirect()->back()->with('error', 'Tidak ada buku valid yang dipilih untuk dikembalikan.');
@@ -81,30 +95,33 @@ class ReturnController extends Controller
         $totalReturned = 0;
         $totalFine = 0;
 
-        foreach ($borrowingsToReturn as $borrowing) {
-            $dueDate = Carbon::parse($borrowing->due_at);
-            $returnDate = Carbon::now();
-            $lateDays = 0;
+        // BEST PRACTICE: Satu transaction untuk semua proses
+        DB::transaction(function () use ($borrowingsToReturn, &$totalReturned, &$totalFine) {
+            foreach ($borrowingsToReturn as $borrowing) {
+                $dueDate = Carbon::parse($borrowing->due_date); // Pastikan nama kolom 'due_date'
+                $returnDate = Carbon::now();
+                $lateDays = 0;
 
-            if ($returnDate->isAfter($dueDate)) {
-                $lateDays = $dueDate->diffInDaysFiltered(fn($date) => !$date->isSaturday() && !$date->isSunday(), $returnDate);
+                if ($returnDate->isAfter($dueDate)) {
+                    $lateDays = $dueDate->diffInDaysFiltered(fn($date) => !$date->isSaturday() && !$date->isSunday(), $returnDate);
+                }
+
+                $fine = $lateDays * 1000;
+                $totalFine += $fine;
+
+                $borrowing->status = 'returned';
+                $borrowing->returned_at = $returnDate;
+                $borrowing->fine_amount = $fine;
+                $borrowing->late_days = $lateDays;
+                $borrowing->save();
+
+                $bookCopy = $borrowing->bookCopy;
+                $bookCopy->status = 'tersedia';
+                $bookCopy->save();
+                
+                $totalReturned++;
             }
-
-            $fine = $lateDays * 1000;
-            $totalFine += $fine;
-
-            $borrowing->status = 'returned';
-            $borrowing->returned_at = $returnDate;
-            $borrowing->fine_amount = $fine;
-            $borrowing->late_days = $lateDays;
-            $borrowing->save();
-
-            $bookCopy = $borrowing->bookCopy;
-            $bookCopy->status = 'tersedia';
-            $bookCopy->save();
-            
-            $totalReturned++;
-        }
+        });
 
         $message = $totalReturned . ' buku berhasil dikembalikan.';
         if ($totalFine > 0) {
