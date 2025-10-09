@@ -27,9 +27,6 @@
     </style>
 </head>
 <body>
-    {{-- =============================================== --}}
-    {{-- BAGIAN HEADER YANG DIKEMBALIKAN                --}}
-    {{-- =============================================== --}}
     <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="{{ route('catalog.index') }}" style="color: var(--brand-red);">Perpustakaan Multicomp</a>
@@ -44,7 +41,6 @@
     </nav>
 
     <main>
-        {{-- Bagian Genre --}}
         <div class="container my-5">
             <div class="text-center mb-4">
                 <h2 class="fw-bold">Pilih Subjek yang Menarik</h2>
@@ -64,7 +60,6 @@
             </div>
         </div>
 
-        {{-- Bagian Katalog Buku --}}
         <div class="container my-4">
             <div class="text-center mb-4">
                 <h2 class="display-5 fw-bold">Katalog Buku</h2>
@@ -81,11 +76,23 @@
                     </form>
                 </div>
             </div>
-
-            @if(request('genre'))
+            
+            {{-- =============================================== --}}
+            {{-- PERUBAHAN DI SINI: Notifikasi Filter Aktif    --}}
+            {{-- =============================================== --}}
+            @if(request('genre') || request('search'))
                 <div class="alert alert-info d-flex justify-content-between align-items-center">
-                    <span>Menampilkan buku untuk genre: <strong>{{ request('genre') }}</strong></span>
-                    <a href="{{ route('catalog.index') }}" class="btn-close" aria-label="Close"></a>
+                    <span>
+                        @if(request('genre'))
+                            Menampilkan buku untuk genre: <strong>{{ request('genre') }}</strong>
+                        @endif
+                        @if(request('search'))
+                            Hasil pencarian untuk: <strong>"{{ request('search') }}"</strong>
+                        @endif
+                    </span>
+                    <a href="{{ route('catalog.index') }}" class="btn btn-danger btn-sm">
+                        Hapus Filter &times;
+                    </a>
                 </div>
             @endif
 
@@ -136,7 +143,6 @@
             </div>
         </div>
 
-        {{-- Bagian Peminjam Teratas --}}
         <div class="top-borrowers-section mt-5 py-5 bg-white">
             <div class="container">
                 <div class="text-center mb-4">
