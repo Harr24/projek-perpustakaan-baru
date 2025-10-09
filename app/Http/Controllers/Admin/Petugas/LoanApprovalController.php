@@ -6,12 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Borrowing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon; // <-- WAJIB: Import Carbon untuk manipulasi tanggal
 
 class LoanApprovalController extends Controller
 {
-    /**
-     * Menampilkan daftar semua pengajuan peminjaman yang masih 'pending'.
-     */
     public function index()
     {
         $pendingBorrowings = Borrowing::where('status', 'pending')
@@ -20,23 +18,26 @@ class LoanApprovalController extends Controller
         return view('admin.petugas.approvals.index', compact('pendingBorrowings'));
     }
 
-    /**
-     * Menyetujui satu pengajuan peminjaman.
-     */
     public function approve(Borrowing $borrowing)
     {
-        // Validasi untuk mencegah aksi ganda
         if ($borrowing->status !== 'pending') {
             return redirect()->route('admin.petugas.approvals.index')->with('error', 'Status peminjaman ini sudah diproses sebelumnya.');
         }
 
-        // Gunakan Transaction untuk memastikan semua perubahan data berhasil
         DB::transaction(function () use ($borrowing) {
+            $approvalDate = Carbon::now();
+
             // 1. Update status record peminjaman
             $borrowing->status = 'approved';
-            $borrowing->approved_at = now(); // Catat waktu persetujuan
-            $borrowing->approved_by = auth()->id(); // Catat siapa yang menyetujui
+            $borrowing->approved_at = $approvalDate;
+            $borrowing->approved_by = auth()->id();
             
+            // ==========================================================
+            // PERBAIKAN UTAMA: Hitung dan simpan tanggal jatuh tempo
+            // Tambahkan 7 hari kerja (Senin-Jumat) dari tanggal persetujuan.
+            // ==========================================================
+            $borrowing->due_date = $approvalDate->copy()->addWeekdays(7);
+
             // 2. Update status salinan buku
             $bookCopy = $borrowing->bookCopy;
             $bookCopy->status = 'borrowed';
@@ -49,9 +50,6 @@ class LoanApprovalController extends Controller
         return redirect()->route('admin.petugas.approvals.index')->with('success', 'Pengajuan peminjaman berhasil dikonfirmasi.');
     }
 
-    /**
-     * Menolak satu pengajuan peminjaman.
-     */
     public function reject(Borrowing $borrowing)
     {
         if ($borrowing->status !== 'pending') {
@@ -59,12 +57,10 @@ class LoanApprovalController extends Controller
         }
 
         DB::transaction(function () use ($borrowing) {
-            // Kembalikan status salinan buku menjadi 'tersedia'
             $bookCopy = $borrowing->bookCopy;
             $bookCopy->status = 'tersedia';
             $bookCopy->save();
 
-            // Ubah status peminjaman menjadi 'rejected'
             $borrowing->status = 'rejected';
             $borrowing->save();
         });
@@ -72,9 +68,6 @@ class LoanApprovalController extends Controller
         return redirect()->back()->with('success', 'Pengajuan pinjaman berhasil ditolak.');
     }
     
-    /**
-     * Menyetujui beberapa pengajuan peminjaman sekaligus (aksi massal).
-     */
     public function approveMultiple(Request $request)
     {
         $request->validate([
@@ -91,9 +84,15 @@ class LoanApprovalController extends Controller
 
         DB::transaction(function () use ($borrowingsToApprove) {
             foreach ($borrowingsToApprove as $borrowing) {
+                $approvalDate = Carbon::now();
+
                 $borrowing->status = 'approved';
-                $borrowing->approved_at = now();
+                $borrowing->approved_at = $approvalDate;
                 $borrowing->approved_by = auth()->id();
+                
+                // PERBAIKAN UTAMA (untuk Aksi Massal)
+                $borrowing->due_date = $approvalDate->copy()->addWeekdays(7);
+                
                 $borrowing->save();
 
                 $bookCopy = $borrowing->bookCopy;
@@ -105,4 +104,3 @@ class LoanApprovalController extends Controller
         return redirect()->back()->with('success', $borrowingsToApprove->count() . ' peminjaman berhasil dikonfirmasi.');
     }
 }
-
