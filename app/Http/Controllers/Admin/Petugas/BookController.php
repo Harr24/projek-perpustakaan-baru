@@ -25,11 +25,13 @@ class BookController extends Controller
         return view('admin.petugas.books.create', compact('genres'));
     }
 
+    // ========== MULAI KODE BARU STORE ==========
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
+            'synopsis' => 'nullable|string', // Ditambahkan
             'genre_id' => 'required|exists:genres,id',
             'initial_code' => 'required|string|max:10|alpha_num',
             'stock' => 'required|integer|min:1|max:100',
@@ -53,7 +55,6 @@ class BookController extends Controller
             $validated['cover_image'] = $path;
         }
 
-        // KUNCI PERBAIKAN ADA DI SINI
         $validated['is_textbook'] = $request->has('is_textbook');
 
         $book = Book::create($validated);
@@ -66,6 +67,7 @@ class BookController extends Controller
         
         return redirect()->route('admin.petugas.books.index')->with('success', 'Buku berhasil ditambahkan.');
     }
+    // ========== SELESAI KODE BARU STORE ==========
     
     public function show(Book $book)
     {
@@ -79,11 +81,13 @@ class BookController extends Controller
         return view('admin.petugas.books.edit', compact('book', 'genres'));
     }
 
+    // ========== MULAI KODE BARU UPDATE ==========
     public function update(Request $request, Book $book)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
+            'synopsis' => 'nullable|string', // Ditambahkan
             'genre_id' => 'required|exists:genres,id',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'is_textbook' => 'nullable|boolean',
@@ -95,13 +99,13 @@ class BookController extends Controller
             $validated['cover_image'] = $path;
         }
         
-        // KUNCI PERBAIKAN ADA DI SINI JUGA
         $validated['is_textbook'] = $request->has('is_textbook');
 
         $book->update($validated);
 
         return redirect()->route('admin.petugas.books.index')->with('success', 'Data buku berhasil diperbarui.');
     }
+    // ========== SELESAI KODE BARU UPDATE ==========
 
     public function destroy(Book $book)
     {

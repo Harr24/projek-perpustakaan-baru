@@ -3,50 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <title>Detail Buku: {{ $book->title }}</title>
-    <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Tambahkan sedikit style agar paragraf sinopsis lebih rapi */
+        .book-synopsis {
+            white-space: pre-wrap; /* Jaga format spasi dan baris baru */
+            line-height: 1.6;
+            color: #495057;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
     <div class="container py-4">
-        <!-- Tombol Kembali -->
         <div class="mb-3">
             <a href="{{ route('admin.petugas.books.index') }}" class="btn btn-sm btn-danger">
                 &larr; Kembali ke Daftar Buku
             </a>
         </div>
 
-        <!-- Card Detail Buku -->
         <div class="card shadow-sm">
             <div class="card-header bg-danger text-white">
                 <h4 class="mb-0">Detail Buku</h4>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <!-- Cover -->
                     <div class="col-md-3 text-center mb-3 mb-md-0">
                         @if($book->cover_image)
                             <img src="{{ Storage::url($book->cover_image) }}" 
                                  alt="Cover Buku" 
                                  class="img-fluid rounded shadow-sm">
                         @else
-                            <div class="bg-secondary text-white p-4 rounded">No Cover</div>
+                            <div class="bg-secondary text-white p-4 rounded d-flex align-items-center justify-content-center" style="min-height: 200px;">No Cover</div>
                         @endif
                     </div>
 
-                    <!-- Info Buku -->
                     <div class="col-md-9">
                         <h3 class="fw-bold">{{ $book->title }}</h3>
-                        <p><strong>Penulis:</strong> {{ $book->author }}</p>
-                        <p><strong>Genre:</strong> {{ optional($book->genre)->name ?? 'N/A' }}</p>
+                        <p class="mb-1"><strong>Penulis:</strong> {{ $book->author }}</p>
+                        <p class="mb-1"><strong>Genre:</strong> {{ optional($book->genre)->name ?? 'N/A' }}</p>
                         <p><strong>Total Stok Awal:</strong> {{ $book->stock }}</p>
                     </div>
                 </div>
-            </div>
+
+                @if ($book->synopsis)
+                    <hr class="my-4">
+                    <div>
+                        <h5 class="fw-bold">Sinopsis</h5>
+                        {{-- Menggunakan nl2br(e($text)) agar aman dari XSS tapi tetap menampilkan baris baru --}}
+                        <p class="book-synopsis">{!! nl2br(e($book->synopsis)) !!}</p>
+                    </div>
+                @endif
+                </div>
         </div>
 
-        <!-- Daftar Salinan -->
         <div class="card shadow-sm mt-4">
+            {{-- ... Sisa kode untuk daftar salinan tidak perlu diubah ... --}}
             <div class="card-header bg-danger text-white">
                 <h5 class="mb-0">Daftar Salinan Buku</h5>
             </div>
@@ -66,7 +78,7 @@
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $copy->book_code }}</td>
                                     <td>
-                                        @if($copy->status == 'available')
+                                        @if($copy->status == 'tersedia') {{-- Saya perbaiki dari 'available' ke 'tersedia' --}}
                                             <span class="badge bg-success">Tersedia</span>
                                         @else
                                             <span class="badge bg-secondary">{{ ucfirst($copy->status) }}</span>
@@ -87,7 +99,6 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

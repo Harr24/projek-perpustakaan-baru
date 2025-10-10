@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Edit Buku - {{ $book->title }}</title>
 
-  <!-- Bootstrap 5 CSS CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -36,24 +33,8 @@
 </head>
 <body>
 
-  <!-- Topbar -->
   <header class="topbar py-3">
-    <div class="container d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-3">
-        <div class="rounded-circle bg-white text-dark d-flex align-items-center justify-content-center" style="width:44px;height:44px;font-weight:700;">
-          LP
-        </div>
-        <div>
-          <div class="small text-white-50">Selamat Datang,</div>
-          <div class="h6 mb-0">Petugas</div>
-        </div>
-      </div>
-      <div>
-        <a href="{{ route('logout') }}" class="btn btn-outline-light btn-sm">
-          <i class="bi bi-box-arrow-right"></i> LOGOUT
-        </a>
-      </div>
-    </div>
+    {{-- ... Kode header Anda ... --}}
   </header>
 
   <main class="container py-4">
@@ -103,6 +84,12 @@
                 @enderror
               </div>
 
+              <div class="mb-3">
+                  <label for="synopsis" class="form-label">Sinopsis</label>
+                  <textarea id="synopsis" name="synopsis" rows="4" class="form-control @error('synopsis') is-invalid @enderror">{{ old('synopsis', $book->synopsis) }}</textarea>
+                  <div class="form-text help-text">Deskripsi singkat atau ringkasan cerita dari buku. (Opsional)</div>
+                  @error('synopsis')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              </div>
               <div class="mb-3">
                 <label for="genre_id" class="form-label required">Genre</label>
                 <select id="genre_id" name="genre_id" required class="form-select @error('genre_id') is-invalid @enderror">
@@ -157,85 +144,14 @@
             </form>
           </div>
         </div>
+        
+        {{-- ... Kode Modal dan sidebar Anda ... --}}
 
-        <!-- Delete confirmation modal -->
-        <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header border-0">
-                <h5 class="modal-title">Hapus Buku</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-              </div>
-              <div class="modal-body">
-                <p>Apakah Anda yakin ingin menghapus buku <strong>{{ $book->title }}</strong>? Tindakan ini tidak dapat dibatalkan.</p>
-              </div>
-              <div class="modal-footer">
-                <form action="{{ route('admin.petugas.books.destroy', $book->id) }}" method="POST">
-                  @csrf
-                  @method('DELETE')
-                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                  <button type="submit" class="btn btn-danger">Ya, Hapus</button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="col-lg-4">
-        <div class="card sidebar-card mb-3">
-          <div class="card-body">
-            <h6 class="mb-2">Ringkasan Cepat</h6>
-            <p class="mb-1"><strong>ISBN / ID:</strong> {{ $book->id }}</p>
-            <p class="mb-0 text-muted">Pastikan perubahan sesuai inventaris dan catatan peminjaman.</p>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-body">
-            <h6 class="mb-2">Petunjuk</h6>
-            <ul class="mb-0">
-              <li class="mb-1">Kosongkan input sampul jika tidak ingin mengubah gambar.</li>
-              <li class="mb-1">Periksa genre dan penulis sebelum menyimpan.</li>
-              <li class="mb-1">Gunakan tombol Hapus hanya jika buku tidak sedang dipinjam.</li>
-            </ul>
-          </div>
-        </div>
       </div>
     </div>
   </main>
+  
+  {{-- ... Kode Javascript Anda ... --}}
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // preview new cover image
-    document.getElementById('cover_image')?.addEventListener('change', function(e){
-      const file = e.target.files[0];
-      const preview = document.getElementById('newCoverPreview');
-      if (!file) {
-        preview.src = "{{ asset('images/placeholder-cover.png') }}";
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(ev){ preview.src = ev.target.result; }
-      reader.readAsDataURL(file);
-    });
-
-    // client-side validation (Bootstrap)
-    (function () {
-      'use strict'
-      var forms = document.querySelectorAll('.needs-validation')
-      Array.prototype.slice.call(forms).forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-          if (!form.checkValidity()) {
-            event.preventDefault()
-            event.stopPropagation()
-          }
-          form.classList.add('was-validated')
-        }, false)
-      })
-    })()
-  </script>
 </body>
 </html>

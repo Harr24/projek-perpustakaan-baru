@@ -63,6 +63,12 @@
                             </div>
 
                             <div class="mb-3">
+                                <label for="synopsis" class="form-label">Sinopsis</label>
+                                <textarea id="synopsis" name="synopsis" rows="4" class="form-control @error('synopsis') is-invalid @enderror">{{ old('synopsis') }}</textarea>
+                                <div class="form-text help-text">Deskripsi singkat atau ringkasan cerita dari buku. (Opsional)</div>
+                                @error('synopsis')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="mb-3">
                                 <label for="genre_id" class="form-label required">Genre</label>
                                 <select id="genre_id" name="genre_id" required class="form-select @error('genre_id') is-invalid @enderror">
                                     <option value="">-- Pilih Genre --</option>
@@ -75,9 +81,6 @@
                                 @error('genre_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
-                            {{-- =============================================== --}}
-                            {{-- TAMBAHAN: Checkbox untuk Buku Paket          --}}
-                            {{-- =============================================== --}}
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" name="is_textbook" id="is_textbook" value="1" {{ old('is_textbook') ? 'checked' : '' }}>
                                 <label class="form-check-label" for="is_textbook">
