@@ -96,6 +96,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
         Route::resource('petugas', SuperadminPetugasController::class);
         Route::resource('members', MemberController::class)->except(['create', 'store']);
+        //
+        Route::resource('sliders', \App\Http\Controllers\Admin\Superadmin\HeroSliderController::class);
     });
 
 });

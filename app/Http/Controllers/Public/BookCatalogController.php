@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\Genre;
+use App\Models\HeroSlider;
 use App\Models\Borrowing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,7 +49,10 @@ class BookCatalogController extends Controller
         ->with('user')
         ->get();
 
-        return view('public.catalog.index', compact('genres', 'favoriteBooks', 'latestBooks', 'topBorrowers'));
+          $sliders = HeroSlider::where('is_active', true)->latest()->get();
+
+  
+        return view('public.catalog.index', compact('genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'sliders'));
     }
 
     public function allBooks(Request $request)
