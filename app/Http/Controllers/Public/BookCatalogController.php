@@ -15,8 +15,21 @@ class BookCatalogController extends Controller
 {
     public function index(Request $request)
     {
+        // 1. Ambil Data Hero Slider
+        // ==========================================================
+        // PERBAIKAN: Mengganti orderBy('order') dengan latest() untuk
+        // menghindari error "Column not found". Slider akan diurutkan
+        // berdasarkan yang paling baru ditambahkan.
+        // Nama variabel juga disesuaikan menjadi 'heroSliders'.
+        // ==========================================================
+        $heroSliders = HeroSlider::where('is_active', true)
+                                 ->latest() // Urutkan berdasarkan yang terbaru
+                                 ->get();
+
+        // 2. Ambil Data Genre
         $genres = Genre::take(6)->get();
 
+        // 3. Ambil Data Buku Favorit & Terbaru
         $nonTextbookQuery = Book::where('is_textbook', 0);
 
         $favoriteBooks = (clone $nonTextbookQuery)
@@ -37,6 +50,7 @@ class BookCatalogController extends Controller
             ->limit(10)
             ->get();
 
+        // 4. Ambil Data Peminjam Teratas
         $topBorrowers = Borrowing::whereHas('user', function ($query) {
             $query->where('role', 'siswa');
         })
@@ -49,10 +63,9 @@ class BookCatalogController extends Controller
         ->with('user')
         ->get();
 
-          $sliders = HeroSlider::where('is_active', true)->latest()->get();
-
-  
-        return view('public.catalog.index', compact('genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'sliders'));
+        // 5. Kirim semua data ke view
+        // PERBAIKAN: Mengirim 'heroSliders' bukan 'sliders'
+        return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers'));
     }
 
     public function allBooks(Request $request)
