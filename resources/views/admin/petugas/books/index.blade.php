@@ -1,186 +1,115 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Buku</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #fff;
-            color: #333;
-            margin: 20px;
-        }
+@extends('layouts.app') {{-- Pastikan ini sesuai dengan layout utama Anda --}}
 
-        h1 {
-            color: #d32f2f;
-            border-bottom: 2px solid #d32f2f;
-            padding-bottom: 10px;
-        }
-
-        .nav-links {
-            margin-bottom: 20px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #d32f2f;
-            font-weight: bold;
-            margin-right: 15px;
-        }
-
-        .success-message {
-            color: green;
-            margin-bottom: 15px;
-        }
-
-        .book-table {
-            width: 100%;
-            border-collapse: collapse;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .book-table th, .book-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .book-table th {
-            background-color: #d32f2f;
-            color: white;
-        }
-
-        .book-table tr:hover {
-            background-color: #f9f9f9;
-        }
-
-        .book-cover {
-            width: 80px;
-            border-radius: 4px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .action-buttons a,
-        .action-buttons button {
-            padding: 6px 12px;
-            border-radius: 4px;
-            border: none;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .action-buttons a {
-            background-color: #d32f2f;
-            color: white;
-        }
-
-        .action-buttons a:hover {
-            background-color: #b71c1c;
-        }
-
-        .action-buttons button {
-            background-color: white;
-            color: #d32f2f;
-            border: 1px solid #d32f2f;
-        }
-
-        .action-buttons button:hover {
-            background-color: #fbe9e7;
-        }
-
-        @media (max-width: 768px) {
-            .book-table, .book-table thead, .book-table tbody, .book-table th, .book-table td, .book-table tr {
-                display: block;
-            }
-
-            .book-table tr {
-                margin-bottom: 15px;
-                border: 1px solid #ddd;
-                padding: 10px;
-            }
-
-            .book-table td {
-                padding: 8px 0;
-            }
-
-            .book-table td::before {
-                content: attr(data-label);
-                font-weight: bold;
-                display: block;
-                color: #d32f2f;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <h1>Daftar Buku</h1>
-
-    <div class="nav-links">
-        <a href="{{ route('dashboard') }}">Kembali ke Dashboard</a>
-        <a href="{{ route('admin.petugas.books.create') }}">Tambah Buku Baru</a>
+@section('content')
+<div class="container-fluid px-3 px-md-4 py-4">
+    {{-- Header Halaman --}}
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-2" style="color: #d9534f;">Kelola Buku</h1>
+            <p class="text-muted mb-0 small">Daftar semua koleksi buku yang ada di perpustakaan.</p>
+        </div>
+        <div class="d-flex gap-2">
+             <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
+            </a>
+            <a href="{{ route('admin.petugas.books.create') }}" class="btn btn-danger btn-sm">
+                <i class="bi bi-plus-circle-fill me-1"></i> Tambah Buku Baru
+            </a>
+        </div>
     </div>
 
+    {{-- Notifikasi Sukses/Error --}}
     @if(session('success'))
-        <div class="success-message">{{ session('success') }}</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     @endif
 
-    <table class="book-table">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Sampul</th>
-                <th>Judul</th>
-                <th>Penulis</th>
-                <th>Genre</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($books as $book)
-                <tr>
-                    <td data-label="No">{{ $loop->iteration }}</td>
-                    <td data-label="Sampul">
-                        @if($book->cover_image)
-                            <img src="{{ Storage::url($book->cover_image) }}" alt="Cover" class="book-cover">
-                        @else
-                            <span>Tidak ada gambar</span>
-                        @endif
-                    </td>
-                    <td data-label="Judul">{{ $book->title }}</td>
-                    <td data-label="Penulis">{{ $book->author }}</td>
-                    <td data-label="Genre">{{ $book->genre->name ?? 'N/A' }}</td>
-                    <td data-label="Aksi">
-                        <div class="action-buttons">
-                            <a href="{{ route('admin.petugas.books.show', $book->id) }}">Detail</a>
-                            <a href="{{ route('admin.petugas.books.edit', $book->id) }}">Edit</a>
-                            <form action="{{ route('admin.petugas.books.destroy', $book->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus buku ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit">Hapus</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6">Belum ada data buku.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-
-</body>
-</html>
-
-
-
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3">
+            {{-- Form Pencarian --}}
+            <form action="{{ route('admin.petugas.books.index') }}" method="GET">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="Cari berdasarkan judul atau penulis..." value="{{ request('search') }}">
+                    <button class="btn btn-danger" type="submit"><i class="bi bi-search"></i> Cari</button>
+                </div>
+            </form>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-3 ps-4" style="width: 5%;">No</th>
+                            <th class="py-3" style="width: 10%;">Sampul</th>
+                            <th class="py-3">Judul & Penulis</th>
+                            <th class="py-3">Genre</th>
+                            <th class="py-3">Tahun</th>
+                            <th class="py-3">Stok</th>
+                            <th class="py-3 pe-4 text-end" style="width: 15%;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($books as $book)
+                        <tr>
+                            <td class="ps-4">{{ $loop->iteration + ($books->currentPage() - 1) * $books->perPage() }}</td>
+                            <td>
+                                <img src="{{ $book->cover_image ? asset('storage/' . $book->cover_image) : 'https://placehold.co/80x120/E91E63/FFFFFF?text=No+Cover' }}" 
+                                     alt="Cover" class="img-fluid rounded" style="width: 60px; height: 90px; object-fit: cover;">
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ $book->title }}</div>
+                                <small class="text-muted">{{ $book->author }}</small>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ $book->genre->name ?? 'N/A' }}</span></td>
+                            <td>{{ $book->publication_year ?? 'N/A' }}</td>
+                            <td>
+                                <span class="badge 
+                                    @if($book->copies_count > 10) bg-success
+                                    @elseif($book->copies_count > 0) bg-warning text-dark
+                                    @else bg-danger @endif">
+                                    {{ $book->copies_count }} Salinan
+                                </span>
+                            </td>
+                            <td class="pe-4 text-end">
+                                <div class="d-flex gap-2 justify-content-end">
+                                    <a href="{{ route('admin.petugas.books.show', $book) }}" class="btn btn-info btn-sm" title="Detail"><i class="bi bi-eye-fill"></i></a>
+                                    <a href="{{ route('admin.petugas.books.edit', $book) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-fill"></i></a>
+                                    <form action="{{ route('admin.petugas.books.destroy', $book) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus buku ini dan semua salinannya?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash-fill"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-search display-4 d-block mb-3 opacity-25"></i>
+                                    <p class="mb-0">
+                                        @if(request('search'))
+                                            Buku dengan kata kunci "{{ request('search') }}" tidak ditemukan.
+                                        @else
+                                            Belum ada data buku.
+                                        @endif
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if ($books->hasPages())
+            <div class="card-footer bg-white">
+                {{-- Link Paginasi --}}
+                {{ $books->links() }}
+            </div>
+        @endif
+    </div>
+</div>
+@endsection

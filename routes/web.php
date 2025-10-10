@@ -3,9 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-// ==========================================================
-// PERBAIKAN: Tambahkan import untuk BookCatalogController
-// ==========================================================
 use App\Http\Controllers\Public\BookCatalogController;
 use App\Http\Controllers\Admin\Petugas\VerificationController;
 use App\Http\Controllers\Admin\Petugas\GenreController;
@@ -18,6 +15,11 @@ use App\Http\Controllers\Admin\Petugas\TeacherController;
 use App\Http\Controllers\Admin\Petugas\LoanApprovalController;
 use App\Http\Controllers\Admin\Petugas\ReturnController;
 use App\Http\Controllers\Admin\Petugas\FineController;
+// ==========================================================
+// TAMBAHAN: Import Controller baru untuk Materi Pembelajaran
+// ==========================================================
+use App\Http\Controllers\Guru\LearningMaterialController;
+use App\Http\Controllers\Admin\Superadmin\HeroSliderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,9 +28,6 @@ use App\Http\Controllers\Admin\Petugas\FineController;
 */
 
 // == RUTE PUBLIK & TAMU ==
-// ==========================================================
-// PERBAIKAN: Menggunakan sintaks array modern yang lebih aman dan cepat
-// ==========================================================
 Route::get('/', [BookCatalogController::class, 'index'])->name('catalog.index');
 Route::get('/catalog/all', [BookCatalogController::class, 'allBooks'])->name('catalog.all');
 Route::get('/book/{book}', [BookCatalogController::class, 'show'])->name('catalog.show');
@@ -53,7 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    // RUTE BARU UNTUK PENGAJUAN PINJAMAN
+    // RUTE UNTUK PENGAJUAN PINJAMAN
     Route::get('/borrow/request/{book_copy}', [BorrowingController::class, 'create'])->name('borrow.create');
     Route::post('/borrow/request', [BorrowingController::class, 'store'])->name('borrow.store');
     Route::get('/my-borrowings', [BorrowingController::class, 'index'])->name('borrow.history');
@@ -70,34 +69,37 @@ Route::middleware('auth')->group(function () {
         Route::resource('genres', GenreController::class);
         Route::resource('books', BookController::class);
 
-        // Rute untuk Kelola Akun Guru
         Route::get('/teachers', [TeacherController::class, 'index'])->name('teachers.index');
         Route::get('/teachers/create', [TeacherController::class, 'create'])->name('teachers.create');
         Route::post('/teachers', [TeacherController::class, 'store'])->name('teachers.store');
 
-        // Rute untuk konfirmasi peminjaman
         Route::get('/approvals', [LoanApprovalController::class, 'index'])->name('approvals.index');
         Route::post('/approvals/{borrowing}/approve', [LoanApprovalController::class, 'approve'])->name('approvals.approve');
         Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
         Route::post('/approvals/approve-multiple', [LoanApprovalController::class, 'approveMultiple'])->name('approvals.approveMultiple');
 
-        // Rute untuk Manajemen Pengembalian
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
         Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store'); 
         Route::put('/returns-multiple', [ReturnController::class, 'storeMultiple'])->name('returns.storeMultiple');
         
-        // Denda
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
+    });
+
+    // ==========================================================
+    // RUTE BARU: Khusus untuk Role Guru
+    // ==========================================================
+    Route::middleware('role:guru')->prefix('guru')->name('guru.')->group(function () {
+        Route::resource('materials', LearningMaterialController::class);
     });
 
     // == RUTE KHUSUS UNTUK ROLE SUPERADMIN ==
     Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
         Route::resource('petugas', SuperadminPetugasController::class);
         Route::resource('members', MemberController::class)->except(['create', 'store']);
-        //
-        Route::resource('sliders', \App\Http\Controllers\Admin\Superadmin\HeroSliderController::class);
+        // PERBAIKAN: Menggunakan sintaks array yang konsisten
+        Route::resource('sliders', HeroSliderController::class);
     });
 
 });

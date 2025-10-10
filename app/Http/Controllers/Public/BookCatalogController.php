@@ -7,6 +7,10 @@ use App\Models\Book;
 use App\Models\Genre;
 use App\Models\HeroSlider;
 use App\Models\Borrowing;
+// ==========================================================
+// 1. IMPORT MODEL BARU ANDA
+// ==========================================================
+use App\Models\LearningMaterial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -15,21 +19,15 @@ class BookCatalogController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Ambil Data Hero Slider
-        // ==========================================================
-        // PERBAIKAN: Mengganti orderBy('order') dengan latest() untuk
-        // menghindari error "Column not found". Slider akan diurutkan
-        // berdasarkan yang paling baru ditambahkan.
-        // Nama variabel juga disesuaikan menjadi 'heroSliders'.
-        // ==========================================================
+        // Ambil Data Hero Slider
         $heroSliders = HeroSlider::where('is_active', true)
                                  ->latest() // Urutkan berdasarkan yang terbaru
                                  ->get();
 
-        // 2. Ambil Data Genre
+        // Ambil Data Genre
         $genres = Genre::take(6)->get();
 
-        // 3. Ambil Data Buku Favorit & Terbaru
+        // Ambil Data Buku Favorit & Terbaru
         $nonTextbookQuery = Book::where('is_textbook', 0);
 
         $favoriteBooks = (clone $nonTextbookQuery)
@@ -50,7 +48,7 @@ class BookCatalogController extends Controller
             ->limit(10)
             ->get();
 
-        // 4. Ambil Data Peminjam Teratas
+        // Ambil Data Peminjam Teratas
         $topBorrowers = Borrowing::whereHas('user', function ($query) {
             $query->where('role', 'siswa');
         })
@@ -63,9 +61,18 @@ class BookCatalogController extends Controller
         ->with('user')
         ->get();
 
-        // 5. Kirim semua data ke view
-        // PERBAIKAN: Mengirim 'heroSliders' bukan 'sliders'
-        return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers'));
+        // ==========================================================
+        // 2. AMBIL DATA MATERI PEMBELAJARAN
+        // Mengambil 4 materi terbaru yang aktif dan data gurunya.
+        // ==========================================================
+        $learningMaterials = LearningMaterial::where('is_active', true)
+                                ->with('user') // Eager load data guru
+                                ->latest()
+                                ->limit(4) // Ambil 4 materi terbaru
+                                ->get();
+
+        // 3. Kirim semua data ke view
+        return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'learningMaterials'));
     }
 
     public function allBooks(Request $request)

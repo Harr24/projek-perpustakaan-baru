@@ -10,7 +10,7 @@
     <style>
         :root { --brand-red: #c62828; }
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-       
+        
         /* CSS Slider Responsif */
         .hero-slider .carousel-item { height: 65vh; min-height: 400px; background-color: #212529; }
         .hero-slider .carousel-item img { width: 100%; height: 100%; object-fit: cover; object-position: center; filter: brightness(0.6); }
@@ -20,11 +20,11 @@
             .hero-slider .carousel-caption h1 { font-size: 1.75rem; }
             .hero-slider .carousel-caption .lead { display: none; }
         }
-       
+        
         /* Styling lain */
         .navbar-brand { font-size: 1.25rem; }
-        .book-card { border: 1px solid #dee2e6; display: flex; flex-direction: column; transition: all .2s ease-in-out; border-radius: 8px; overflow: hidden; }
-        .book-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .book-card, .material-card { border: 1px solid #dee2e6; display: flex; flex-direction: column; transition: all .2s ease-in-out; border-radius: 8px; overflow: hidden; }
+        .book-card:hover, .material-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
         .book-cover { height: 300px; object-fit: cover; width: 100%; }
         .card-body { flex-grow: 1; display: flex; flex-direction: column; }
         .card-footer { border-top: 1px dashed #e9ecef !important; }
@@ -69,32 +69,26 @@
                     <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}" aria-current="{{ $index === 0 ? 'true' : 'false' }}" aria-label="Slide {{ $index + 1 }}"></button>
                 @endforeach
             </div>
-           
+            
             <div class="carousel-inner">
                 @foreach($heroSliders as $index => $slider)
                     <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
                         <img src="{{ asset('storage/' . $slider->image_path) }}" class="d-block" alt="{{ $slider->title }}">
                         <div class="carousel-caption text-center">
-                            @if($slider->title)
-                                <h1 class="display-4 fw-bold mb-3">{{ $slider->title }}</h1>
-                            @endif
-                            @if($slider->description)
-                                <p class="lead d-none d-md-block">{{ $slider->description }}</p>
-                            @endif
-                           @if($slider->link_url)
-                                <a href="{{ $slider->link_url }}" class="btn btn-danger btn-lg">
-                                                Lihat Selengkapnya <i class="bi bi-arrow-right ms-2"></i>
+                            @if($slider->title)<h1 class="display-4 fw-bold mb-3">{{ $slider->title }}</h1>@endif
+                            @if($slider->description)<p class="lead d-none d-md-block">{{ $slider->description }}</p>@endif
+                            @if($slider->button_link)
+                                <a href="{{ $slider->button_link }}" class="btn btn-danger btn-lg mt-3" target="_blank" rel="noopener noreferrer">
+                                    {{ $slider->button_text ?? 'Lihat Selengkapnya' }} <i class="bi bi-arrow-right ms-2"></i>
                                 </a>
                             @endif
                         </div>
                     </div>
                 @endforeach
             </div>
-           
+            
             @if($heroSliders->count() > 1)
-                {{-- ========================================================== --}}
-                {{-- PERBAIKAN: data-bs-slide untuk prev/next sudah benar --}}
-                {{-- ========================================================== --}}
+                {{-- PERBAIKAN: Tombol panah slider yang sudah benar --}}
                 <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Previous</span></button>
                 <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Next</span></button>
             @endif
@@ -122,21 +116,19 @@
         </div>
 
         {{-- Section 2: Buku Favorit --}}
-        <div class="bg-white py-5 mb-5 shadow-sm">
+        <div class="bg-white py-5 shadow-sm">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3 class="fw-bold mb-0 text-danger"><i class="bi bi-heart-fill me-2"></i> 10 Buku Favorit</h3>
                 </div>
                 @if($favoriteBooks->isNotEmpty())
-                    <div id="favoriteBooksCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div id="favoriteBooksCarousel" class="carousel slide">
                         <div class="carousel-inner">
                             @foreach ($favoriteBooks->chunk(4) as $index => $chunk)
                                 <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
                                     <div class="row row-cols-2 row-cols-md-4 g-4">
                                         @foreach ($chunk as $book)
-                                            <div class="col">
-                                                @include('public.catalog.partials._book_card', ['book' => $book])
-                                            </div>
+                                            <div class="col">@include('public.catalog.partials._book_card', ['book' => $book])</div>
                                         @endforeach
                                     </div>
                                 </div>
@@ -150,42 +142,71 @@
                 @endif
             </div>
         </div>
-       
+        
         {{-- ========================================================== --}}
-        {{-- BAGIAN YANG DIKEMBALIKAN: Buku Terbaru & Peminjam Teratas --}}
+        {{-- BAGIAN YANG DIKEMBALIKAN: Materi Pembelajaran --}}
         {{-- ========================================================== --}}
-
-        {{-- Section 3: Buku Terbaru --}}
+        @if(isset($learningMaterials) && $learningMaterials->isNotEmpty())
         <div class="container py-5">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold mb-0"><i class="bi bi-arrow-down-up me-2"></i> 10 Buku Terbaru</h3>
-                <a href="{{ route('catalog.all', ['sort' => 'latest']) }}" class="btn btn-outline-danger btn-sm">Lihat Semua Buku <i class="bi bi-arrow-right"></i></a>
+            <div class="text-center mb-5">
+                <h2 class="fw-bold display-6">Materi Belajar Terbaru</h2>
+                <p class="lead text-muted">Akses materi tambahan yang dibagikan oleh para guru.</p>
             </div>
-            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4">
-                @forelse ($latestBooks as $book)
-                    <div class="col">
-                        @include('public.catalog.partials._book_card', ['book' => $book])
-                    </div>
-                @empty
-                    <div class="col-12 text-center"><div class="alert alert-warning">Belum ada buku baru.</div></div>
-                @endforelse
+            <div class="row g-3">
+                @foreach($learningMaterials as $material)
+                <div class="col-lg-6">
+                    <a href="{{ $material->link_url }}" target="_blank" rel="noopener noreferrer" class="card h-100 material-card text-decoration-none text-dark">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="pe-3">
+                                <div class="d-flex align-items-center justify-content-center bg-danger text-white rounded-circle" style="width: 50px; height: 50px;">
+                                    <i class="bi bi-link-45deg fs-4"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h5 class="card-title fw-bold mb-1">{{ $material->title }}</h5>
+                                <p class="card-text text-muted small mb-2">{{ Str::limit($material->description, 100) }}</p>
+                                <p class="card-text mb-0"><small class="text-muted">Oleh: {{ $material->user->name }}</small></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                @endforeach
             </div>
-            <div class="text-center mt-5">
-                 <a href="{{ route('catalog.all') }}" class="btn btn-lg btn-danger shadow-lg"><i class="bi bi-grid-3x3-gap-fill me-2"></i> Lihat Semua Buku di Katalog</a>
+        </div>
+        @endif
+
+        {{-- Bagian lain yang sudah ada --}}
+        <div class="bg-white py-5 mt-5 shadow-sm">
+             <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold mb-0"><i class="bi bi-arrow-down-up me-2"></i> 10 Buku Terbaru</h3>
+                    <a href="{{ route('catalog.all', ['sort' => 'latest']) }}" class="btn btn-outline-danger btn-sm">Lihat Semua Buku <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4">
+                    @forelse ($latestBooks as $book)
+                        <div class="col">
+                            @include('public.catalog.partials._book_card', ['book' => $book])
+                        </div>
+                    @empty
+                        <div class="col-12 text-center"><div class="alert alert-warning">Belum ada buku baru.</div></div>
+                    @endforelse
+                </div>
+                <div class="text-center mt-5">
+                     <a href="{{ route('catalog.all') }}" class="btn btn-lg btn-danger shadow-lg"><i class="bi bi-grid-3x3-gap-fill me-2"></i> Lihat Semua Buku di Katalog</a>
+                </div>
             </div>
         </div>
 
-        {{-- Section 4: Peminjam Teratas --}}
-        <div class="top-borrowers-section mt-5 py-5 bg-white shadow-lg">
+        <div class="top-borrowers-section mt-5 py-5">
             <div class="container">
                 <div class="text-center mb-5">
-                    <h2 class="fw-bold display-6">Peminjam Teratas Bulan Ini!</h2>
+                    <h2 class="fw-bold display-6">Peminjam Teratas Bulan Ini</h2>
                     <p class="lead text-muted">Apresiasi bagi para penikmat koleksi kami.</p>
                 </div>
                 <div class="row g-4 justify-content-center">
                     @forelse ($topBorrowers as $borrower)
                         <div class="col-md-6 col-lg-4">
-                            <div class="card text-center h-100 shadow-sm borrower-card">
+                            <div class="card text-center h-100 shadow-sm borrower-card bg-white">
                                 <div class="card-body p-4">
                                     <div class="avatar mx-auto mb-3">{{ strtoupper(substr($borrower->user->name, 0, 2)) }}</div>
                                     <h5 class="card-title fw-bold text-danger">{{ $borrower->user->name }}</h5>
@@ -206,7 +227,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="col-12"><p class="text-center text-muted">Belum ada data peminjam di bulan ini.</p></div>
+                        <div class="col-12"><p class="text-center text-muted">Belum ada data peminjaman di bulan ini.</p></div>
                     @endforelse
                 </div>
             </div>
@@ -220,3 +241,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

@@ -3,7 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Dashboard</title>
+    <title>Dashboard - Perpustakaan Multicomp</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root{
             --bg:#f6f8f9;
@@ -31,7 +34,7 @@
         .page{
             max-width:var(--container-max);
             margin:24px auto;
-            padding:20px;
+            padding:0 20px;
         }
         header.header{
             display:flex;
@@ -112,21 +115,8 @@
             font-weight:600;
             font-size:0.9rem;
         }
-        .hamburger{
-            display:none;
-            width:44px;
-            height:44px;
-            border-radius:10px;
-            background:rgba(255,255,255,0.12);
-            border:0;
-            color:#fff;
-            cursor:pointer;
-            align-items:center;
-            justify-content:center;
-        }
         .grid{
             display:grid;
-            grid-template-columns: 1fr 360px;
             gap:20px;
             margin-top:20px;
         }
@@ -150,6 +140,7 @@
             background:linear-gradient(135deg,#fff,#f8fafc);
             box-shadow:0 6px 18px rgba(15,23,36,0.04);
             font-size:22px;
+            color: var(--accent);
         }
         .welcome h2{ margin:0 0 8px 0; font-size:1.1rem; }
         .welcome p{margin:0;color:var(--muted);font-size:0.95rem}
@@ -215,16 +206,16 @@
                     @if(Auth::user()->profile_photo)
                         <img src="{{ Storage::url(Auth::user()->profile_photo) }}" alt="Foto Profil" style="width:100%; height:100%; object-fit:cover;">
                     @else
-                        LP
+                        {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
                     @endif
                 </div>
                 <div class="title">
-                    <h1>Selamat Datang, {{ Auth::user()->name }}!</h1>
+                    <h1>Selamat Datang, {{ strtok(Auth::user()->name, " ") }}!</h1>
                     <p>Dashboard {{ ucfirst(Auth::user()->role) }}</p>
                 </div>
             </div>
             <div class="header-actions">
-                <div class="profile-badge" role="img" aria-label="Nama pengguna">
+                <div class="profile-badge" role="img" aria-label="Role Pengguna">
                     {{ ucfirst(Auth::user()->role) }}
                 </div>
                 <form action="{{ route('logout') }}" method="POST" style="display:inline;">
@@ -240,21 +231,35 @@
                     <div class="icon" aria-hidden="true">📚</div>
                     <div>
                         <h2 id="welcomeTitle">Anda berhasil login ke sistem perpustakaan.</h2>
-                        <p class="muted">Pilih menu navigasi di bawah ini untuk memulai.</p>
+                        <p>Pilih menu navigasi di bawah ini untuk memulai.</p>
                         
-                        {{-- ========================================================== --}}
-                        {{-- PERUBAHAN DI SINI: Semua @if diganti dengan @switch --}}
-                        {{-- ========================================================== --}}
                         <div class="nav-list" id="navList">
+                            {{-- ========================================================== --}}
+                            {{-- PERBAIKAN UTAMA: Logika @switch diperbarui --}}
+                            {{-- ========================================================== --}}
                             @switch(Auth::user()->role)
                                 @case('superadmin')
                                     @include('dashboard-partials.superadmin')
                                     @break
+
                                 @case('petugas')
                                     @include('dashboard-partials.petugas')
                                     @break
-                                @case('siswa')
+
                                 @case('guru')
+                                    {{-- Menu Khusus untuk Guru --}}
+                                    <a href="{{ route('guru.materials.index') }}" class="nav-item">
+                                        <div class="nav-item-main">
+                                            <span>Kelola Materi Pembelajaran</span>
+                                        </div>
+                                        <span class="meta">Tambah/edit materi</span>
+                                    </a>
+                                    {{-- Memuat menu umum untuk member (Siswa & Guru) --}}
+                                    @include('dashboard-partials.member')
+                                    @break
+
+                                @case('siswa')
+                                    {{-- Siswa hanya melihat menu umum --}}
                                     @include('dashboard-partials.member')
                                     @break
                             @endswitch
@@ -262,16 +267,12 @@
                     </div>
                 </div>
             </section>
-
-            {{-- Sidebar (disingkat) --}}
-            <aside>
-                 {{-- ... kode aside Anda ... --}}
-            </aside>
         </main>
     </div>
-
-    <script>
-        {{-- ... kode script Anda ... --}}
-    </script>
 </body>
 </html>
+```
+
+
+    
+
