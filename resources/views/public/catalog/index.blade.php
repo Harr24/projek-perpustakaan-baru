@@ -10,42 +10,17 @@
     <style>
         :root { --brand-red: #c62828; }
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        
-        /* Navbar Styling */
-        .navbar-brand { font-size: 1.25rem; }
-        
-        /* Hero Slider */
-        .hero-slider { margin-top: 0; }
-        .hero-slide { 
-            height: 500px; 
-            background-size: cover; 
-            background-position: center; 
-            position: relative;
-        }
-        .hero-slide::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6));
-        }
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        .hero-slide .btn {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+       
+        /* CSS Slider Responsif */
+        .hero-slider .carousel-item { height: 65vh; min-height: 400px; background-color: #212529; }
+        .hero-slider .carousel-item img { width: 100%; height: 100%; object-fit: cover; object-position: center; filter: brightness(0.6); }
+        .hero-slider .carousel-caption { top: 50%; transform: translateY(-50%); bottom: auto; }
         @media (max-width: 768px) {
-            .hero-slide { height: 350px; }
-            .hero-content h1 { font-size: 1.75rem; }
-            .hero-content p { font-size: 0.9rem; }
+            .hero-slider .carousel-item { height: 50vh; min-height: 300px; }
+            .hero-slider .carousel-caption h1 { font-size: 1.75rem; }
+            .hero-slider .carousel-caption .lead { display: none; }
         }
-        
+       
         /* Styling lain */
         .navbar-brand { font-size: 1.25rem; }
         .book-card { border: 1px solid #dee2e6; display: flex; flex-direction: column; transition: all .2s ease-in-out; border-radius: 8px; overflow: hidden; }
@@ -86,60 +61,47 @@
     </nav>
 
     <main>
-        {{-- =============================================== --}}
-        {{-- SECTION 0: Hero Sliderr --}}
-        {{-- =============================================== --}}
-        @if(isset($sliders) && $sliders->isNotEmpty())
-        <div class="hero-slider">
-            <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
-                <div class="carousel-indicators">
-                    @foreach($sliders as $index => $slider)
-                        <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ $index }}" 
-                                class="{{ $index === 0 ? 'active' : '' }}" 
-                                aria-current="{{ $index === 0 ? 'true' : 'false' }}" 
-                                aria-label="Slide {{ $index + 1 }}"></button>
-                    @endforeach
-                </div>
-                
-                <div class="carousel-inner">
-                    @foreach($sliders as $index => $slider)
-                        <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                            <div class="hero-slide d-flex align-items-center" 
-                                 style="background-image: url('{{ $slider->image_path ? asset('storage/' . $slider->image_path) : 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&h=500&fit=crop' }}');">
-                                <div class="container">
-                                    <div class="hero-content">
-                                        @if($slider->title)
-                                            <h1 class="display-4 fw-bold mb-3">{{ $slider->title }}</h1>
-                                        @endif
-                                        @if($slider->link_url)
-                                            <a href="{{ $slider->link_url }}" class="btn btn-danger btn-lg">
-                                                Lihat Selengkapnya <i class="bi bi-arrow-right ms-2"></i>
-                                            </a>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-                
-                @if($sliders->count() > 1)
-                    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Previous</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Next</span>
-                    </button>
-                @endif
+        {{-- Hero Slider --}}
+        @if(isset($heroSliders) && $heroSliders->isNotEmpty())
+        <div id="heroCarousel" class="carousel slide hero-slider" data-bs-ride="carousel" data-bs-interval="5000">
+            <div class="carousel-indicators">
+                @foreach($heroSliders as $index => $slider)
+                    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}" aria-current="{{ $index === 0 ? 'true' : 'false' }}" aria-label="Slide {{ $index + 1 }}"></button>
+                @endforeach
             </div>
+           
+            <div class="carousel-inner">
+                @foreach($heroSliders as $index => $slider)
+                    <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
+                        <img src="{{ asset('storage/' . $slider->image_path) }}" class="d-block" alt="{{ $slider->title }}">
+                        <div class="carousel-caption text-center">
+                            @if($slider->title)
+                                <h1 class="display-4 fw-bold mb-3">{{ $slider->title }}</h1>
+                            @endif
+                            @if($slider->description)
+                                <p class="lead d-none d-md-block">{{ $slider->description }}</p>
+                            @endif
+                           @if($slider->link_url)
+                                <a href="{{ $slider->link_url }}" class="btn btn-danger btn-lg">
+                                                Lihat Selengkapnya <i class="bi bi-arrow-right ms-2"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+           
+            @if($heroSliders->count() > 1)
+                {{-- ========================================================== --}}
+                {{-- PERBAIKAN: data-bs-slide untuk prev/next sudah benar --}}
+                {{-- ========================================================== --}}
+                <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Previous</span></button>
+                <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Next</span></button>
+            @endif
         </div>
         @endif
 
-        {{-- =============================================== --}}
-        {{-- SECTION 1: Kategori/Genre --}}
-        {{-- =============================================== --}}
+        {{-- Section 1: Kategori/Genre --}}
         <div class="container py-5">
             <div class="text-center mb-5">
                 <h2 class="fw-bold display-6">Jelajahi Berdasarkan Kategori</h2>
@@ -188,7 +150,7 @@
                 @endif
             </div>
         </div>
-        
+       
         {{-- ========================================================== --}}
         {{-- BAGIAN YANG DIKEMBALIKAN: Buku Terbaru & Peminjam Teratas --}}
         {{-- ========================================================== --}}
