@@ -179,7 +179,7 @@
         <div class="top-borrowers-section mt-5 py-5 bg-white shadow-lg">
             <div class="container">
                 <div class="text-center mb-5">
-                    <h2 class="fw-bold display-6">Peminjam Teratas Bulan Ini</h2>
+                    <h2 class="fw-bold display-6">Peminjam Teratas Bulan Ini!</h2>
                     <p class="lead text-muted">Apresiasi bagi para penikmat koleksi kami.</p>
                 </div>
                 <div class="row g-4 justify-content-center">
