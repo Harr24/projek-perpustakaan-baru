@@ -28,11 +28,28 @@
 
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom py-3">
-            {{-- Form Pencarian --}}
-            <form action="{{ route('admin.petugas.books.index') }}" method="GET">
-                <div class="input-group">
-                    <input type="text" name="search" class="form-control" placeholder="Cari berdasarkan judul atau penulis..." value="{{ request('search') }}">
-                    <button class="btn btn-danger" type="submit"><i class="bi bi-search"></i> Cari</button>
+            {{-- ======================================================= --}}
+            {{-- PERUBAHAN 1: Mengganti Form Pencarian dengan Filter Lengkap --}}
+            {{-- ======================================================= --}}
+            <form action="{{ route('admin.petugas.books.index') }}" method="GET" class="row g-2 align-items-center">
+                {{-- Filter by Genre --}}
+                <div class="col-md-4">
+                    <select name="genre_id" class="form-select form-select-sm">
+                        <option value="">-- Semua Genre --</option>
+                        @foreach ($genres as $genre)
+                            <option value="{{ $genre->id }}" {{ request('genre_id') == $genre->id ? 'selected' : '' }}>
+                                {{ $genre->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Search Input --}}
+                <div class="col-md-8">
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="search" class="form-control" placeholder="Cari berdasarkan judul atau penulis..." value="{{ request('search') }}">
+                        <button class="btn btn-danger" type="submit"><i class="bi bi-search"></i> Cari</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -53,6 +70,7 @@
                     <tbody>
                         @forelse ($books as $book)
                         <tr>
+                            {{-- Penomoran yang benar untuk paginasi, kodemu sudah bagus! --}}
                             <td class="ps-4">{{ $loop->iteration + ($books->currentPage() - 1) * $books->perPage() }}</td>
                             <td>
                                 <img src="{{ $book->cover_image ? asset('storage/' . $book->cover_image) : 'https://placehold.co/80x120/E91E63/FFFFFF?text=No+Cover' }}" 
@@ -90,10 +108,13 @@
                                 <div class="text-muted">
                                     <i class="bi bi-search display-4 d-block mb-3 opacity-25"></i>
                                     <p class="mb-0">
-                                        @if(request('search'))
-                                            Buku dengan kata kunci "{{ request('search') }}" tidak ditemukan.
+                                        {{-- ======================================================= --}}
+                                        {{-- PERUBAHAN 2: Pesan Kosong yang Lebih Informatif --}}
+                                        {{-- ======================================================= --}}
+                                        @if(request('search') || request('genre_id'))
+                                            Tidak ada buku yang cocok dengan kriteria filter Anda.
                                         @else
-                                            Belum ada data buku.
+                                            Belum ada data buku. Silakan tambahkan buku baru.
                                         @endif
                                     </p>
                                 </div>
@@ -106,7 +127,7 @@
         </div>
         @if ($books->hasPages())
             <div class="card-footer bg-white">
-                {{-- Link Paginasi --}}
+                {{-- Link Paginasi, kodemu sudah benar! --}}
                 {{ $books->links() }}
             </div>
         @endif

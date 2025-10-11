@@ -7,7 +7,7 @@ use App\Models\Book;
 use App\Models\BookCopy;
 use App\Models\Genre;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // <-- WAJIB: Import DB untuk Transaction
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -15,20 +15,46 @@ use Illuminate\Validation\ValidationException;
 class BookController extends Controller
 {
     /**
-     * PERBAIKAN: Menambahkan Paginasi dan Fitur Pencarian.
+     * ===================================================================
+     * PERUBAHAN DI SINI:
+     * - Menambahkan filter berdasarkan genre.
+     * - Mengambil semua data genre untuk dikirim ke view.
+     * - Mengubah paginasi dari 15 menjadi 10 per halaman.
+     * - Memastikan filter dan pencarian tetap aktif saat paginasi.
+     * ===================================================================
      */
     public function index(Request $request)
     {
+        // 1. Ambil semua genre untuk ditampilkan di dropdown filter
+        $genres = Genre::orderBy('name')->get();
+
+        // 2. Ambil input dari form (pencarian dan filter genre)
+        $search = $request->input('search');
+        $genreId = $request->input('genre_id');
+
+        // 3. Mulai query builder
         $query = Book::with('genre')->withCount('copies')->latest();
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('title', 'LIKE', "%{$search}%")
-                  ->orWhere('author', 'LIKE', "%{$search}%");
-        }
+        // 4. Terapkan filter PENCARIAN jika ada
+        $query->when($search, function ($q) use ($search) {
+            // Mengelompokkan 'where' untuk memastikan logika OR tidak bentrok dengan filter lain
+            return $q->where(function ($subQuery) use ($search) {
+                $subQuery->where('title', 'LIKE', "%{$search}%")
+                         ->orWhere('author', 'LIKE', "%{$search}%");
+            });
+        });
 
-        $books = $query->paginate(15); // Tampilkan 15 buku per halaman
-        return view('admin.petugas.books.index', compact('books'));
+        // 5. Terapkan filter GENRE jika ada
+        $query->when($genreId, function ($q) use ($genreId) {
+            return $q->where('genre_id', $genreId);
+        });
+
+        // 6. Ambil data dengan PAGINASI 10 per halaman
+        // withQueryString() memastikan filter tetap ada di URL saat pindah halaman
+        $books = $query->paginate(10)->withQueryString();
+        
+        // 7. Kirim data buku dan daftar genre ke view
+        return view('admin.petugas.books.index', compact('books', 'genres'));
     }
 
     public function create()
@@ -37,9 +63,6 @@ class BookController extends Controller
         return view('admin.petugas.books.create', compact('genres'));
     }
 
-    /**
-     * PERBAIKAN: Dibungkus dengan DB Transaction untuk keamanan data.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -63,7 +86,6 @@ class BookController extends Controller
             ]);
         }
         
-        // Mulai transaction
         DB::transaction(function () use ($request, $validated, $prefix) {
             if ($request->hasFile('cover_image')) {
                 $path = $request->file('cover_image')->store('covers', 'public');
@@ -98,9 +120,6 @@ class BookController extends Controller
         return view('admin.petugas.books.edit', compact('book', 'genres'));
     }
 
-    /**
-     * PERBAIKAN UTAMA: Menambahkan fungsionalitas untuk MENAMBAH STOK BUKU.
-     */
     public function update(Request $request, Book $book)
     {
         $validated = $request->validate([
@@ -111,7 +130,7 @@ class BookController extends Controller
             'genre_id' => 'required|exists:genres,id',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'is_textbook' => 'nullable|boolean',
-            'add_stock' => 'nullable|integer|min:1|max:100', // <-- Input baru untuk tambah stok
+            'add_stock' => 'nullable|integer|min:1|max:100',
         ]);
 
         DB::transaction(function () use ($request, $validated, $book) {
@@ -124,17 +143,12 @@ class BookController extends Controller
             $validated['is_textbook'] = $request->has('is_textbook');
             $book->update($validated);
 
-            // Logika untuk menambah stok baru
             if ($request->filled('add_stock')) {
-                // Cari salinan terakhir untuk mendapatkan nomor terakhir dan prefix kode
                 $lastCopy = $book->copies()->latest('id')->first();
                 if (!$lastCopy) {
-                    // Jika karena suatu alasan buku tidak punya salinan, tidak bisa menambah stok.
-                    // Seharusnya ini tidak terjadi.
                     throw ValidationException::withMessages(['add_stock' => 'Buku ini tidak memiliki salinan awal. Tidak dapat menambah stok.']);
                 }
 
-                // Ekstrak prefix dari kode buku terakhir, misal: "01-IPA-"
                 $parts = explode('-', $lastCopy->book_code);
                 $lastNumber = (int)array_pop($parts);
                 $prefix = implode('-', $parts) . '-';
@@ -159,7 +173,7 @@ class BookController extends Controller
         if ($book->cover_image) {
             Storage::disk('public')->delete($book->cover_image);
         }
-        $book->delete(); // Ini akan otomatis menghapus salinan buku jika foreign key di set `onDelete('cascade')`
+        $book->delete();
         return redirect()->route('admin.petugas.books.index')->with('success', 'Buku dan semua salinannya berhasil dihapus.');
     }
 }
