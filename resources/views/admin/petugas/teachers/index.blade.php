@@ -33,6 +33,22 @@
         </div>
     @endif
 
+    {{-- ======================================================= --}}
+    {{-- PERUBAHAN 1: Menambahkan Form Pencarian --}}
+    {{-- ======================================================= --}}
+    <div class="card mb-4">
+        <div class="card-body">
+            <form action="{{ route('admin.petugas.teachers.index') }}" method="GET">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" name="search" placeholder="Cari berdasarkan nama atau email guru..." value="{{ request('search') }}">
+                    <button class="btn btn-outline-primary" type="submit">Cari</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     {{-- Main Card --}}
     <div class="card">
         <div class="card-header">
@@ -41,7 +57,10 @@
                     <i class="bi bi-person-badge me-2 text-danger"></i>
                     Data Guru
                 </h5>
-                <span class="badge bg-secondary">{{ count($teachers) }} Guru</span>
+                {{-- ======================================================= --}}
+                {{-- PERUBAHAN 2: Menggunakan total() untuk Paginasi --}}
+                {{-- ======================================================= --}}
+                <span class="badge bg-secondary">{{ $teachers->total() }} Guru</span>
             </div>
         </div>
         
@@ -55,14 +74,21 @@
                             <th class="py-3">Nama Guru</th>
                             <th class="py-3">Email</th>
                             <th class="py-3">Mata Pelajaran</th>
-                            <th class="py-3 pe-4 text-center" style="width: 15%;">Status</th>
+                            <th class="py-3 text-center" style="width: 15%;">Status</th>
+                            {{-- ======================================================= --}}
+                            {{-- PERUBAHAN 3: Menambahkan Kolom Aksi --}}
+                            {{-- ======================================================= --}}
+                            <th class="py-3 pe-4 text-center" style="width: 10%;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($teachers as $index => $teacher)
+                        @forelse ($teachers as $teacher)
                         <tr>
                             <td class="ps-4">
-                                <span class="text-muted fw-medium">{{ $index + 1 }}</span>
+                                {{-- ======================================================= --}}
+                                {{-- PERUBAHAN 4: Penomoran yang benar untuk Paginasi --}}
+                                {{-- ======================================================= --}}
+                                <span class="text-muted fw-medium">{{ $loop->iteration + $teachers->firstItem() - 1 }}</span>
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
@@ -86,23 +112,39 @@
                                     {{ $teacher->subject }}
                                 </span>
                             </td>
-                            <td class="pe-4 text-center">
+                            <td class="text-center">
                                 <span class="badge bg-success">
                                     <i class="bi bi-check-circle me-1"></i>
                                     Aktif
                                 </span>
                             </td>
+                            {{-- ======================================================= --}}
+                            {{-- PERUBAHAN 5: Menambahkan Tombol Edit --}}
+                            {{-- ======================================================= --}}
+                            <td class="pe-4 text-center">
+                                <a href="{{ route('admin.petugas.teachers.edit', $teacher) }}" class="btn btn-warning btn-sm" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5">
+                            <td colspan="6" class="text-center py-5"> {{-- colspan diubah jadi 6 --}}
                                 <div class="empty-state">
                                     <i class="bi bi-inbox d-block"></i>
-                                    <p class="mb-2 fw-medium">Belum Ada Data Guru</p>
-                                    <p class="small text-muted mb-3">Silakan tambahkan akun guru terlebih dahulu.</p>
-                                    <a href="{{ route('admin.petugas.teachers.create') }}" class="btn btn-danger btn-sm">
-                                        <i class="bi bi-plus-circle me-1"></i>Tambah Guru Sekarang
-                                    </a>
+                                    @if(request('search'))
+                                        <p class="mb-2 fw-medium">Guru Tidak Ditemukan</p>
+                                        <p class="small text-muted mb-3">Tidak ada guru yang cocok dengan kata kunci "{{ request('search') }}".</p>
+                                        <a href="{{ route('admin.petugas.teachers.index') }}" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-arrow-left me-1"></i>Tampilkan Semua
+                                        </a>
+                                    @else
+                                        <p class="mb-2 fw-medium">Belum Ada Data Guru</p>
+                                        <p class="small text-muted mb-3">Silakan tambahkan akun guru terlebih dahulu.</p>
+                                        <a href="{{ route('admin.petugas.teachers.create') }}" class="btn btn-danger btn-sm">
+                                            <i class="bi bi-plus-circle me-1"></i>Tambah Guru Sekarang
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -113,7 +155,7 @@
 
             {{-- Mobile/Tablet Card View --}}
             <div class="d-lg-none p-3">
-                @forelse ($teachers as $index => $teacher)
+                @forelse ($teachers as $teacher)
                 <div class="card mb-3 border shadow-sm">
                     <div class="card-body">
                         <div class="d-flex align-items-start mb-3">
@@ -128,7 +170,8 @@
                                             <i class="bi bi-check-circle me-1"></i>Aktif
                                         </span>
                                     </div>
-                                    <span class="badge bg-secondary">{{ $index + 1 }}</span>
+                                    {{-- Menggunakan penomoran paginasi yang benar juga di mobile --}}
+                                    <span class="badge bg-secondary">{{ $loop->iteration + $teachers->firstItem() - 1 }}</span>
                                 </div>
                             </div>
                         </div>
@@ -147,28 +190,55 @@
                                 <span class="badge bg-primary">{{ $teacher->subject }}</span>
                             </div>
                         </div>
+                        
+                        {{-- ======================================================= --}}
+                        {{-- PERUBAHAN 6: Menambahkan Tombol Edit untuk Mobile --}}
+                        {{-- ======================================================= --}}
+                        <div class="border-top pt-3 mt-3 text-end">
+                             <a href="{{ route('admin.petugas.teachers.edit', $teacher) }}" class="btn btn-warning btn-sm">
+                                <i class="bi bi-pencil-square me-1"></i> Edit
+                            </a>
+                        </div>
                     </div>
                 </div>
                 @empty
-                <div class="empty-state">
+                 <div class="empty-state py-5">
                     <i class="bi bi-inbox d-block"></i>
-                    <p class="mb-2 fw-medium">Belum Ada Data Guru</p>
-                    <p class="small text-muted mb-3">Silakan tambahkan akun guru terlebih dahulu.</p>
-                    <a href="{{ route('admin.petugas.teachers.create') }}" class="btn btn-danger btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>Tambah Guru Sekarang
-                    </a>
+                     @if(request('search'))
+                        <p class="mb-2 fw-medium">Guru Tidak Ditemukan</p>
+                        <p class="small text-muted mb-3">Tidak ada guru yang cocok dengan kata kunci "{{ request('search') }}".</p>
+                        <a href="{{ route('admin.petugas.teachers.index') }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i>Tampilkan Semua
+                        </a>
+                    @else
+                        <p class="mb-2 fw-medium">Belum Ada Data Guru</p>
+                        <p class="small text-muted mb-3">Silakan tambahkan akun guru terlebih dahulu.</p>
+                        <a href="{{ route('admin.petugas.teachers.create') }}" class="btn btn-danger btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>Tambah Guru Sekarang
+                        </a>
+                    @endif
                 </div>
                 @endforelse
             </div>
         </div>
 
         {{-- Card Footer with Info --}}
-        @if(count($teachers) > 0)
+        @if($teachers->hasPages())
         <div class="card-footer bg-light border-top">
+             <div class="d-flex justify-content-center">
+                {{-- ======================================================= --}}
+                {{-- PERUBAHAN 7: Menampilkan Link Paginasi --}}
+                {{-- ======================================================= --}}
+                {{ $teachers->links() }}
+            </div>
+        </div>
+        @elseif($teachers->total() > 0)
+         <div class="card-footer bg-light border-top">
             <div class="d-flex justify-content-between align-items-center text-muted small">
                 <span>
                     <i class="bi bi-info-circle me-1"></i>
-                    Total {{ count($teachers) }} guru terdaftar
+                    {{-- Menggunakan total() untuk Paginasi --}}
+                    Total {{ $teachers->total() }} guru terdaftar
                 </span>
                 <span>
                     <i class="bi bi-clock me-1"></i>
@@ -180,35 +250,21 @@
     </div>
 </div>
 
-{{-- Custom Styles --}}
+{{-- Custom Styles (tidak ada perubahan di sini) --}}
 <style>
-    .btn-danger {
-        background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-red-dark) 100%);
-        border: none;
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-weight: 600;
-        transition: all 0.3s ease;
+        font-size: 1rem;
     }
+    .empty-state { text-align: center; }
+    .empty-state .bi { font-size: 3.5rem; color: #ced4da; }
 
-    .btn-danger:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(217, 83, 79, 0.3);
-    }
-
-    .card-footer {
-        padding: 1rem 1.5rem;
-    }
-
-    .badge {
-        font-weight: 500;
-        padding: 0.5rem 0.75rem;
-    }
-
-    @media (max-width: 991.98px) {
-        .avatar-circle {
-            width: 50px !important;
-            height: 50px !important;
-            font-size: 1.25rem !important;
-        }
-    }
+    /* ... sisa style kamu ... */
 </style>
 @endsection

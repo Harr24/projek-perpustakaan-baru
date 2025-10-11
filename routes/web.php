@@ -69,9 +69,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('genres', GenreController::class);
         Route::resource('books', BookController::class);
 
-        Route::get('/teachers', [TeacherController::class, 'index'])->name('teachers.index');
-        Route::get('/teachers/create', [TeacherController::class, 'create'])->name('teachers.create');
-        Route::post('/teachers', [TeacherController::class, 'store'])->name('teachers.store');
+        // ==========================================================
+        // PERUBAHAN DI SINI: Menggunakan Route::resource untuk Guru
+        // ==========================================================
+        Route::resource('teachers', TeacherController::class)->except(['show']); // Tidak menggunakan method 'show'
 
         Route::get('/approvals', [LoanApprovalController::class, 'index'])->name('approvals.index');
         Route::post('/approvals/{borrowing}/approve', [LoanApprovalController::class, 'approve'])->name('approvals.approve');
@@ -103,4 +104,3 @@ Route::middleware('auth')->group(function () {
     });
 
 });
-
