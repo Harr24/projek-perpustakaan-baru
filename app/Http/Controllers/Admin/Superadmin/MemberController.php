@@ -35,34 +35,7 @@ class MemberController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     * (Tidak digunakan sesuai konfigurasi route kita)
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     * (Tidak digunakan sesuai konfigurasi route kita)
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
      * Menampilkan form untuk mengedit data anggota.
-     * Menggunakan Route Model Binding untuk mengambil user secara otomatis.
      */
     public function edit(User $member)
     {
@@ -81,31 +54,41 @@ class MemberController extends Controller
             'account_status' => 'required|in:pending,active,rejected,suspended',
             'password' => 'nullable|string|min:8|confirmed',
             
-            // Validasi untuk data tambahan
-            'nis' => 'nullable|string|max:20',
-            'class' => 'nullable|string|max:50',
-            'major' => 'nullable|string|max:100',
+            // ==========================================================
+            // PERUBAHAN 1: Validasi untuk data siswa disempurnakan
+            // ==========================================================
+            'nis' => ['nullable', 'string', 'max:20', Rule::unique('users')->ignore($member->id), Rule::requiredIf($request->role === 'siswa')],
+            'class_name' => ['nullable', 'string', 'max:50', Rule::requiredIf($request->role === 'siswa')], // Diubah dari 'class'
+            
+            // Validasi data guru
             'phone_number' => 'nullable|string|max:15',
             'subject' => 'nullable|string|max:100',
         ]);
 
         // Update data utama
-        $member->fill($request->only([
-            'name', 'email', 'role', 'account_status'
-        ]));
+        $member->name = $request->name;
+        $member->email = $request->email;
+        $member->role = $request->role;
+        $member->account_status = $request->account_status;
 
-        // Update data spesifik role
+        // ==========================================================
+        // PERUBAHAN 2: Logika penyimpanan data spesifik role diperbaiki
+        // ==========================================================
         if ($request->role == 'siswa') {
-            $member->fill($request->only(['nis', 'class', 'major', 'phone_number']));
-            $member->subject = null; // Kosongkan data guru jika role diubah ke siswa
+            $member->nis = $request->nis;
+            $member->class_name = $request->class_name; // Diubah dari 'class'
+            $member->phone_number = $request->phone_number;
+            // Kosongkan data guru
+            $member->subject = null;
         } elseif ($request->role == 'guru') {
-            $member->fill($request->only(['subject', 'phone_number']));
-            // Kosongkan data siswa jika role diubah ke guru
+            $member->subject = $request->subject;
+            $member->phone_number = $request->phone_number;
+            // Kosongkan data siswa
             $member->nis = null;
-            $member->class = null;
-            $member->major = null;
+            $member->class_name = null; // Diubah dari 'class'
         }
 
+        // Update password jika diisi
         if ($request->filled('password')) {
             $member->password = Hash::make($request->password);
         }
@@ -117,15 +100,10 @@ class MemberController extends Controller
 
     /**
      * Menghapus data anggota dari database.
-     * Menggunakan Route Model Binding untuk mengambil user secara otomatis.
      */
     public function destroy(User $member)
     {
-        // Opsi: Tambahkan logika untuk menghapus file terkait (foto, dll) jika perlu
-        // Storage::delete($member->student_card_photo);
-        
         $member->delete();
-
         return redirect()->route('admin.superadmin.members.index')->with('success', 'Anggota berhasil dihapus.');
     }
 }

@@ -13,10 +13,34 @@
    padding: 20px;
    color: #333;
   }
+  .header-container {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   margin-bottom: 20px;
+   flex-wrap: wrap;
+   gap: 15px;
+  }
   h1 {
    font-size: 1.8rem;
-   margin-bottom: 20px;
+   margin: 0;
    color: #c62828;
+  }
+  .btn-back {
+    padding: 8px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: none;
+    background-color: #fff;
+    color: #555;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  .btn-back:hover {
+    background-color: #f3f4f6;
+    border-color: #ccc;
   }
   .alert-success, .alert-error {
    padding: 12px 16px;
@@ -121,7 +145,11 @@
  </style>
 </head>
 <body>
- <h1>Daftar Siswa Menunggu Verifikasi</h1>
+
+ <div class="header-container">
+    <h1>Daftar Siswa Menunggu Verifikasi</h1>
+    <a href="{{ route('dashboard') }}" class="btn-back">Kembali ke Dashboard</a>
+ </div>
 
  @if(session('success'))
   <div class="alert-success">{{ session('success') }}</div>
@@ -135,8 +163,9 @@
   <thead>
    <tr>
     <th>Nama</th>
+    <th>NISN</th> {{-- <-- PERUBAHAN 1: Menambahkan judul kolom NISN --}}
     <th>Email</th>
-    <th>Kelas</th> {{-- <-- PERUBAHAN 1: Menambahkan judul kolom --}}
+    <th>Kelas</th>
     <th>Kartu Pelajar</th>
     <th>Aksi</th>
    </tr>
@@ -145,8 +174,9 @@
    @forelse ($pendingUsers as $student)
     <tr>
      <td data-label="Nama">{{ $student->name }}</td>
+     <td data-label="NISN">{{ $student->nis ?? 'N/A' }}</td> {{-- <-- PERUBAHAN 2: Menampilkan data NISN --}}
      <td data-label="Email">{{ $student->email }}</td>
-     <td data-label="Kelas">{{ $student->class_name ?? 'N/A' }}</td> {{-- <-- PERUBAHAN 2: Menampilkan data kelas --}}
+     <td data-label="Kelas">{{ $student->class_name ?? 'N/A' }}</td>
      <td data-label="Kartu Pelajar">
       @if($student->student_card_photo)
        <a href="{{ Storage::url($student->student_card_photo) }}" target="_blank">Lihat Foto</a>
@@ -169,7 +199,7 @@
     </tr>
    @empty
     <tr>
-     <td colspan="5">Tidak ada pendaftar baru.</td> {{-- <-- PERUBAHAN 3: Mengubah colspan menjadi 5 --}}
+     <td colspan="6">Tidak ada pendaftar baru.</td> {{-- <-- PERUBAHAN 3: Mengubah colspan menjadi 6 --}}
     </tr>
    @endforelse
   </tbody>

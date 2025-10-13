@@ -30,21 +30,19 @@
                 </select>
             </div>
 
-            {{-- ====================================================== --}}
-            {{-- TAMBAHAN: Kolom-kolom detail berdasarkan role --}}
-            {{-- ====================================================== --}}
+            {{-- Kolom detail berdasarkan role --}}
             <div id="student-fields" style="{{ old('role', $member->role) == 'siswa' ? '' : 'display:none;' }}">
                 <div class="mb-4">
                     <label for="nis" class="block text-gray-700 text-sm font-bold mb-2">NIS:</label>
                     <input type="text" id="nis" name="nis" value="{{ old('nis', $member->nis) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
                 </div>
+                
+                {{-- ====================================================== --}}
+                {{-- PERUBAHAN DI SINI: Sesuaikan input 'class' menjadi 'class_name' --}}
+                {{-- ====================================================== --}}
                 <div class="mb-4">
-                    <label for="class" class="block text-gray-700 text-sm font-bold mb-2">Kelas:</label>
-                    <input type="text" id="class" name="class" value="{{ old('class', $member->class) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
-                </div>
-                <div class="mb-4">
-                    <label for="major" class="block text-gray-700 text-sm font-bold mb-2">Jurusan:</label>
-                    <input type="text" id="major" name="major" value="{{ old('major', $member->major) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                    <label for="class_name" class="block text-gray-700 text-sm font-bold mb-2">Kelas:</label>
+                    <input type="text" id="class_name" name="class_name" value="{{ old('class_name', $member->class_name) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
                 </div>
             </div>
 
@@ -87,7 +85,7 @@
 </div>
 
 <script>
-    // Script sederhana untuk menampilkan/menyembunyikan field berdasarkan role
+    // Script ini sudah benar, tidak perlu diubah
     const roleSelect = document.getElementById('role');
     const studentFields = document.getElementById('student-fields');
     const teacherFields = document.getElementById('teacher-fields');

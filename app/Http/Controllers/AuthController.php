@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password; // <-- Tambahkan ini untuk validasi password modern
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -24,26 +24,28 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         // ==========================================================
-        // PERUBAHAN 1: Tambahkan 'class_name' ke dalam validasi
+        // PERUBAHAN 1: Tambahkan 'nis' ke dalam validasi
         // ==========================================================
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'nis' => ['required', 'string', 'max:20', 'unique:users,nis'], // <-- ATURAN BARU
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'class_name' => ['required', 'string', 'max:50'], // <-- ATURAN BARU
+            'class_name' => ['required', 'string', 'max:50'],
             'student_card_photo' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
-            'password' => ['required', 'confirmed', Password::defaults()], // <-- Validasi password disempurnakan
+            'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         // Simpan file foto ke disk 'public' di dalam folder 'student_cards'
         $path = $request->file('student_card_photo')->store('student_cards', 'public');
 
         // ==========================================================
-        // PERUBAHAN 2: Tambahkan 'class_name' saat membuat user baru
+        // PERUBAHAN 2: Tambahkan 'nis' saat membuat user baru
         // ==========================================================
         User::create([
             'name' => $request->name,
+            'nis' => $request->nis, // <-- DATA BARU DISIMPAN
             'email' => $request->email,
-            'class_name' => $request->class_name, // <-- DATA BARU DISIMPAN
+            'class_name' => $request->class_name,
             'password' => Hash::make($request->password),
             'student_card_photo' => $path,
             'role' => 'siswa',
@@ -61,7 +63,6 @@ class AuthController extends Controller
     {
         return view('auth.registration-success');
     }
-
 
     /**
      * Menampilkan halaman form login.

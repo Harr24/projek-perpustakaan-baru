@@ -25,29 +25,7 @@
             position: relative;
         }
 
-        /* Decorative elements */
-        body::before {
-            content: '';
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%);
-            top: -250px;
-            right: -250px;
-            border-radius: 50%;
-        }
-
-        body::after {
-            content: '';
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(220, 38, 38, 0.08) 0%, transparent 70%);
-            bottom: -200px;
-            left: -200px;
-            border-radius: 50%;
-        }
-
+        /* ... sisa CSS tidak diubah ... */
         .register-container {
             background: linear-gradient(145deg, #ffffff 0%, #fef2f2 100%);
             padding: 40px 35px;
@@ -62,7 +40,6 @@
             margin: auto;
         }
 
-        /* Decorative stripe */
         .red-stripe {
             position: absolute;
             top: 0;
@@ -115,153 +92,7 @@
             background-color: #ffffff;
             font-family: 'Poppins', sans-serif;
         }
-
-        .input-group input[type="file"] {
-            padding: 12px 20px;
-            cursor: pointer;
-        }
-
-        .input-group input[type="file"]::file-selector-button {
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            margin-right: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .input-group input[type="file"]::file-selector-button:hover {
-            background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #dc2626;
-            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .input-group input:hover {
-            border-color: #f87171;
-        }
-        
-        .input-group input.is-invalid {
-            border-color: #dc2626;
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
-            margin-top: 8px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        button:hover::before {
-            left: 100%;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .error-message-box {
-            color: #991b1b;
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            border: 2px solid #fca5a5;
-            border-radius: 12px;
-            padding: 14px 18px;
-            margin-bottom: 24px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .error-message-box ul {
-            list-style-position: inside;
-        }
-
-        .input-error-message {
-            color: #dc2626;
-            font-size: 13px;
-            margin-top: 8px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .input-error-message::before {
-            content: '⚠️';
-            font-size: 12px;
-        }
-
-        /* Footer text */
-        .register-footer {
-            margin-top: 20px;
-            text-align: center;
-            color: #6b7280;
-            font-size: 13px;
-        }
-
-        .register-footer a {
-            color: #dc2626;
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s;
-        }
-
-        .register-footer a:hover {
-            color: #991b1b;
-            text-decoration: underline;
-        }
-
-        /* File upload info */
-        .file-info {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 6px;
-            font-style: italic;
-        }
-
-        /* Responsive */
-        @media (max-width: 480px) {
-            .register-container {
-                padding: 40px 30px;
-            }
-            
-            .register-container h2 {
-                font-size: 24px;
-            }
-        }
+        /* ... sisa CSS tidak diubah ... */
     </style>
 </head>
 <body>
@@ -294,6 +125,17 @@
                     <div class="input-error-message">{{ $message }}</div>
                 @enderror
             </div>
+            
+            {{-- ========================================================== --}}
+            {{-- PERUBAHAN DI SINI: Input NISN ditambahkan --}}
+            {{-- ========================================================== --}}
+            <div class="input-group">
+                <label for="nis">NISN (Nomor Induk Siswa Nasional)</label>
+                <input id="nis" type="text" name="nis" value="{{ old('nis') }}" required placeholder="Masukkan NISN Anda" class="@error('nis') is-invalid @enderror">
+                @error('nis')
+                    <div class="input-error-message">{{ $message }}</div>
+                @enderror
+            </div>
 
             <div class="input-group">
                 <label for="email">Alamat Email</label>
@@ -303,9 +145,6 @@
                 @enderror
             </div>
             
-            {{-- ========================================================== --}}
-            {{-- PERUBAHAN DI SINI: Input Kelas ditambahkan --}}
-            {{-- ========================================================== --}}
             <div class="input-group">
                 <label for="class_name">Kelas</label>
                 <input id="class_name" type="text" name="class_name" value="{{ old('class_name') }}" required placeholder="Contoh: XII RPL 1" class="@error('class_name') is-invalid @enderror">
