@@ -6,6 +6,16 @@
     <span class="meta">Mulai Meminjam</span>
 </a>
 
+{{-- ========================================================== --}}
+{{-- MENU BARU: Link untuk Edit Profil --}}
+{{-- ========================================================== --}}
+<a class="nav-item" href="{{ route('profile.edit') }}">
+    <div class="nav-item-main">
+        <span>Edit Profil Saya</span>
+    </div>
+    <span class="meta">Akun</span>
+</a>
+
 {{-- Tampilkan link riwayat HANYA jika pernah meminjam --}}
 @if($hasBorrowings)
 <a class="nav-item" href="{{ route('borrow.history') }}">

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password; // <-- Tambahkan ini untuk validasi password modern
 
 class AuthController extends Controller
 {
@@ -22,29 +23,34 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        // 1. Validasi data input, termasuk file foto
+        // ==========================================================
+        // PERUBAHAN 1: Tambahkan 'class_name' ke dalam validasi
+        // ==========================================================
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'student_card_photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-            'password' => 'required|string|min:8|confirmed',
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'class_name' => ['required', 'string', 'max:50'], // <-- ATURAN BARU
+            'student_card_photo' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'password' => ['required', 'confirmed', Password::defaults()], // <-- Validasi password disempurnakan
         ]);
 
-        // --- PERUBAHAN DI SINI ---
-        // 2. Simpan file foto ke disk 'public' di dalam folder 'student_cards'
+        // Simpan file foto ke disk 'public' di dalam folder 'student_cards'
         $path = $request->file('student_card_photo')->store('student_cards', 'public');
 
-        // 3. Buat user baru dengan status PENDING dan role SISWA
-        $user = User::create([
+        // ==========================================================
+        // PERUBAHAN 2: Tambahkan 'class_name' saat membuat user baru
+        // ==========================================================
+        User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'class_name' => $request->class_name, // <-- DATA BARU DISIMPAN
             'password' => Hash::make($request->password),
             'student_card_photo' => $path,
             'role' => 'siswa',
             'account_status' => 'pending',
         ]);
 
-        // 4. Arahkan ke halaman sukses
+        // Arahkan ke halaman sukses
         return redirect()->route('register.success');
     }
 

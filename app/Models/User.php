@@ -19,10 +19,7 @@ class User extends Authenticatable
     }
 
     /**
-     * ==========================================================
-     * PERBAIKAN: Tambahkan relasi baru ke LearningMaterial
-     * Satu User (Guru) bisa memiliki banyak materi pembelajaran.
-     * ==========================================================
+     * Relasi baru ke LearningMaterial
      */
     public function learningMaterials()
     {
@@ -41,7 +38,10 @@ class User extends Authenticatable
         'profile_photo',
         'student_card_photo',
         'nis',
-        'class',
+        // ==========================================================
+        // PERUBAHAN DI SINI: Ganti 'class' menjadi 'class_name'
+        // ==========================================================
+        'class_name',
         'major',
         'phone_number',
         'subject',
@@ -66,4 +66,3 @@ class User extends Authenticatable
         ];
     }
 }
-

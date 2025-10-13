@@ -6,6 +6,7 @@
     <title>Register Anggota</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* [ SELURUH KODE CSS KAMU YANG SUDAH ADA DI SINI, TIDAK ADA YANG DIUBAH ] */
         * {
             margin: 0;
             padding: 0;
@@ -272,7 +273,6 @@
             <p class="register-subtitle">Lengkapi data diri Anda</p>
         </div>
 
-        <!-- Menampilkan semua error validasi di bagian atas -->
         @if ($errors->any())
             <div class="error-message-box">
                 <p><strong>Oops! Terjadi kesalahan:</strong></p>
@@ -284,13 +284,11 @@
             </div>
         @endif
 
-        {{-- PERUBAHAN 1: Menggunakan route helper dan menambahkan @csrf --}}
         <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
             @csrf
 
             <div class="input-group">
                 <label for="name">Nama Lengkap</label>
-                {{-- PERUBAHAN 2: Menambahkan old() dan @error --}}
                 <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus placeholder="Masukkan nama lengkap" class="@error('name') is-invalid @enderror">
                 @error('name')
                     <div class="input-error-message">{{ $message }}</div>
@@ -301,6 +299,17 @@
                 <label for="email">Alamat Email</label>
                 <input id="email" type="email" name="email" value="{{ old('email') }}" required placeholder="nama@email.com" class="@error('email') is-invalid @enderror">
                 @error('email')
+                    <div class="input-error-message">{{ $message }}</div>
+                @enderror
+            </div>
+            
+            {{-- ========================================================== --}}
+            {{-- PERUBAHAN DI SINI: Input Kelas ditambahkan --}}
+            {{-- ========================================================== --}}
+            <div class="input-group">
+                <label for="class_name">Kelas</label>
+                <input id="class_name" type="text" name="class_name" value="{{ old('class_name') }}" required placeholder="Contoh: XII RPL 1" class="@error('class_name') is-invalid @enderror">
+                @error('class_name')
                     <div class="input-error-message">{{ $message }}</div>
                 @enderror
             </div>
@@ -336,4 +345,3 @@
     </div>
 </body>
 </html>
-
