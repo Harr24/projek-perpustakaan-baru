@@ -2,9 +2,15 @@
 
 @section('content')
 <div class="container-fluid px-3 px-md-4 py-4">
-    <h1 class="h3 fw-bold mb-4">Edit Profil Saya</h1>
 
-    {{-- Notifikasi Sukses --}}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 fw-bold mb-0">Edit Profil Saya</h1>
+        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>
+            Kembali ke Dashboard
+        </a>
+    </div>
+
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>
@@ -15,7 +21,6 @@
 
     <div class="card shadow-sm">
         <div class="card-body p-4">
-            {{-- PENTING: enctype="multipart/form-data" wajib untuk upload file --}}
             <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
@@ -37,7 +42,6 @@
 
                     {{-- Bagian Data Diri --}}
                     <div class="col-md-8">
-                        {{-- Nama Lengkap --}}
                         <div class="mb-3">
                             <label for="name" class="form-label">Nama Lengkap</label>
                             <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $user->name) }}" required>
@@ -46,11 +50,21 @@
                             @enderror
                         </div>
 
-                        {{-- Email --}}
                         <div class="mb-3">
                             <label for="email" class="form-label">Alamat Email</label>
                             <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $user->email) }}" required>
                              @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- ========================================================== --}}
+                        {{-- PERUBAHAN DI SINI: Tambahkan Input Nomor WhatsApp --}}
+                        {{-- ========================================================== --}}
+                        <div class="mb-3">
+                            <label for="phone_number" class="form-label">Nomor WhatsApp</label>
+                            <input type="tel" class="form-control @error('phone_number') is-invalid @enderror" id="phone_number" name="phone_number" value="{{ old('phone_number', $user->phone_number) }}" placeholder="Contoh: 081234567890">
+                            @error('phone_number')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

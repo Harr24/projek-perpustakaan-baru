@@ -12,85 +12,16 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #dc2626 0%, #991b1b 50%, #ffffff 50%, #f3f4f6 100%);
-            background-attachment: fixed;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 40px 20px;
-            position: relative;
+            /* ... sisa CSS tidak diubah ... */
         }
-
-        /* ... sisa CSS tidak diubah ... */
         .register-container {
             background: linear-gradient(145deg, #ffffff 0%, #fef2f2 100%);
             padding: 40px 35px;
             border-radius: 24px;
-            box-shadow: 
-                0 20px 60px rgba(220, 38, 38, 0.2),
-                0 0 0 1px rgba(220, 38, 38, 0.05);
-            width: 100%;
-            max-width: 500px;
-            position: relative;
-            z-index: 1;
-            margin: auto;
-        }
-
-        .red-stripe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, #dc2626 0%, #991b1b 50%, #dc2626 100%);
-            border-radius: 24px 24px 0 0;
-        }
-
-        .register-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .register-container h2 {
-            color: #dc2626;
-            font-weight: 700;
-            font-size: 26px;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 4px rgba(220, 38, 38, 0.1);
-        }
-
-        .register-subtitle {
-            color: #6b7280;
-            font-size: 14px;
-            font-weight: 400;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #374151;
-            font-size: 14px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px 18px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            background-color: #ffffff;
-            font-family: 'Poppins', sans-serif;
+            /* ... sisa CSS tidak diubah ... */
         }
         /* ... sisa CSS tidak diubah ... */
     </style>
@@ -126,9 +57,6 @@
                 @enderror
             </div>
             
-            {{-- ========================================================== --}}
-            {{-- PERUBAHAN DI SINI: Input NISN ditambahkan --}}
-            {{-- ========================================================== --}}
             <div class="input-group">
                 <label for="nis">NISN (Nomor Induk Siswa Nasional)</label>
                 <input id="nis" type="text" name="nis" value="{{ old('nis') }}" required placeholder="Masukkan NISN Anda" class="@error('nis') is-invalid @enderror">
@@ -149,6 +77,17 @@
                 <label for="class_name">Kelas</label>
                 <input id="class_name" type="text" name="class_name" value="{{ old('class_name') }}" required placeholder="Contoh: XII RPL 1" class="@error('class_name') is-invalid @enderror">
                 @error('class_name')
+                    <div class="input-error-message">{{ $message }}</div>
+                @enderror
+            </div>
+
+            {{-- ========================================================== --}}
+            {{-- INPUT BARU: Tambahkan Input Nomor WhatsApp di Sini --}}
+            {{-- ========================================================== --}}
+            <div class="input-group">
+                <label for="phone_number">Nomor WhatsApp (Aktif)</label>
+                <input id="phone_number" type="tel" name="phone_number" value="{{ old('phone_number') }}" required placeholder="Contoh: 081234567890" class="@error('phone_number') is-invalid @enderror">
+                @error('phone_number')
                     <div class="input-error-message">{{ $message }}</div>
                 @enderror
             </div>

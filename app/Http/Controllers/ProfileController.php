@@ -17,8 +17,6 @@ class ProfileController extends Controller
     public function edit()
     {
         $user = Auth::user();
-        
-        // Mengarahkan ke view profil yang lebih umum, bukan spesifik superadmin
         return view('profile.edit', compact('user'));
     }
 
@@ -29,21 +27,36 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        // 1. VALIDASI: Menambahkan validasi untuk 'class_name'
+        // ==========================================================
+        // PERUBAHAN 1: Tambahkan validasi untuk 'phone_number'
+        // ==========================================================
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            // 'class_name' hanya wajib diisi jika role pengguna adalah 'siswa'
+            // Aturan baru: nomor telepon harus unik, kecuali untuk user ini sendiri
+            'phone_number' => ['nullable', 'string', 'max:15', Rule::unique('users')->ignore($user->id)],
             'class_name' => [Rule::requiredIf($user->role === 'siswa'), 'nullable', 'string', 'max:50'],
             'password' => ['nullable', 'confirmed', Password::min(8)],
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // 2. PROSES DATA: Memperbarui data dasar
+        // Proses foto jika ada
+        if ($request->hasFile('profile_photo')) {
+            if ($user->profile_photo) {
+                Storage::disk('public')->delete($user->profile_photo);
+            }
+            $path = $request->file('profile_photo')->store('profile-photos', 'public');
+            $user->profile_photo = $path;
+        }
+
+        // ==========================================================
+        // PERUBAHAN 2: Simpan data dasar, termasuk 'phone_number'
+        // ==========================================================
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->phone_number = $request->phone_number; // <-- SIMPAN NOMOR TELEPON
 
-        // Tambahkan logika untuk menyimpan kelas HANYA jika pengguna adalah siswa
+        // Simpan data kelas HANYA jika pengguna adalah siswa
         if ($user->role === 'siswa') {
             $user->class_name = $request->class_name;
         }
@@ -53,18 +66,7 @@ class ProfileController extends Controller
             $user->password = Hash::make($request->password);
         }
 
-        // 3. PROSES FOTO: Logika upload foto yang lebih baik
-        if ($request->hasFile('profile_photo')) {
-            // Hapus foto lama jika ada
-            if ($user->profile_photo) {
-                Storage::disk('public')->delete($user->profile_photo);
-            }
-            // Simpan foto baru di 'storage/app/public/profile-photos'
-            $path = $request->file('profile_photo')->store('profile-photos', 'public');
-            $user->profile_photo = $path;
-        }
-
-        // 4. SIMPAN SEMUA PERUBAHAN
+        // Simpan semua perubahan
         $user->save();
 
         return redirect()->route('profile.edit')->with('success', 'Profil berhasil diperbarui!');
