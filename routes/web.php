@@ -15,11 +15,10 @@ use App\Http\Controllers\Admin\Petugas\TeacherController;
 use App\Http\Controllers\Admin\Petugas\LoanApprovalController;
 use App\Http\Controllers\Admin\Petugas\ReturnController;
 use App\Http\Controllers\Admin\Petugas\FineController;
-// ==========================================================
-// TAMBAHAN: Import Controller baru untuk Materi Pembelajaran
-// ==========================================================
+
 use App\Http\Controllers\Guru\LearningMaterialController;
 use App\Http\Controllers\Admin\Superadmin\HeroSliderController;
+use App\Http\Controllers\Admin\Petugas\BorrowingReportController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -68,11 +67,7 @@ Route::middleware('auth')->group(function () {
         
         Route::resource('genres', GenreController::class);
         Route::resource('books', BookController::class);
-
-        // ==========================================================
-        // PERUBAHAN DI SINI: Menggunakan Route::resource untuk Guru
-        // ==========================================================
-        Route::resource('teachers', TeacherController::class)->except(['show']); // Tidak menggunakan method 'show'
+        Route::resource('teachers', TeacherController::class)->except(['show']);
 
         Route::get('/approvals', [LoanApprovalController::class, 'index'])->name('approvals.index');
         Route::post('/approvals/{borrowing}/approve', [LoanApprovalController::class, 'approve'])->name('approvals.approve');
@@ -86,6 +81,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
+
+        // ==========================================================
+        // RUTE BARU: Laporan Peminjaman
+        // ==========================================================
+        Route::get('/reports/borrowings', [BorrowingReportController::class, 'index'])->name('reports.borrowings.index');
+        Route::get('/reports/borrowings/export', [BorrowingReportController::class, 'export'])->name('reports.borrowings.export');
+        Route::get('/reports/users/{user}/history', [BorrowingReportController::class, 'showUserHistory'])->name('reports.users.history');
     });
 
     // ==========================================================
@@ -99,7 +101,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
         Route::resource('petugas', SuperadminPetugasController::class);
         Route::resource('members', MemberController::class)->except(['create', 'store']);
-        // PERBAIKAN: Menggunakan sintaks array yang konsisten
         Route::resource('sliders', HeroSliderController::class);
     });
 
