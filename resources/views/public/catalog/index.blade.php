@@ -88,7 +88,6 @@
             </div>
             
             @if($heroSliders->count() > 1)
-                {{-- PERBAIKAN: Tombol panah slider yang sudah benar --}}
                 <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Previous</span></button>
                 <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Next</span></button>
             @endif
@@ -143,9 +142,6 @@
             </div>
         </div>
         
-        {{-- ========================================================== --}}
-        {{-- BAGIAN YANG DIKEMBALIKAN: Materi Pembelajaran --}}
-        {{-- ========================================================== --}}
         @if(isset($learningMaterials) && $learningMaterials->isNotEmpty())
         <div class="container py-5">
             <div class="text-center mb-5">
@@ -175,7 +171,6 @@
         </div>
         @endif
 
-        {{-- Bagian lain yang sudah ada --}}
         <div class="bg-white py-5 mt-5 shadow-sm">
              <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -197,6 +192,9 @@
             </div>
         </div>
 
+        {{-- ========================================================== --}}
+        {{-- BAGIAN YANG DIUBAH ADA DI BAWAH INI --}}
+        {{-- ========================================================== --}}
         <div class="top-borrowers-section mt-5 py-5">
             <div class="container">
                 <div class="text-center mb-5">
@@ -208,15 +206,27 @@
                         <div class="col-md-6 col-lg-4">
                             <div class="card text-center h-100 shadow-sm borrower-card bg-white">
                                 <div class="card-body p-4">
-                                    <div class="avatar mx-auto mb-3">{{ strtoupper(substr($borrower->user->name, 0, 2)) }}</div>
+
+                                    {{-- PERUBAHAN 1: Tampilkan Foto Profil atau Inisial --}}
+                                    @if($borrower->user->profile_photo)
+                                        <img src="{{ asset('storage/' . $borrower->user->profile_photo) }}" alt="{{ $borrower->user->name }}" class="avatar mx-auto mb-3" style="object-fit: cover;">
+                                    @else
+                                        <div class="avatar mx-auto mb-3">{{ strtoupper(substr($borrower->user->name, 0, 2)) }}</div>
+                                    @endif
+
                                     <h5 class="card-title fw-bold text-danger">{{ $borrower->user->name }}</h5>
+                                    
+                                    {{-- PERUBAHAN 2: Tampilkan Kelas atau Role --}}
                                     <p class="text-muted mb-3 small">
-                                        @if(isset($borrower->user->class) && isset($borrower->user->major))
-                                            Siswa Kelas {{ $borrower->user->class }} {{ $borrower->user->major }}
+                                        @if($borrower->user->role === 'siswa' && $borrower->user->class_name)
+                                            {{ $borrower->user->class_name }}
+                                        @elseif($borrower->user->role === 'guru')
+                                            Guru
                                         @else
                                             Anggota Perpustakaan
                                         @endif
                                     </p>
+
                                     <div class="stats d-flex justify-content-center gap-4 border-top pt-3">
                                         <div>
                                             <div class="fw-bolder fs-4 text-primary">{{ $borrower->loans_count }}</div>
@@ -241,4 +251,3 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
