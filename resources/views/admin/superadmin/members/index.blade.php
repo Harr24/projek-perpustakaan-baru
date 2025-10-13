@@ -6,7 +6,6 @@
     <div class="flex flex-col md:flex-row justify-between md:items-center mb-8 gap-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">Kelola Anggota</h1>
-            {{-- Teks deskripsi diperbarui sesuai informasi Anda --}}
             <p class="text-gray-500 mt-1">Lihat, edit, atau hapus data anggota siswa dan guru.</p>
         </div>
         <a href="{{ route('dashboard') }}" class="inline-flex items-center bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:-translate-y-px">
@@ -38,7 +37,12 @@
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase">Nama</th>
+                        {{-- ====================================================== --}}
+                        {{-- PERUBAHAN 1: Menambahkan judul kolom baru --}}
+                        {{-- ====================================================== --}}
+                        <th class="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase">NISN</th>
                         <th class="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
+                        <th class="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase">Kelas</th>
                         <th class="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase">Role</th>
                         <th class="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
                         <th class="py-3 px-4 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
@@ -48,11 +52,27 @@
                     @forelse ($members as $member)
                     <tr class="border-b hover:bg-gray-50">
                         <td class="py-3 px-4 font-medium">{{ $member->name }}</td>
+                        {{-- ====================================================== --}}
+                        {{-- PERUBAHAN 2: Menampilkan data NISN dan Kelas --}}
+                        {{-- ====================================================== --}}
+                        <td class="py-3 px-4">
+                            {{-- Tampilkan NISN hanya jika role-nya siswa --}}
+                            @if ($member->role == 'siswa')
+                                {{ $member->nis ?? 'N/A' }}
+                            @else
+                                <span class="text-gray-400">-</span>
+                            @endif
+                        </td>
                         <td class="py-3 px-4">{{ $member->email }}</td>
                         <td class="py-3 px-4">
-                            {{-- ========================================================== --}}
-                            {{-- PERBAIKAN: Logika disederhanakan hanya untuk guru dan siswa --}}
-                            {{-- ========================================================== --}}
+                            {{-- Tampilkan Kelas hanya jika role-nya siswa --}}
+                             @if ($member->role == 'siswa')
+                                {{ $member->class_name ?? 'N/A' }}
+                            @else
+                                <span class="text-gray-400">-</span>
+                            @endif
+                        </td>
+                        <td class="py-3 px-4">
                             <span class="capitalize px-3 py-1 text-xs font-semibold rounded-full 
                                 @if($member->role == 'guru') bg-purple-100 text-purple-800
                                 @else bg-gray-100 text-gray-800 @endif">
@@ -73,7 +93,10 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="py-4 px-4 text-center text-gray-500">Tidak ada anggota yang ditemukan.</td>
+                        {{-- ====================================================== --}}
+                        {{-- PERUBAHAN 3: Menyesuaikan colspan --}}
+                        {{-- ====================================================== --}}
+                        <td colspan="7" class="py-4 px-4 text-center text-gray-500">Tidak ada anggota yang ditemukan.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -86,4 +109,3 @@
     </div>
 </div>
 @endsection
-
