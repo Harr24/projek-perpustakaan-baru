@@ -19,9 +19,6 @@
             <h1 class="h3 fw-bold mb-0">Manajemen Denda</h1>
             <p class="text-muted mb-0">Daftar denda keterlambatan yang belum lunas.</p>
         </div>
-        {{-- =============================================== --}}
-        {{-- PERUBAHAN DI SINI: Menambahkan tombol Riwayat  --}}
-        {{-- =============================================== --}}
         <div class="d-flex gap-2">
             <a href="{{ route('admin.petugas.fines.history') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-clock-history"></i> Lihat Riwayat Denda
@@ -53,6 +50,11 @@
                     <thead class="table-light">
                         <tr>
                             <th class="py-3 px-3">Nama Peminjam</th>
+                            {{-- ========================================================== --}}
+                            {{-- PERUBAHAN 1: Menambahkan judul kolom baru --}}
+                            {{-- ========================================================== --}}
+                            <th class="py-3 px-3">Kelas</th>
+                            <th class="py-3 px-3">Kontak (WA)</th>
                             <th class="py-3 px-3">Judul Buku</th>
                             <th class="py-3 px-3">Jumlah Denda</th>
                             <th class="py-3 px-3">Telat (Hari Kerja)</th>
@@ -63,6 +65,23 @@
                         @forelse ($unpaidFines as $fine)
                             <tr>
                                 <td class="px-3">{{ $fine->user->name }}</td>
+                                {{-- ========================================================== --}}
+                                {{-- PERUBAHAN 2: Menampilkan data kelas dan kontak --}}
+                                {{-- ========================================================== --}}
+                                <td class="px-3">{{ $fine->user->class_name ?? 'N/A' }}</td>
+                                <td class="px-3">
+                                    @if($fine->user->phone_number)
+                                        @php
+                                            $cleanedPhone = preg_replace('/[^0-9]/', '', $fine->user->phone_number);
+                                            $waNumber = (substr($cleanedPhone, 0, 1) === '0') ? '62' . substr($cleanedPhone, 1) : $cleanedPhone;
+                                        @endphp
+                                        <a href="https://wa.me/{{ $waNumber }}" target="_blank" class="btn btn-sm btn-outline-success" title="Chat {{ $fine->user->name }} di WhatsApp">
+                                            <i class="bi bi-whatsapp"></i> Chat
+                                        </a>
+                                    @else
+                                        <span class="text-muted small">N/A</span>
+                                    @endif
+                                </td>
                                 <td class="px-3">
                                     {{ $fine->bookCopy->book->title }}
                                     <small class="d-block text-muted">{{ $fine->bookCopy->book_code }}</small>
@@ -78,7 +97,10 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
+                                {{-- ========================================================== --}}
+                                {{-- PERUBAHAN 3: Menyesuaikan colspan --}}
+                                {{-- ========================================================== --}}
+                                <td colspan="7" class="text-center text-muted py-4">
                                     Tidak ada denda yang belum lunas.
                                 </td>
                             </tr>

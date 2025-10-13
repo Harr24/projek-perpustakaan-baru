@@ -6,6 +6,10 @@
     <title>Riwayat Denda</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -18,9 +22,6 @@
         <a href="{{ route('admin.petugas.fines.index') }}" class="btn btn-outline-danger">Kembali ke Denda Aktif</a>
     </div>
 
-    {{-- ========================================================== --}}
-    {{-- BAGIAN BARU: Form Filter --}}
-    {{-- ========================================================== --}}
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ route('admin.petugas.fines.history') }}" method="GET" class="row g-3 align-items-end">
@@ -56,6 +57,11 @@
                     <thead class="table-light">
                         <tr>
                             <th class="py-3 px-3">Nama Peminjam</th>
+                            {{-- ========================================================== --}}
+                            {{-- PERUBAHAN 1: Menambahkan judul kolom baru --}}
+                            {{-- ========================================================== --}}
+                            <th class="py-3 px-3">Kelas</th>
+                            <th class="py-3 px-3">Kontak (WA)</th>
                             <th class="py-3 px-3">Judul Buku</th>
                             <th class="py-3 px-3">Jumlah Denda</th>
                             <th class="py-3 px-3">Tanggal Lunas</th>
@@ -65,6 +71,23 @@
                         @forelse ($paidFines as $fine)
                             <tr>
                                 <td class="px-3">{{ $fine->user->name }}</td>
+                                {{-- ========================================================== --}}
+                                {{-- PERUBAHAN 2: Menampilkan data kelas dan kontak --}}
+                                {{-- ========================================================== --}}
+                                <td class="px-3">{{ $fine->user->class_name ?? 'N/A' }}</td>
+                                <td class="px-3">
+                                    @if($fine->user->phone_number)
+                                        @php
+                                            $cleanedPhone = preg_replace('/[^0-9]/', '', $fine->user->phone_number);
+                                            $waNumber = (substr($cleanedPhone, 0, 1) === '0') ? '62' . substr($cleanedPhone, 1) : $cleanedPhone;
+                                        @endphp
+                                        <a href="https://wa.me/{{ $waNumber }}" target="_blank" class="btn btn-sm btn-outline-success" title="Chat {{ $fine->user->name }} di WhatsApp">
+                                            <i class="bi bi-whatsapp"></i>
+                                        </a>
+                                    @else
+                                        <span class="text-muted small">N/A</span>
+                                    @endif
+                                </td>
                                 <td class="px-3">
                                     {{ $fine->bookCopy->book->title }}
                                     <small class="d-block text-muted">{{ $fine->bookCopy->book_code }}</small>
@@ -74,7 +97,10 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">
+                                {{-- ========================================================== --}}
+                                {{-- PERUBAHAN 3: Menyesuaikan colspan --}}
+                                {{-- ========================================================== --}}
+                                <td colspan="6" class="text-center text-muted py-4">
                                     Tidak ada data riwayat denda yang cocok dengan filter.
                                 </td>
                             </tr>

@@ -24,28 +24,30 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         // ==========================================================
-        // PERUBAHAN 1: Tambahkan 'nis' ke dalam validasi
+        // PERUBAHAN 1: Tambahkan 'phone_number' ke dalam validasi
         // ==========================================================
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'nis' => ['required', 'string', 'max:20', 'unique:users,nis'], // <-- ATURAN BARU
+            'nis' => ['required', 'string', 'max:20', 'unique:users,nis'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'class_name' => ['required', 'string', 'max:50'],
+            'phone_number' => ['required', 'string', 'max:15', 'unique:users,phone_number'], // <-- ATURAN BARU
             'student_card_photo' => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
         // Simpan file foto ke disk 'public' di dalam folder 'student_cards'
-        $path = $request->file('student_card_photo')->store('student_cards', 'public');
+        $path = $request->file('student_card_photo')->store('student-cards', 'public');
 
         // ==========================================================
-        // PERUBAHAN 2: Tambahkan 'nis' saat membuat user baru
+        // PERUBAHAN 2: Tambahkan 'phone_number' saat membuat user baru
         // ==========================================================
         User::create([
             'name' => $request->name,
-            'nis' => $request->nis, // <-- DATA BARU DISIMPAN
+            'nis' => $request->nis,
             'email' => $request->email,
             'class_name' => $request->class_name,
+            'phone_number' => $request->phone_number, // <-- DATA BARU DISIMPAN
             'password' => Hash::make($request->password),
             'student_card_photo' => $path,
             'role' => 'siswa',

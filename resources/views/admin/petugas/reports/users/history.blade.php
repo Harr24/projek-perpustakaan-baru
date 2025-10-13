@@ -20,7 +20,13 @@
                 <div class="col-md-8">
                     <h5 class="card-title fw-bold">{{ $user->name }}</h5>
                     <p class="card-text text-muted mb-2"><i class="bi bi-envelope-fill me-2"></i>{{ $user->email }}</p>
-                    <p class="card-text text-muted mb-0"><i class="bi bi-person-badge-fill me-2"></i>{{ $user->class_name ?? 'Kelas tidak tersedia' }}</p>
+                    <p class="card-text text-muted mb-2"><i class="bi bi-person-badge-fill me-2"></i>{{ $user->class_name ?? 'Kelas tidak tersedia' }}</p>
+                    
+                    {{-- ========================================================== --}}
+                    {{-- PERUBAHAN DI SINI: Tambahkan Nomor WhatsApp --}}
+                    {{-- ========================================================== --}}
+                    <p class="card-text text-muted mb-0"><i class="bi bi-whatsapp me-2"></i>{{ $user->phone_number ?? 'Nomor tidak tersedia' }}</p>
+                    
                 </div>
                 <div class="col-md-4 text-md-end mt-3 mt-md-0">
                     <span class="badge fs-6 bg-info">{{ ucfirst($user->role) }}</span>
@@ -56,9 +62,9 @@
                                 <td>{{ \Carbon\Carbon::parse($item->borrowed_at)->format('d M Y') }}</td>
                                 <td>{{ $item->returned_at ? \Carbon\Carbon::parse($item->returned_at)->format('d M Y') : 'Belum Kembali' }}</td>
                                 <td class="pe-4">
-                                    @if($item->status == 'dikembalikan')
+                                    @if($item->status == 'returned' || $item->status == 'dikembalikan')
                                         <span class="badge bg-success">Dikembalikan</span>
-                                    @elseif($item->status == 'dipinjam')
+                                    @elseif($item->status == 'borrowed' || $item->status == 'dipinjam')
                                         <span class="badge bg-warning text-dark">Dipinjam</span>
                                     @else
                                         <span class="badge bg-secondary">{{ ucfirst($item->status) }}</span>

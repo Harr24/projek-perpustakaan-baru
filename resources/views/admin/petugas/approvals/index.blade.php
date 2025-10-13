@@ -31,7 +31,7 @@
         </div>
     @endif
 
-    {{-- Form untuk Aksi Massal (diletakkan terpisah dari tabel) --}}
+    {{-- Form untuk Aksi Massal --}}
     <form action="{{ route('admin.petugas.approvals.approveMultiple') }}" method="POST" id="bulk-approve-form">
         @csrf
     </form>
@@ -44,7 +44,6 @@
                     Peminjaman Menunggu Konfirmasi
                     <span class="badge bg-warning text-dark ms-2">{{ $pendingBorrowings->count() }}</span>
                 </h5>
-                {{-- Tombol ini secara logis terhubung ke form di atas melalui atribut 'form' --}}
                 <button type="submit" form="bulk-approve-form" class="btn btn-primary btn-sm">
                     <i class="bi bi-check2-all me-1"></i> Konfirmasi yang Dipilih
                 </button>
@@ -58,6 +57,10 @@
                         <tr>
                             <th class="py-3 ps-4" style="width: 5%;"><input class="form-check-input" type="checkbox" id="selectAll"></th>
                             <th class="py-3">Nama Peminjam</th>
+                            {{-- ========================================================== --}}
+                            {{-- PERUBAHAN 1: Menambahkan judul kolom "Kelas" --}}
+                            {{-- ========================================================== --}}
+                            <th class="py-3">Kelas</th>
                             <th class="py-3">Judul Buku</th>
                             <th class="py-3">Kode Buku</th>
                             <th class="py-3">Tanggal Pengajuan</th>
@@ -68,7 +71,6 @@
                         @forelse ($pendingBorrowings as $borrow)
                         <tr>
                             <td class="ps-4">
-                                {{-- Checkbox ini juga terhubung ke form massal melalui atribut 'form' --}}
                                 <input class="form-check-input" type="checkbox" name="borrowing_ids[]" value="{{ $borrow->id }}" form="bulk-approve-form">
                             </td>
                             <td>
@@ -79,13 +81,16 @@
                                     <span class="fw-medium">{{ $borrow->user->name }}</span>
                                 </div>
                             </td>
+                            {{-- ========================================================== --}}
+                            {{-- PERUBAHAN 2: Menampilkan data kelas peminjam --}}
+                            {{-- ========================================================== --}}
+                            <td>{{ $borrow->user->class_name ?? 'N/A' }}</td>
                             <td><span class="text-dark">{{ $borrow->bookCopy->book->title }}</span></td>
                             <td><span class="badge bg-secondary">{{ $borrow->bookCopy->book_code }}</span></td>
                             <td>
                                 <small class="text-muted"><i class="bi bi-calendar3 me-1"></i> {{ $borrow->created_at->format('d M Y, H:i') }}</small>
                             </td>
                             <td class="pe-4 text-end">
-                                {{-- Form individual ini sekarang valid karena tidak lagi berada di dalam form lain --}}
                                 <div class="d-flex gap-2 justify-content-end">
                                     <form action="{{ route('admin.petugas.approvals.approve', $borrow) }}" method="POST">
                                         @csrf
@@ -100,7 +105,10 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center py-5">
+                            {{-- ========================================================== --}}
+                            {{-- PERUBAHAN 3: Menyesuaikan colspan --}}
+                            {{-- ========================================================== --}}
+                            <td colspan="7" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="bi bi-inbox display-4 d-block mb-3 opacity-25"></i>
                                     <p class="mb-0">Tidak ada pengajuan pinjaman baru.</p>
@@ -120,7 +128,6 @@
 <script>
     // Skrip untuk fungsionalitas "Pilih Semua"
     document.getElementById('selectAll').addEventListener('click', function(event) {
-        // Memilih hanya checkbox yang merupakan bagian dari form massal
         const checkboxes = document.querySelectorAll('input[form="bulk-approve-form"]');
         checkboxes.forEach(checkbox => {
             checkbox.checked = event.target.checked;
@@ -128,4 +135,3 @@
     });
 </script>
 @endpush
-
