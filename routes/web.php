@@ -15,7 +15,6 @@ use App\Http\Controllers\Admin\Petugas\TeacherController;
 use App\Http\Controllers\Admin\Petugas\LoanApprovalController;
 use App\Http\Controllers\Admin\Petugas\ReturnController;
 use App\Http\Controllers\Admin\Petugas\FineController;
-
 use App\Http\Controllers\Guru\LearningMaterialController;
 use App\Http\Controllers\Admin\Superadmin\HeroSliderController;
 use App\Http\Controllers\Admin\Petugas\BorrowingReportController;
@@ -31,6 +30,11 @@ Route::get('/', [BookCatalogController::class, 'index'])->name('catalog.index');
 Route::get('/catalog/all', [BookCatalogController::class, 'allBooks'])->name('catalog.all');
 Route::get('/book/{book}', [BookCatalogController::class, 'show'])->name('catalog.show');
 Route::get('/book-cover/{book}', [BookCatalogController::class, 'showCover'])->name('book.cover');
+
+// ==========================================================
+// RUTE BARU: Untuk halaman Pustakawan
+// ==========================================================
+Route::get('/pustakawan', [BookCatalogController::class, 'showLibrarians'])->name('catalog.librarians');
 
 
 Route::middleware('guest')->group(function () {
@@ -51,14 +55,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    // ==========================================================
-    // RUTE UNTUK PENGAJUAN PINJAMAN (SUDAH DIPERBAIKI)
-    // ==========================================================
     Route::get('/borrow/request/{book_copy}', [BorrowingController::class, 'create'])->name('borrow.create');
-    Route::post('/borrow/{book_copy}', [BorrowingController::class, 'store'])->name('borrow.store'); // HANYA ADA SATU DEFINISI INI
+    Route::post('/borrow/{book_copy}', [BorrowingController::class, 'store'])->name('borrow.store');
     Route::get('/my-borrowings', [BorrowingController::class, 'index'])->name('borrow.history');
     Route::post('/borrow/bulk', [BorrowingController::class, 'storeBulk'])->name('borrow.store.bulk');
-    // ==========================================================
 
     // == RUTE KHUSUS UNTUK ROLE PETUGAS ==
     Route::middleware('role:petugas')->prefix('admin/petugas')->name('admin.petugas.')->group(function () {

@@ -27,7 +27,7 @@
                 <h6 class="footer-heading mb-3">Informasi</h6>
                 <ul class="footer-links">
                     <li><a href="#"><i class="bi bi-chevron-right"></i> Layanan</a></li>
-                    <li><a href="#"><i class="bi bi-chevron-right"></i> Pustakawan</a></li>
+                    <li><a href="{{ route('catalog.librarians') }}"><i class="bi bi-chevron-right"></i> Pustakawan</a></li>
                     <li><a href="#"><i class="bi bi-chevron-right"></i> Area Anggota</a></li>
                 </ul>
             </div>

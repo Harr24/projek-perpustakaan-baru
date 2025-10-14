@@ -8,6 +8,7 @@ use App\Models\Genre;
 use App\Models\HeroSlider;
 use App\Models\Borrowing;
 use App\Models\LearningMaterial;
+use App\Models\User; // <-- PERUBAHAN: Tambahkan import model User
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -69,11 +70,6 @@ class BookCatalogController extends Controller
         return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'learningMaterials'));
     }
 
-    /**
-     * ==========================================================
-     * PERUBAHAN DI SINI: Method allBooks diperbarui
-     * ==========================================================
-     */
     public function allBooks(Request $request)
     {
         // 1. Ambil semua genre untuk ditampilkan sebagai filter di view
@@ -142,5 +138,21 @@ class BookCatalogController extends Controller
         $file = Storage::disk('public')->get($path);
         $type = Storage::disk('public')->mimeType($path);
         return response($file)->header('Content-Type', $type);
+    }
+    
+    /**
+     * ==========================================================
+     * METHOD BARU: Untuk menampilkan halaman Pustakawan
+     * ==========================================================
+     */
+    public function showLibrarians()
+    {
+        // Mengambil semua user yang role-nya adalah 'petugas' atau 'guru'
+        $staff = User::whereIn('role', ['petugas', 'guru'])
+                       ->orderBy('name', 'asc')
+                       ->get();
+
+        // Mengirim data staff ke view 'public.librarians'
+        return view('public.librarians', compact('staff'));
     }
 }
