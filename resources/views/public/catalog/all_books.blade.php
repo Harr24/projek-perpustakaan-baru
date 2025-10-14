@@ -66,6 +66,11 @@
 
     <main>
         <div class="container header-section mb-4">
+
+        <a href="{{ route('catalog.index') }}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-house-door-fill"></i> Kembali ke Beranda
+        </a>
+
             <h1 class="display-5 fw-bold text-center">Seluruh Katalog Buku</h1>
             <p class="lead text-muted text-center">Jelajahi, cari, dan saring semua koleksi buku kami.</p>
         </div>

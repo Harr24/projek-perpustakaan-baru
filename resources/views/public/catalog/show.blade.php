@@ -30,6 +30,9 @@
                 Perpustakaan Multicomp
             </a>
             <div>
+                 <a href="{{ route('catalog.index') }}" class="btn btn-sm btn-outline-secondary me-2">
+                    <i class="bi bi-house-door-fill"></i> Kembali ke Beranda
+                </a>
                 @auth
                     <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-secondary">Dashboard</a>
                 @else
@@ -53,7 +56,10 @@
                 <div class="row">
                     {{-- Kolom Kiri: Gambar Sampul --}}
                     <div class="col-md-4 text-center mb-4 mb-md-0">
-                        <img src="{{ $book->cover_image_url }}" 
+                        {{-- ========================================================== --}}
+                        {{-- PERUBAHAN HANYA DI BARIS INI --}}
+                        {{-- ========================================================== --}}
+                        <img src="{{ $book->cover_image ? asset('storage/' . $book->cover_image) : 'https://placehold.co/300x450/E91E63/FFFFFF?text=No+Cover' }}" 
                              class="cover-image" alt="Sampul {{ $book->title }}">
                     </div>
 
@@ -80,9 +86,7 @@
                 <hr class="my-4">
 
                 @auth
-                    {{-- ========================================================== --}}
-                    {{-- BAGIAN BARU: FORMULIR PINJAM BUKU PAKET UNTUK GURU      --}}
-                    {{-- ========================================================== --}}
+                    {{-- Form Pinjam Buku Paket untuk Guru --}}
                     @if(Auth::user()->role == 'guru' && $book->is_textbook)
                         <div class="card bg-light border-2 border-danger border-opacity-25 mb-4">
                             <div class="card-body">
@@ -111,9 +115,7 @@
                         </div>
                     @endif
 
-                    {{-- ========================================================== --}}
-                    {{-- BAGIAN LAMA: TABEL PINJAM SATUAN                        --}}
-                    {{-- ========================================================== --}}
+                    {{-- Tabel Pinjam Satuan --}}
                     <h3 class="h5 fw-bold mt-4">Daftar Salinan Buku (Pinjam Satuan)</h3>
                     <div class="table-responsive">
                         <table class="table table-bordered table-hover">

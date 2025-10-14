@@ -1,3 +1,5 @@
+
+
 <!doctype html>
 <html lang="id">
 <head>
@@ -244,10 +246,7 @@
         </div>
     </main>
 
-    <footer class="text-center py-4 text-muted small mt-5">
-        <div class="container">&copy; {{ date('Y') }} Perpustakaan Multicomp. All rights reserved.</div>
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+@include('layouts.footer')
 </html>
