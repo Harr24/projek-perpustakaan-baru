@@ -89,7 +89,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/reports/users/{user}/history', [BorrowingReportController::class, 'showUserHistory'])->name('reports.users.history');
     });
 
-    // RUTE KHUSUS UNTUK ROLE GURU
+    // RUTE KHUSUS UNTUK ROLE GURu
     Route::middleware('role:guru')->prefix('guru')->name('guru.')->group(function () {
         Route::resource('materials', LearningMaterialController::class);
     });
