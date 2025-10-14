@@ -16,7 +16,6 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .border-dashed { border-style: dashed !important; }
         .book-synopsis {
             white-space: pre-wrap;
             line-height: 1.6;
@@ -49,12 +48,12 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
-        <div class="card">
+        <div class="card border-0 shadow-sm">
             <div class="card-body p-lg-5">
                 <div class="row">
                     {{-- Kolom Kiri: Gambar Sampul --}}
                     <div class="col-md-4 text-center mb-4 mb-md-0">
-                        <img src="{{ $book->cover_image ? route('book.cover', $book) : 'https://via.placeholder.com/300x400.png?text=No+Cover' }}" 
+                        <img src="{{ $book->cover_image_url }}" 
                              class="cover-image" alt="Sampul {{ $book->title }}">
                     </div>
 
@@ -80,17 +79,44 @@
 
                 <hr class="my-4">
 
-                {{-- ========================================================== --}}
-                {{-- BAGIAN YANG DIKEMBALIKAN: DAFTAR SALINAN BUKU --}}
-                {{-- ========================================================== --}}
                 @auth
+                    {{-- ========================================================== --}}
+                    {{-- BAGIAN BARU: FORMULIR PINJAM BUKU PAKET UNTUK GURU      --}}
+                    {{-- ========================================================== --}}
                     @if(Auth::user()->role == 'guru' && $book->is_textbook)
-                        {{-- Form Pinjam Massal --}}
+                        <div class="card bg-light border-2 border-danger border-opacity-25 mb-4">
+                            <div class="card-body">
+                                <h3 class="h5 fw-bold text-danger"><i class="bi bi-person-workspace me-2"></i> Pinjam Buku Paket (Khusus Guru)</h3>
+                                <p class="small text-muted">Anda dapat meminjam beberapa eksemplar buku ini sekaligus untuk kebutuhan kelas.</p>
+                                <form action="{{ route('borrow.store.bulk') }}" method="POST">    @csrf
+                                    <input type="hidden" name="book_id" value="{{ $book->id }}">
+                                    <div class="row align-items-end">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <label for="quantity" class="form-label fw-semibold">Jumlah yang ingin dipinjam:</label>
+                                            <input type="number" name="quantity" id="quantity" class="form-control" 
+                                                   min="1" max="{{ $book->available_copies_count }}" 
+                                                   placeholder="Maks: {{ $book->available_copies_count }}" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button type="submit" class="btn btn-danger w-100 fw-bold">
+                                                <i class="bi bi-box-arrow-down me-2"></i> Ajukan Pinjaman Massal
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="form-text mt-2">
+                                        Saat ini tersedia <strong>{{ $book->available_copies_count }}</strong> eksemplar untuk dipinjam.
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     @endif
 
+                    {{-- ========================================================== --}}
+                    {{-- BAGIAN LAMA: TABEL PINJAM SATUAN                        --}}
+                    {{-- ========================================================== --}}
                     <h3 class="h5 fw-bold mt-4">Daftar Salinan Buku (Pinjam Satuan)</h3>
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
+                        <table class="table table-bordered table-hover">
                             <thead class="table-light">
                                 <tr>
                                     <th>Kode Eksemplar</th>
@@ -113,7 +139,10 @@
                                         </td>
                                         <td>
                                             @if($copy->status == 'tersedia')
-                                                <a href="{{ route('borrow.create', $copy) }}" class="btn btn-danger btn-sm">Ajukan Pinjaman</a>
+                                                <form action="{{ route('borrow.store', $copy) }}" method="POST" onsubmit="return confirm('Anda yakin ingin meminjam buku ini?');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-danger btn-sm">Ajukan Pinjaman</button>
+                                                </form>
                                             @else
                                                 <button class="btn btn-secondary btn-sm" disabled>Tidak Tersedia</button>
                                             @endif
@@ -130,12 +159,10 @@
                 @endauth
 
                 @guest
-                    <div class="alert alert-warning">
+                    <div class="alert alert-warning mt-4">
                         Anda harus <a href="{{ route('login') }}" class="alert-link">login</a> atau <a href="{{ route('register') }}" class="alert-link">mendaftar</a> untuk dapat meminjam buku.
                     </div>
                 @endguest
-                {{-- ========================================================== --}}
-                
             </div>
         </div>
     </main>

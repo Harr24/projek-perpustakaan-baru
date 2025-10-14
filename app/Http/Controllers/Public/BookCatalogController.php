@@ -7,9 +7,6 @@ use App\Models\Book;
 use App\Models\Genre;
 use App\Models\HeroSlider;
 use App\Models\Borrowing;
-// ==========================================================
-// 1. IMPORT MODEL BARU ANDA
-// ==========================================================
 use App\Models\LearningMaterial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,8 +18,8 @@ class BookCatalogController extends Controller
     {
         // Ambil Data Hero Slider
         $heroSliders = HeroSlider::where('is_active', true)
-                                 ->latest() // Urutkan berdasarkan yang terbaru
-                                 ->get();
+                                    ->latest()
+                                    ->get();
 
         // Ambil Data Genre
         $genres = Genre::take(6)->get();
@@ -61,17 +58,14 @@ class BookCatalogController extends Controller
         ->with('user')
         ->get();
 
-        // ==========================================================
-        // 2. AMBIL DATA MATERI PEMBELAJARAN
-        // Mengambil 4 materi terbaru yang aktif dan data gurunya.
-        // ==========================================================
+        // Ambil Data Materi Pembelajaran
         $learningMaterials = LearningMaterial::where('is_active', true)
-                                ->with('user') // Eager load data guru
-                                ->latest()
-                                ->limit(4) // Ambil 4 materi terbaru
-                                ->get();
+                                        ->with('user')
+                                        ->latest()
+                                        ->limit(4)
+                                        ->get();
 
-        // 3. Kirim semua data ke view
+        // Kirim semua data ke view
         return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'learningMaterials'));
     }
 
@@ -113,13 +107,24 @@ class BookCatalogController extends Controller
         return view('public.catalog.all_books', compact('books'));
     }
     
+    // ==========================================================
+    // METHOD YANG DIPERBARUI
+    // ==========================================================
     public function show(Book $book)
     {
+        // Memuat relasi genre dan semua salinan buku
         $book->load('genre', 'copies');
-        $availableCopiesCount = $book->copies->where('status', 'tersedia')->count();
-        $firstAvailableCopy = $book->copies->where('status', 'tersedia')->first();
-        return view('public.catalog.show', compact('book', 'availableCopiesCount', 'firstAvailableCopy'));
+
+        // Menghitung dan menambahkan atribut 'available_copies_count' ke objek $book
+        // Ini adalah cara yang lebih efisien dan sesuai dengan view yang baru
+        $book->loadCount(['copies as available_copies_count' => function ($query) {
+            $query->where('status', 'tersedia');
+        }]);
+
+        // Sekarang kita hanya perlu mengirimkan objek $book karena semuanya sudah ada di sana
+        return view('public.catalog.show', compact('book'));
     }
+    // ==========================================================
 
     public function showCover(Book $book)
     {
@@ -132,4 +137,3 @@ class BookCatalogController extends Controller
         return response($file)->header('Content-Type', $type);
     }
 }
-
