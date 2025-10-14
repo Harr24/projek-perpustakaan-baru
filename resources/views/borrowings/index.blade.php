@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
+    <meta charset="utf-t">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Riwayat Peminjaman Saya - Perpustakaan Multicomp</title>
 
@@ -35,7 +35,7 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <div class="card">
+        <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
@@ -55,7 +55,8 @@
                                 @php
                                     $isOverdue = $borrow->status == 'borrowed' && $borrow->due_at < now();
                                 @endphp
-                                <tr>
+                                {{-- Sentuhan UI: Baris yang ditolak akan sedikit pudar --}}
+                                <tr class="{{ $borrow->status == 'rejected' ? 'text-muted' : '' }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $borrow->bookCopy->book->title }}</td>
                                     <td>{{ $borrow->bookCopy->book_code }}</td>
@@ -69,13 +70,18 @@
                                         @endif
                                     </td>
                                     <td>
-                                        {{-- =============================================== --}}
-                                        {{-- PERUBAHAN DI SINI: Logika status baru --}}
-                                        {{-- =============================================== --}}
                                         @switch($borrow->status)
                                             @case('pending')
                                                 <span class="badge bg-warning text-dark">Menunggu Konfirmasi</span>
                                                 @break
+                                            
+                                            {{-- =============================================== --}}
+                                            {{-- PENAMBAHAN BARU: Status Ditolak --}}
+                                            {{-- =============================================== --}}
+                                            @case('rejected')
+                                                <span class="badge bg-danger">Ditolak</span>
+                                                @break
+
                                             @case('borrowed')
                                                 @if($isOverdue)
                                                     <span class="badge bg-danger">Terlambat</span>

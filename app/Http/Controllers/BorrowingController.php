@@ -8,7 +8,7 @@ use App\Models\Borrowing;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; // 1. WAJIB DI-IMPORT UNTUK TRANSACTION
+use Illuminate\Support\Facades\DB;
 
 class BorrowingController extends Controller
 {
@@ -21,6 +21,7 @@ class BorrowingController extends Controller
 
     public function create(BookCopy $book_copy)
     {
+        // ... Method ini tidak perlu diubah ...
         $user = Auth::user();
         if ($book_copy->status !== 'tersedia') {
             return redirect()->back()->with('error', 'Eksemplar buku ini sedang tidak tersedia.');
@@ -54,15 +55,30 @@ class BorrowingController extends Controller
         return view('borrowings.create', compact('book_copy', 'borrowDate', 'dueDate'));
     }
 
-    public function store(Request $request, BookCopy $book_copy)
+    public function store(BookCopy $book_copy)
     {
-        $request->validate(['due_at' => 'sometimes|date']); // 'sometimes' jika tidak selalu ada
         $user = Auth::user();
 
-        if ($user->account_status !== 'active' || $book_copy->status !== 'tersedia') {
-            return redirect()->route('catalog.index')->with('error', 'Gagal mengajukan pinjaman.');
-        }
+        // ==========================================================
+        // LOGIKA BARU: Batasi peminjaman buku paket untuk siswa
+        // ==========================================================
+        if ($user->role == 'siswa' && $book_copy->book->is_textbook) {
+            $hasActiveTextbookLoan = Borrowing::where('user_id', $user->id)
+                ->whereIn('status', ['pending', 'borrowed']) // Cek pinjaman yang masih aktif (pending atau sudah dipinjam)
+                ->whereHas('bookCopy.book', function ($query) {
+                    $query->where('is_textbook', true);
+                })->exists();
 
+            if ($hasActiveTextbookLoan) {
+                return redirect()->back()->with('error', 'Siswa hanya dapat meminjam satu buku paket dalam satu waktu.');
+            }
+        }
+        // ==========================================================
+
+        if ($user->account_status !== 'active' || $book_copy->status !== 'tersedia') {
+            return redirect()->route('catalog.index')->with('error', 'Gagal mengajukan pinjaman. Akun atau buku tidak valid.');
+        }
+        
         $book_copy->status = 'pending';
         $book_copy->save();
 
@@ -70,15 +86,16 @@ class BorrowingController extends Controller
             'user_id' => $user->id,
             'book_copy_id' => $book_copy->id,
             'borrowed_at' => Carbon::now(),
-            'due_at' => new Carbon($request->input('due_at', now()->addDays(7))), // Default jika due_at tidak ada
+            'due_at' => now()->addDays(7),
             'status' => 'pending',
         ]);
 
-        return redirect()->route('borrow.history')->with('success', 'Pengajuan pinjaman berhasil dikirim.');
+        return redirect()->route('borrow.history')->with('success', 'Pengajuan pinjaman berhasil dikirim. Silakan tunggu konfirmasi dari petugas.');
     }
 
     public function storeBulk(Request $request)
     {
+        // ... Method ini tidak perlu diubah ...
         $request->validate([
             'book_id' => 'required|exists:books,id', 
             'quantity' => 'required|integer|min:1'
@@ -88,7 +105,6 @@ class BorrowingController extends Controller
         $book = Book::find($request->book_id);
         $quantity = $request->quantity;
 
-        // Validasi awal di luar transaksi
         $hasUnpaidFines = Borrowing::where('user_id', $user->id)->where('fine_amount', '>', 0)->where('fine_status', 'unpaid')->exists();
         if ($user->account_status !== 'active' || $hasUnpaidFines) {
             return redirect()->back()->with('error', 'Gagal, akun Anda belum aktif atau masih memiliki denda.');
@@ -98,19 +114,15 @@ class BorrowingController extends Controller
             return redirect()->back()->with('error', 'Aksi tidak diizinkan.');
         }
 
-        // ==========================================================
-        // 2. LOGIKA UTAMA DIBUNGKUS DALAM DB::TRANSACTION
-        // ==========================================================
         try {
             DB::transaction(function () use ($book, $quantity, $user) {
                 $availableCopies = BookCopy::where('book_id', $book->id)
                                     ->where('status', 'tersedia')
-                                    ->lockForUpdate() // Mengunci baris untuk mencegah race condition
+                                    ->lockForUpdate()
                                     ->take($quantity)
                                     ->get();
 
                 if ($availableCopies->count() < $quantity) {
-                    // Melempar exception akan otomatis me-rollback transaksi
                     throw new \Exception('Stok tidak mencukupi. Hanya tersedia ' . $availableCopies->count() . ' eksemplar.');
                 }
 
@@ -137,10 +149,8 @@ class BorrowingController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            // Jika transaksi gagal (misal karena stok tidak cukup), kembalikan dengan pesan error
             return redirect()->back()->with('error', $e->getMessage());
         }
-        // ==========================================================
 
         return redirect()->route('borrow.history')->with('success', $quantity . ' pengajuan pinjaman berhasil dikirim.');
     }

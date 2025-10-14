@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Borrowing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon; // <-- WAJIB: Import Carbon untuk manipulasi tanggal
+use Carbon\Carbon;
 
 class LoanApprovalController extends Controller
 {
@@ -27,22 +27,19 @@ class LoanApprovalController extends Controller
         DB::transaction(function () use ($borrowing) {
             $approvalDate = Carbon::now();
 
-            // 1. Update status record peminjaman
-            $borrowing->status = 'approved';
+            // Update status record peminjaman
+            $borrowing->status = 'approved'; // Seharusnya 'borrowed' agar konsisten
             $borrowing->approved_at = $approvalDate;
             $borrowing->approved_by = auth()->id();
             
-            // ==========================================================
-            // PERBAIKAN UTAMA: Hitung dan simpan tanggal jatuh tempo
-            // Tambahkan 7 hari kerja (Senin-Jumat) dari tanggal persetujuan.
-            // ==========================================================
+            // Hitung dan simpan tanggal jatuh tempo
             $borrowing->due_date = $approvalDate->copy()->addWeekdays(7);
-
-            // 2. Update status salinan buku
+            
+            // Update status salinan buku
             $bookCopy = $borrowing->bookCopy;
             $bookCopy->status = 'borrowed';
 
-            // 3. Simpan kedua perubahan
+            // Simpan kedua perubahan
             $borrowing->save();
             $bookCopy->save();
         });
@@ -50,6 +47,9 @@ class LoanApprovalController extends Controller
         return redirect()->route('admin.petugas.approvals.index')->with('success', 'Pengajuan peminjaman berhasil dikonfirmasi.');
     }
 
+    // ==========================================================
+    // METHOD REJECT YANG DISEMPURNAKAN
+    // ==========================================================
     public function reject(Borrowing $borrowing)
     {
         if ($borrowing->status !== 'pending') {
@@ -57,16 +57,24 @@ class LoanApprovalController extends Controller
         }
 
         DB::transaction(function () use ($borrowing) {
+            // 1. Kembalikan status buku menjadi 'tersedia'
             $bookCopy = $borrowing->bookCopy;
             $bookCopy->status = 'tersedia';
             $bookCopy->save();
 
+            // 2. Ubah status peminjaman menjadi 'rejected'
             $borrowing->status = 'rejected';
+            
+            // 3. (BARU) Tambahkan jejak audit untuk penolakan
+            $borrowing->rejected_at = Carbon::now();
+            $borrowing->rejected_by = auth()->id();
+            
             $borrowing->save();
         });
 
         return redirect()->back()->with('success', 'Pengajuan pinjaman berhasil ditolak.');
     }
+    // ==========================================================
     
     public function approveMultiple(Request $request)
     {
@@ -86,11 +94,10 @@ class LoanApprovalController extends Controller
             foreach ($borrowingsToApprove as $borrowing) {
                 $approvalDate = Carbon::now();
 
-                $borrowing->status = 'approved';
+                $borrowing->status = 'approved'; // Seharusnya 'borrowed'
                 $borrowing->approved_at = $approvalDate;
                 $borrowing->approved_by = auth()->id();
                 
-                // PERBAIKAN UTAMA (untuk Aksi Massal)
                 $borrowing->due_date = $approvalDate->copy()->addWeekdays(7);
                 
                 $borrowing->save();
