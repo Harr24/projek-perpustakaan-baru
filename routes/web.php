@@ -31,11 +31,7 @@ Route::get('/catalog/all', [BookCatalogController::class, 'allBooks'])->name('ca
 Route::get('/book/{book}', [BookCatalogController::class, 'show'])->name('catalog.show');
 Route::get('/book-cover/{book}', [BookCatalogController::class, 'showCover'])->name('book.cover');
 
-// ==========================================================
-// RUTE BARU: Untuk halaman Pustakawan
-// ==========================================================
 Route::get('/pustakawan', [BookCatalogController::class, 'showLibrarians'])->name('catalog.librarians');
-
 
 Route::middleware('guest')->group(function () {
     Route::get('register', [AuthController::class, 'showRegisterForm'])->name('register');
@@ -44,7 +40,6 @@ Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('login', [AuthController::class, 'login']);
 });
-
 
 // == RUTE UNTUK PENGGUNA YANG SUDAH LOGIN ==
 Route::middleware('auth')->group(function () {
@@ -83,13 +78,19 @@ Route::middleware('auth')->group(function () {
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
+        Route::delete('/fines/history/{borrowing}', [FineController::class, 'destroy'])->name('fines.destroy');
+
+        // ==========================================================
+        // (BARU) RUTE UNTUK EKSPOR EXCEL
+        // ==========================================================
+        Route::get('/fines/history/export', [FineController::class, 'export'])->name('fines.export');
 
         Route::get('/reports/borrowings', [BorrowingReportController::class, 'index'])->name('reports.borrowings.index');
         Route::get('/reports/borrowings/export', [BorrowingReportController::class, 'export'])->name('reports.borrowings.export');
         Route::get('/reports/users/{user}/history', [BorrowingReportController::class, 'showUserHistory'])->name('reports.users.history');
     });
 
-    // RUTE KHUSUS UNTUK ROLE GURu
+    // RUTE KHUSUS UNTUK ROLE GURU
     Route::middleware('role:guru')->prefix('guru')->name('guru.')->group(function () {
         Route::resource('materials', LearningMaterialController::class);
     });
@@ -100,5 +101,4 @@ Route::middleware('auth')->group(function () {
         Route::resource('members', MemberController::class)->except(['create', 'store']);
         Route::resource('sliders', HeroSliderController::class);
     });
-
 });
