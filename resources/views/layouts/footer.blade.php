@@ -52,7 +52,7 @@
                 <p class="footer-subtitle mb-3">
                     Website ini dikembangkan untuk memudahkan manajemen perpustakaan sekolah.
                 </p>
-                <a href="https://github.com/yourusername/perpustakaan-multicomp" target="_blank" class="footer-btn-github">
+                <a href="https://github.com/Harr24/projek-perpustakaan-baru" target="_blank" class="footer-btn-github">
                     <i class="bi bi-github"></i> Lihat di GitHub
                 </a>
             </div>
