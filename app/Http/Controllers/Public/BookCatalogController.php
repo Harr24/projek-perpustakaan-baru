@@ -18,8 +18,8 @@ class BookCatalogController extends Controller
     {
         // Ambil Data Hero Slider
         $heroSliders = HeroSlider::where('is_active', true)
-                                    ->latest()
-                                    ->get();
+                                     ->latest()
+                                     ->get();
 
         // Ambil Data Genre
         $genres = Genre::take(6)->get();
@@ -60,71 +60,78 @@ class BookCatalogController extends Controller
 
         // Ambil Data Materi Pembelajaran
         $learningMaterials = LearningMaterial::where('is_active', true)
-                                        ->with('user')
-                                        ->latest()
-                                        ->limit(4)
-                                        ->get();
+                                            ->with('user')
+                                            ->latest()
+                                            ->limit(4)
+                                            ->get();
 
         // Kirim semua data ke view
         return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'learningMaterials'));
     }
 
+    /**
+     * ==========================================================
+     * PERUBAHAN DI SINI: Method allBooks diperbarui
+     * ==========================================================
+     */
     public function allBooks(Request $request)
     {
-        $query = Book::query();
+        // 1. Ambil semua genre untuk ditampilkan sebagai filter di view
+        $genres = Genre::orderBy('name')->get();
 
-        if ($request->filled('search')) {
-            $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('title', 'LIKE', '%' . $searchTerm . '%')
-                  ->orWhere('author', 'LIKE', '%' . $searchTerm . '%');
-            });
-        }
+        // Ambil input dari URL
+        $search = $request->input('search');
+        $selectedGenreName = $request->input('genre');
+        $sort = $request->input('sort', 'latest');
 
-        if ($request->filled('genre')) {
-            $genreName = $request->genre;
-            $query->whereHas('genre', function($q) use ($genreName) {
-                $q->where('name', 'like', '%' . $genreName . '%');
-            });
-        }
-        
-        $query->withCount([
+        // 2. Mulai query builder
+        $booksQuery = Book::query()->withCount([
             'copies',
-            'copies as available_copies_count' => function ($query) {
-                $query->where('status', 'tersedia');
-            }
+            'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia')
         ]);
 
-        $sort = $request->input('sort', 'latest');
+        // 3. Terapkan filter PENCARIAN jika ada
+        $booksQuery->when($search, function ($query, $search) {
+            return $query->where(function($q) use ($search) {
+                $q->where('title', 'LIKE', '%' . $search . '%')
+                  ->orWhere('author', 'LIKE', '%' . $search . '%');
+            });
+        });
+
+        // 4. Terapkan filter GENRE jika ada
+        $booksQuery->when($selectedGenreName, function ($query, $genreName) {
+            return $query->whereHas('genre', function ($q) use ($genreName) {
+                // Menggunakan pencocokan nama yang pasti, bukan 'like'
+                $q->where('name', $genreName);
+            });
+        });
+
+        // 5. Terapkan PENGURUTAN
         if ($sort === 'popular') {
-            $query->orderByDesc('available_copies_count');
+            $booksQuery->orderByDesc('available_copies_count');
         } else {
-            $query->latest();
+            $booksQuery->latest(); // Default adalah buku terbaru
         }
 
-        $books = $query->paginate(12)->withQueryString();
+        // 6. Ambil data dengan PAGINASI
+        $books = $booksQuery->paginate(12)->withQueryString();
         
-        return view('public.catalog.all_books', compact('books'));
+        // 7. Kirim data buku dan daftar genre ke view
+        return view('public.catalog.all_books', compact('books', 'genres'));
     }
     
-    // ==========================================================
-    // METHOD YANG DIPERBARUI
-    // ==========================================================
     public function show(Book $book)
     {
         // Memuat relasi genre dan semua salinan buku
         $book->load('genre', 'copies');
 
-        // Menghitung dan menambahkan atribut 'available_copies_count' ke objek $book
-        // Ini adalah cara yang lebih efisien dan sesuai dengan view yang baru
+        // Menghitung dan menambahkan atribut 'available_copies_count'
         $book->loadCount(['copies as available_copies_count' => function ($query) {
             $query->where('status', 'tersedia');
         }]);
 
-        // Sekarang kita hanya perlu mengirimkan objek $book karena semuanya sudah ada di sana
         return view('public.catalog.show', compact('book'));
     }
-    // ==========================================================
 
     public function showCover(Book $book)
     {
