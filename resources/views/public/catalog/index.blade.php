@@ -1,5 +1,3 @@
-
-
 <!doctype html>
 <html lang="id">
 <head>
@@ -71,7 +69,6 @@
                     <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}" aria-current="{{ $index === 0 ? 'true' : 'false' }}" aria-label="Slide {{ $index + 1 }}"></button>
                 @endforeach
             </div>
-            
             <div class="carousel-inner">
                 @foreach($heroSliders as $index => $slider)
                     <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
@@ -88,7 +85,6 @@
                     </div>
                 @endforeach
             </div>
-            
             @if($heroSliders->count() > 1)
                 <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Previous</span></button>
                 <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Next</span></button>
@@ -144,6 +140,10 @@
             </div>
         </div>
         
+        {{-- ========================================================== --}}
+        {{-- PERUBAHAN UTAMA: Dibungkus dengan @auth dan ditambah tombol --}}
+        {{-- ========================================================== --}}
+        @auth
         @if(isset($learningMaterials) && $learningMaterials->isNotEmpty())
         <div class="container py-5">
             <div class="text-center mb-5">
@@ -170,9 +170,16 @@
                 </div>
                 @endforeach
             </div>
+            {{-- TOMBOL BARU --}}
+            <div class="text-center mt-5">
+                <a href="{{ route('catalog.materials.all') }}" class="btn btn-outline-danger"><i class="bi bi-collection-fill me-2"></i> Lihat Semua Materi Belajar</a>
+            </div>
         </div>
         @endif
+        @endauth
+        {{-- ========================================================== --}}
 
+        {{-- Buku Terbaru --}}
         <div class="bg-white py-5 mt-5 shadow-sm">
              <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -194,9 +201,7 @@
             </div>
         </div>
 
-        {{-- ========================================================== --}}
-        {{-- BAGIAN YANG DIUBAH ADA DI BAWAH INI --}}
-        {{-- ========================================================== --}}
+        {{-- Peminjam Teratas --}}
         <div class="top-borrowers-section mt-5 py-5">
             <div class="container">
                 <div class="text-center mb-5">
@@ -208,17 +213,12 @@
                         <div class="col-md-6 col-lg-4">
                             <div class="card text-center h-100 shadow-sm borrower-card bg-white">
                                 <div class="card-body p-4">
-
-                                    {{-- PERUBAHAN 1: Tampilkan Foto Profil atau Inisial --}}
                                     @if($borrower->user->profile_photo)
                                         <img src="{{ asset('storage/' . $borrower->user->profile_photo) }}" alt="{{ $borrower->user->name }}" class="avatar mx-auto mb-3" style="object-fit: cover;">
                                     @else
                                         <div class="avatar mx-auto mb-3">{{ strtoupper(substr($borrower->user->name, 0, 2)) }}</div>
                                     @endif
-
                                     <h5 class="card-title fw-bold text-danger">{{ $borrower->user->name }}</h5>
-                                    
-                                    {{-- PERUBAHAN 2: Tampilkan Kelas atau Role --}}
                                     <p class="text-muted mb-3 small">
                                         @if($borrower->user->role === 'siswa' && $borrower->user->class_name)
                                             {{ $borrower->user->class_name }}
@@ -228,7 +228,6 @@
                                             Anggota Perpustakaan
                                         @endif
                                     </p>
-
                                     <div class="stats d-flex justify-content-center gap-4 border-top pt-3">
                                         <div>
                                             <div class="fw-bolder fs-4 text-primary">{{ $borrower->loans_count }}</div>

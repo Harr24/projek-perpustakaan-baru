@@ -30,7 +30,7 @@ Route::get('/', [BookCatalogController::class, 'index'])->name('catalog.index');
 Route::get('/catalog/all', [BookCatalogController::class, 'allBooks'])->name('catalog.all');
 Route::get('/book/{book}', [BookCatalogController::class, 'show'])->name('catalog.show');
 Route::get('/book-cover/{book}', [BookCatalogController::class, 'showCover'])->name('book.cover');
-
+Route::get('/materials', [BookCatalogController::class, 'allMaterials'])->name('catalog.materials.all');
 Route::get('/pustakawan', [BookCatalogController::class, 'showLibrarians'])->name('catalog.librarians');
 
 Route::middleware('guest')->group(function () {

@@ -8,7 +8,7 @@ use App\Models\Genre;
 use App\Models\HeroSlider;
 use App\Models\Borrowing;
 use App\Models\LearningMaterial;
-use App\Models\User; // <-- PERUBAHAN: Tambahkan import model User
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -17,17 +17,12 @@ class BookCatalogController extends Controller
 {
     public function index(Request $request)
     {
-        // Ambil Data Hero Slider
+        // ... (Fungsi ini tidak diubah)
         $heroSliders = HeroSlider::where('is_active', true)
-                                     ->latest()
-                                     ->get();
-
-        // Ambil Data Genre
+                                      ->latest()
+                                      ->get();
         $genres = Genre::take(6)->get();
-
-        // Ambil Data Buku Favorit & Terbaru
         $nonTextbookQuery = Book::where('is_textbook', 0);
-
         $favoriteBooks = (clone $nonTextbookQuery)
             ->withCount([
                 'copies',
@@ -36,7 +31,6 @@ class BookCatalogController extends Controller
             ->orderByDesc('available_copies_count')
             ->limit(10)
             ->get();
-        
         $latestBooks = (clone $nonTextbookQuery)
             ->withCount([
                 'copies',
@@ -45,8 +39,6 @@ class BookCatalogController extends Controller
             ->latest()
             ->limit(10)
             ->get();
-
-        // Ambil Data Peminjam Teratas
         $topBorrowers = Borrowing::whereHas('user', function ($query) {
             $query->where('role', 'siswa');
         })
@@ -58,79 +50,58 @@ class BookCatalogController extends Controller
         ->limit(3)
         ->with('user')
         ->get();
-
-        // Ambil Data Materi Pembelajaran
         $learningMaterials = LearningMaterial::where('is_active', true)
-                                            ->with('user')
-                                            ->latest()
-                                            ->limit(4)
-                                            ->get();
-
-        // Kirim semua data ke view
+                                               ->with('user')
+                                               ->latest()
+                                               ->limit(4)
+                                               ->get();
         return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'learningMaterials'));
     }
 
     public function allBooks(Request $request)
     {
-        // 1. Ambil semua genre untuk ditampilkan sebagai filter di view
+        // ... (Fungsi ini tidak diubah)
         $genres = Genre::orderBy('name')->get();
-
-        // Ambil input dari URL
         $search = $request->input('search');
         $selectedGenreName = $request->input('genre');
         $sort = $request->input('sort', 'latest');
-
-        // 2. Mulai query builder
         $booksQuery = Book::query()->withCount([
             'copies',
             'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia')
         ]);
-
-        // 3. Terapkan filter PENCARIAN jika ada
         $booksQuery->when($search, function ($query, $search) {
             return $query->where(function($q) use ($search) {
                 $q->where('title', 'LIKE', '%' . $search . '%')
                   ->orWhere('author', 'LIKE', '%' . $search . '%');
             });
         });
-
-        // 4. Terapkan filter GENRE jika ada
         $booksQuery->when($selectedGenreName, function ($query, $genreName) {
             return $query->whereHas('genre', function ($q) use ($genreName) {
-                // Menggunakan pencocokan nama yang pasti, bukan 'like'
                 $q->where('name', $genreName);
             });
         });
-
-        // 5. Terapkan PENGURUTAN
         if ($sort === 'popular') {
             $booksQuery->orderByDesc('available_copies_count');
         } else {
-            $booksQuery->latest(); // Default adalah buku terbaru
+            $booksQuery->latest();
         }
-
-        // 6. Ambil data dengan PAGINASI
         $books = $booksQuery->paginate(12)->withQueryString();
-        
-        // 7. Kirim data buku dan daftar genre ke view
         return view('public.catalog.all_books', compact('books', 'genres'));
     }
     
     public function show(Book $book)
     {
-        // Memuat relasi genre dan semua salinan buku
+        // ... (Fungsi ini tidak diubah)
         $book->load('genre', 'copies');
-
-        // Menghitung dan menambahkan atribut 'available_copies_count'
         $book->loadCount(['copies as available_copies_count' => function ($query) {
             $query->where('status', 'tersedia');
         }]);
-
         return view('public.catalog.show', compact('book'));
     }
 
     public function showCover(Book $book)
     {
+        // ... (Fungsi ini tidak diubah)
         $path = $book->cover_image;
         if (!$path || !Storage::disk('public')->exists($path)) {
             abort(404, 'Gambar tidak ditemukan.');
@@ -140,19 +111,46 @@ class BookCatalogController extends Controller
         return response($file)->header('Content-Type', $type);
     }
     
-    /**
-     * ==========================================================
-     * METHOD BARU: Untuk menampilkan halaman Pustakawan
-     * ==========================================================
-     */
     public function showLibrarians()
     {
-        // Mengambil semua user yang role-nya adalah 'petugas' atau 'guru'
+        // ... (Fungsi ini tidak diubah)
         $staff = User::whereIn('role', ['petugas', 'guru'])
                        ->orderBy('name', 'asc')
                        ->get();
-
-        // Mengirim data staff ke view 'public.librarians'
         return view('public.librarians', compact('staff'));
     }
+
+    // ==========================================================
+    // METHOD YANG DIPERBARUI: Ditambahkan logika filter & pencarian
+    // ==========================================================
+    public function allMaterials(Request $request)
+    {
+        // Ambil query dasar untuk materi belajar
+        $query = LearningMaterial::where('is_active', true)
+                                 ->with('user')
+                                 ->latest();
+
+        // Terapkan filter pencarian judul jika ada
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        // Terapkan filter guru jika ada
+        if ($request->filled('teacher')) {
+            $query->where('user_id', $request->teacher);
+        }
+
+        // Ambil hasil query dengan paginasi
+        $materials = $query->paginate(10)->withQueryString();
+
+        // Ambil daftar guru yang pernah mengunggah materi (untuk dropdown filter)
+        $teachers = User::where('role', 'guru')
+                        ->whereHas('learningMaterials') 
+                        ->orderBy('name')
+                        ->get();
+
+        // Kirim semua data yang dibutuhkan ke view
+        return view('public.catalog.all_materials', compact('materials', 'teachers'));
+    }
 }
+
