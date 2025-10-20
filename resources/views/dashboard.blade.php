@@ -64,6 +64,7 @@
             letter-spacing:0.6px;
             box-shadow:inset 0 -4px 12px rgba(0,0,0,0.08);
             overflow: hidden;
+            flex-shrink: 0; /* Mencegah logo menyusut */
         }
         .title{
             display:flex;
@@ -85,6 +86,7 @@
             display:flex;
             align-items:center;
             gap:12px;
+            flex-shrink: 0; /* Mencegah grup tombol menyusut */
         }
         .btn{
             display:inline-flex;
@@ -141,6 +143,7 @@
             box-shadow:0 6px 18px rgba(15,23,36,0.04);
             font-size:22px;
             color: var(--accent);
+            flex-shrink: 0;
         }
         .welcome h2{ margin:0 0 8px 0; font-size:1.1rem; }
         .welcome p{margin:0;color:var(--muted);font-size:0.95rem}
@@ -196,6 +199,21 @@
             color: #fff;
             border-color: #fff;
         }
+        
+        /* ========================================================== */
+        /* PERBAIKAN UTAMA: Tambahkan Media Query untuk Responsif */
+        /* ========================================================== */
+        @media (max-width: 600px) {
+            header.header {
+                flex-wrap: wrap; /* Izinkan item turun ke baris baru */
+                justify-content: center; /* Pusatkan item saat baris baru terbentuk */
+                gap: 12px; /* Kurangi jarak antar item */
+            }
+            .header-actions {
+                width: 100%; /* Buat grup tombol memenuhi lebar */
+                justify-content: space-between;
+            }
+        }
     </style>
 </head>
 <body>
@@ -244,19 +262,16 @@
                                     @break
 
                                 @case('guru')
-                                    {{-- Menu Khusus untuk Guru --}}
                                     <a href="{{ route('guru.materials.index') }}" class="nav-item">
                                         <div class="nav-item-main">
                                             <span>Kelola Materi Pembelajaran</span>
                                         </div>
                                         <span class="meta">Tambah/edit materi</span>
                                     </a>
-                                    {{-- Memuat menu umum untuk member (Siswa & Guru) --}}
                                     @include('dashboard-partials.member')
                                     @break
 
                                 @case('siswa')
-                                    {{-- Siswa hanya melihat menu umum --}}
                                     @include('dashboard-partials.member')
                                     @break
                             @endswitch
@@ -268,3 +283,4 @@
     </div>
 </body>
 </html>
+

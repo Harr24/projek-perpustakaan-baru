@@ -42,9 +42,7 @@
             <p class="lead text-muted">Akses semua materi tambahan yang dibagikan oleh para guru.</p>
         </div>
 
-        {{-- ========================================================== --}}
-        {{-- FORM PENCARIAN DAN FILTER BARU --}}
-        {{-- ========================================================== --}}
+        {{-- FORM PENCARIAN DAN FILTER --}}
         <div class="card card-body mb-5 shadow-sm border-0">
             <form action="{{ route('catalog.materials.all') }}" method="GET" class="row g-3 align-items-end">
                 <div class="col-md-6">
@@ -69,12 +67,13 @@
                 </div>
             </form>
         </div>
+
         {{-- ========================================================== --}}
-
-
-        <div class="row g-4">
+        {{-- PERUBAHAN UTAMA: Menerapkan grid 3 kolom yang responsif --}}
+        {{-- ========================================================== --}}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             @forelse($materials as $material)
-                <div class="col-lg-6">
+                <div class="col">
                     <a href="{{ $material->link_url }}" target="_blank" rel="noopener noreferrer" class="card h-100 material-card">
                         <div class="card-body d-flex align-items-center p-4">
                             <div class="pe-3">

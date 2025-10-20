@@ -11,12 +11,33 @@
         :root { --brand-red: #c62828; }
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
         
-        /* CSS Slider Responsif */
-        .hero-slider .carousel-item { height: 65vh; min-height: 400px; background-color: #212529; }
-        .hero-slider .carousel-item img { width: 100%; height: 100%; object-fit: cover; object-position: center; filter: brightness(0.6); }
-        .hero-slider .carousel-caption { top: 50%; transform: translateY(-50%); bottom: auto; }
+        /* ========================================================== */
+        /* PERBAIKAN CSS SLIDER DENGAN !IMPORTANT */
+        /* ========================================================== */
+        .hero-slider .carousel-item {
+            height: 60vh !important;
+            max-height: 580px !important;
+            min-height: 400px !important; 
+            background-color: #212529;
+        }
+        .hero-slider .carousel-item img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            object-position: center; 
+            filter: brightness(0.6); 
+        }
+        .hero-slider .carousel-caption { 
+            top: 50%; 
+            transform: translateY(-50%); 
+            bottom: auto; 
+        }
+        /* Style untuk HP tidak diubah */
         @media (max-width: 768px) {
-            .hero-slider .carousel-item { height: 50vh; min-height: 300px; }
+            .hero-slider .carousel-item { 
+                height: 50vh !important; 
+                min-height: 300px !important; 
+            }
             .hero-slider .carousel-caption h1 { font-size: 1.75rem; }
             .hero-slider .carousel-caption .lead { display: none; }
         }
@@ -140,9 +161,6 @@
             </div>
         </div>
         
-        {{-- ========================================================== --}}
-        {{-- BAGIAN MATERI BELAJAR YANG DIPERBARUI --}}
-        {{-- ========================================================== --}}
         @auth
         @if(isset($learningMaterials) && $learningMaterials->isNotEmpty())
         <div class="container py-5">
@@ -150,8 +168,6 @@
                 <h2 class="fw-bold display-6">Materi Belajar Terbaru</h2>
                 <p class="lead text-muted">Akses materi tambahan yang dibagikan oleh para guru.</p>
             </div>
-            
-            {{-- Menggunakan grid Bootstrap. `row-cols-1` untuk HP, `row-cols-md-2` untuk Tablet ke atas --}}
             <div class="row row-cols-1 row-cols-md-2 g-4">
                 @foreach($learningMaterials as $material)
                 <div class="col">
@@ -172,14 +188,12 @@
                 </div>
                 @endforeach
             </div>
-
             <div class="text-center mt-5">
                 <a href="{{ route('catalog.materials.all') }}" class="btn btn-outline-danger"><i class="bi bi-collection-fill me-2"></i> Lihat Semua Materi Belajar</a>
             </div>
         </div>
         @endif
         @endauth
-        {{-- ========================================================== --}}
 
         {{-- Buku Terbaru --}}
         <div class="bg-white py-5 mt-5 shadow-sm">
@@ -248,7 +262,8 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    @include('layouts.footer')
 </body>
-@include('layouts.footer')
 </html>
 

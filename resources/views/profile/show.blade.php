@@ -36,38 +36,43 @@
                                 @endif
                             </p>
                             <hr>
+
+                            {{-- ========================================================== --}}
+                            {{-- PERUBAHAN UTAMA: Menggunakan Grid Bootstrap --}}
+                            {{-- ========================================================== --}}
                             
                             {{-- Tampilkan info spesifik untuk Siswa --}}
                             @if (Auth::user()->role === 'siswa')
-                            <div class="row mt-2">
-                                <div class="col-sm-4"><strong class="text-muted">NISN</strong></div>
-                                <div class="col-sm-8">{{ Auth::user()->nis ?: '-' }}</div>
+                            <div class="row mb-2">
+                                <div class="col-sm-4 fw-semibold text-muted">NISN</div>
+                                <div class="col-sm-8">: {{ Auth::user()->nis ?: '-' }}</div>
                             </div>
-                            <div class="row mt-2">
-                                <div class="col-sm-4"><strong class="text-muted">Kelas</strong></div>
-                                <div class="col-sm-8">{{ Auth::user()->class_name ?: '-' }}</div>
+                            <div class="row mb-2">
+                                <div class="col-sm-4 fw-semibold text-muted">Kelas</div>
+                                <div class="col-sm-8">: {{ Auth::user()->class_name ?: '-' }}</div>
                             </div>
                             @endif
 
-                            {{-- ========================================================== --}}
-                            {{-- PERUBAHAN UTAMA: Tampilkan Mata Pelajaran untuk Guru --}}
-                            {{-- ========================================================== --}}
+                            {{-- Tampilkan Mata Pelajaran untuk Guru --}}
                             @if (Auth::user()->role === 'guru')
-                            <div class="row mt-2">
-                                <div class="col-sm-4"><strong class="text-muted">Mata Pelajaran</strong></div>
-                                <div class="col-sm-8">{{ Auth::user()->subject ?: '-' }}</div>
+                            <div class="row mb-2">
+                                <div class="col-sm-4 fw-semibold text-muted">Mata Pelajaran</div>
+                                <div class="col-sm-8">: {{ Auth::user()->subject ?: '-' }}</div>
                             </div>
                             @endif
                             
                             {{-- Info Umum --}}
-                            <div class="row mt-2">
-                                <div class="col-sm-4"><strong class="text-muted">Email</strong></div>
-                                <div class="col-sm-8">{{ Auth::user()->email }}</div>
+                            <div class="row mb-2">
+                                <div class="col-sm-4 fw-semibold text-muted">Email</div>
+                                <div class="col-sm-8">: {{ Auth::user()->email }}</div>
                             </div>
-                            <div class="row mt-2">
-                                <div class="col-sm-4"><strong class="text-muted">Nomor WhatsApp</strong></div>
-                                <div class="col-sm-8">{{ Auth::user()->phone_number ?: '-' }}</div>
+                            <div class="row mb-2">
+                                <div class="col-sm-4 fw-semibold text-muted">Nomor WhatsApp</div>
+                                <div class="col-sm-8">: {{ Auth::user()->phone_number ?: '-' }}</div>
                             </div>
+                            {{-- ========================================================== --}}
+
+
                             <div class="mt-4">
                                 <a href="{{ route('profile.edit') }}" class="btn btn-danger">
                                     <i class="bi bi-pencil-square me-2"></i> Edit Profil
