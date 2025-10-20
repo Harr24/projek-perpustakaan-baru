@@ -234,9 +234,6 @@
                         <p>Pilih menu navigasi di bawah ini untuk memulai.</p>
                         
                         <div class="nav-list" id="navList">
-                            {{-- ========================================================== --}}
-                            {{-- PERBAIKAN UTAMA: Logika @switch diperbarui --}}
-                            {{-- ========================================================== --}}
                             @switch(Auth::user()->role)
                                 @case('superadmin')
                                     @include('dashboard-partials.superadmin')
@@ -271,8 +268,3 @@
     </div>
 </body>
 </html>
-```
-
-
-    
-

@@ -47,8 +47,16 @@ Route::middleware('auth')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // ==========================================================
+    // PERBAIKAN UTAMA: Rute profil diperbarui
+    // ==========================================================
+    // Rute untuk menampilkan halaman profil (hanya lihat)
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    // Rute untuk menampilkan form edit profil
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Rute untuk memproses pembaruan data profil
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // ==========================================================
 
     Route::get('/borrow/request/{book_copy}', [BorrowingController::class, 'create'])->name('borrow.create');
     Route::post('/borrow/{book_copy}', [BorrowingController::class, 'store'])->name('borrow.store');
@@ -79,10 +87,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
         Route::delete('/fines/history/{borrowing}', [FineController::class, 'destroy'])->name('fines.destroy');
-
-        // ==========================================================
-        // (BARU) RUTE UNTUK EKSPOR EXCEL
-        // ==========================================================
+        
         Route::get('/fines/history/export', [FineController::class, 'export'])->name('fines.export');
 
         Route::get('/reports/borrowings', [BorrowingReportController::class, 'index'])->name('reports.borrowings.index');

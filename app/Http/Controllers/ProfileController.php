@@ -12,7 +12,19 @@ use Illuminate\Validation\Rules\Password;
 class ProfileController extends Controller
 {
     /**
-     * Menampilkan halaman edit profil untuk pengguna yang sedang login.
+     * ==========================================================
+     * METHOD BARU: Menampilkan halaman profil statis (hanya lihat)
+     * ==========================================================
+     */
+    public function show()
+    {
+        $user = Auth::user();
+        return view('profile.show', compact('user'));
+    }
+
+    /**
+     * Menampilkan halaman form edit profil untuk pengguna.
+     * (Fungsi ini tidak diubah)
      */
     public function edit()
     {
@@ -27,20 +39,15 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        // ==========================================================
-        // PERUBAHAN 1: Tambahkan validasi untuk 'phone_number'
-        // ==========================================================
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            // Aturan baru: nomor telepon harus unik, kecuali untuk user ini sendiri
             'phone_number' => ['nullable', 'string', 'max:15', Rule::unique('users')->ignore($user->id)],
             'class_name' => [Rule::requiredIf($user->role === 'siswa'), 'nullable', 'string', 'max:50'],
             'password' => ['nullable', 'confirmed', Password::min(8)],
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Proses foto jika ada
         if ($request->hasFile('profile_photo')) {
             if ($user->profile_photo) {
                 Storage::disk('public')->delete($user->profile_photo);
@@ -49,26 +56,24 @@ class ProfileController extends Controller
             $user->profile_photo = $path;
         }
 
-        // ==========================================================
-        // PERUBAHAN 2: Simpan data dasar, termasuk 'phone_number'
-        // ==========================================================
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->phone_number = $request->phone_number; // <-- SIMPAN NOMOR TELEPON
+        $user->phone_number = $request->phone_number;
 
-        // Simpan data kelas HANYA jika pengguna adalah siswa
         if ($user->role === 'siswa') {
             $user->class_name = $request->class_name;
         }
 
-        // Proses password jika diisi
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
 
-        // Simpan semua perubahan
         $user->save();
 
-        return redirect()->route('profile.edit')->with('success', 'Profil berhasil diperbarui!');
+        // ==========================================================
+        // PERUBAHAN UTAMA: Redirect kembali ke halaman LIHAT PROFIL
+        // ==========================================================
+        return redirect()->route('profile.show')->with('success', 'Profil berhasil diperbarui!');
     }
 }
+

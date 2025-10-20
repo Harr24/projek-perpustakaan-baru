@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage; // 1. PASTIKAN INI DI-IMPORT
 
 class User extends Authenticatable
 {
@@ -27,6 +28,25 @@ class User extends Authenticatable
     }
 
     /**
+     * ==========================================================
+     * 2. FUNGSI BARU DITAMBAHKAN DI SINI
+     * ==========================================================
+     * Accessor untuk mendapatkan URL foto profil.
+     * Akan dipanggil otomatis saat kita mengakses $user->profile_photo_url
+     */
+    public function getProfilePhotoUrlAttribute()
+    {
+        if ($this->profile_photo) {
+            // Jika user punya foto profil, kembalikan URL-nya dari storage
+            return Storage::url($this->profile_photo);
+        }
+
+        // Jika tidak, kembalikan URL ke gambar default/placeholder
+        // Menggunakan inisial nama untuk gambar default
+        return 'https://placehold.co/500x500/d9534f/ffffff?text=' . strtoupper(substr($this->name, 0, 2));
+    }
+
+    /**
      * Kolom yang boleh diisi mass assignment
      */
     protected $fillable = [
@@ -38,9 +58,6 @@ class User extends Authenticatable
         'profile_photo',
         'student_card_photo',
         'nis',
-        // ==========================================================
-        // PERUBAHAN DI SINI: Ganti 'class' menjadi 'class_name'
-        // ==========================================================
         'class_name',
         'major',
         'phone_number',
@@ -66,3 +83,4 @@ class User extends Authenticatable
         ];
     }
 }
+

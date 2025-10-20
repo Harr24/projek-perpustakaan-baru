@@ -141,7 +141,7 @@
         </div>
         
         {{-- ========================================================== --}}
-        {{-- PERUBAHAN UTAMA: Dibungkus dengan @auth dan ditambah tombol --}}
+        {{-- BAGIAN MATERI BELAJAR YANG DIPERBARUI --}}
         {{-- ========================================================== --}}
         @auth
         @if(isset($learningMaterials) && $learningMaterials->isNotEmpty())
@@ -150,9 +150,11 @@
                 <h2 class="fw-bold display-6">Materi Belajar Terbaru</h2>
                 <p class="lead text-muted">Akses materi tambahan yang dibagikan oleh para guru.</p>
             </div>
-            <div class="row g-3">
+            
+            {{-- Menggunakan grid Bootstrap. `row-cols-1` untuk HP, `row-cols-md-2` untuk Tablet ke atas --}}
+            <div class="row row-cols-1 row-cols-md-2 g-4">
                 @foreach($learningMaterials as $material)
-                <div class="col-lg-6">
+                <div class="col">
                     <a href="{{ $material->link_url }}" target="_blank" rel="noopener noreferrer" class="card h-100 material-card text-decoration-none text-dark">
                         <div class="card-body d-flex align-items-center">
                             <div class="pe-3">
@@ -170,7 +172,7 @@
                 </div>
                 @endforeach
             </div>
-            {{-- TOMBOL BARU --}}
+
             <div class="text-center mt-5">
                 <a href="{{ route('catalog.materials.all') }}" class="btn btn-outline-danger"><i class="bi bi-collection-fill me-2"></i> Lihat Semua Materi Belajar</a>
             </div>
@@ -249,3 +251,4 @@
 </body>
 @include('layouts.footer')
 </html>
+
