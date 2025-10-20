@@ -36,9 +36,8 @@
                                 @endif
                             </p>
                             <hr>
-                            {{-- ========================================================== --}}
-                            {{-- PERUBAHAN DI SINI: Tampilkan NISN --}}
-                            {{-- ========================================================== --}}
+                            
+                            {{-- Tampilkan info spesifik untuk Siswa --}}
                             @if (Auth::user()->role === 'siswa')
                             <div class="row mt-2">
                                 <div class="col-sm-4"><strong class="text-muted">NISN</strong></div>
@@ -49,6 +48,18 @@
                                 <div class="col-sm-8">{{ Auth::user()->class_name ?: '-' }}</div>
                             </div>
                             @endif
+
+                            {{-- ========================================================== --}}
+                            {{-- PERUBAHAN UTAMA: Tampilkan Mata Pelajaran untuk Guru --}}
+                            {{-- ========================================================== --}}
+                            @if (Auth::user()->role === 'guru')
+                            <div class="row mt-2">
+                                <div class="col-sm-4"><strong class="text-muted">Mata Pelajaran</strong></div>
+                                <div class="col-sm-8">{{ Auth::user()->subject ?: '-' }}</div>
+                            </div>
+                            @endif
+                            
+                            {{-- Info Umum --}}
                             <div class="row mt-2">
                                 <div class="col-sm-4"><strong class="text-muted">Email</strong></div>
                                 <div class="col-sm-8">{{ Auth::user()->email }}</div>
