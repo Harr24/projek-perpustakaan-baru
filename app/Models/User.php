@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Storage; // 1. PASTIKAN INI DI-IMPORT
+// use Illuminate\Notifications\Notifiable; // <-- 1. HAPUS ATAU BERI KOMENTAR BARIS INI
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory; // <-- 2. HAPUS ', Notifiable' DARI SINI
     
     /**
      * Mendapatkan semua record peminjaman milik user ini.
@@ -29,10 +29,17 @@ class User extends Authenticatable
 
     /**
      * ==========================================================
-     * 2. FUNGSI BARU DITAMBAHKAN DI SINI
+     * 3. TAMBAHKAN RELASI NOTIFIKASI KITA SENDIRI
      * ==========================================================
+     * Mendapatkan semua notifikasi milik user.
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->latest(); // 'latest()' untuk mengurutkan dari yang terbaru
+    }
+
+    /**
      * Accessor untuk mendapatkan URL foto profil.
-     * Akan dipanggil otomatis saat kita mengakses $user->profile_photo_url
      */
     public function getProfilePhotoUrlAttribute()
     {

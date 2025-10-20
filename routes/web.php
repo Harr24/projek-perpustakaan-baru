@@ -43,7 +43,7 @@ Route::middleware('guest')->group(function () {
 
 // == RUTE UNTUK PENGGUNA YANG SUDAH LOGIN ==
 Route::middleware('auth')->group(function () {
-    
+    Route::post('/notifications/mark-as-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markasread');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 

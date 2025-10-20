@@ -27,20 +27,18 @@ class LoanApprovalController extends Controller
         DB::transaction(function () use ($borrowing) {
             $approvalDate = Carbon::now();
 
-            // ==========================================================
-            // PERBAIKAN UTAMA: Ganti status menjadi 'dipinjam'
-            // ==========================================================
-            $borrowing->status = 'dipinjam'; // Diubah agar sinkron
-            $borrowing->borrowed_at = $approvalDate; // Ganti nama kolom agar lebih sesuai
+            $borrowing->status = 'dipinjam';
+            $borrowing->approved_at = $approvalDate;
             $borrowing->approved_by = auth()->id();
-            
             $borrowing->due_date = $approvalDate->copy()->addWeekdays(7);
             
             $bookCopy = $borrowing->bookCopy;
-            $bookCopy->status = 'dipinjam'; // Status buku juga diganti menjadi 'dipinjam'
+            $bookCopy->status = 'dipinjam';
 
             $borrowing->save();
             $bookCopy->save();
+
+            
         });
 
         return redirect()->route('admin.petugas.approvals.index')->with('success', 'Pengajuan peminjaman berhasil dikonfirmasi.');
@@ -61,6 +59,8 @@ class LoanApprovalController extends Controller
             $borrowing->rejected_at = Carbon::now();
             $borrowing->rejected_by = auth()->id();
             $borrowing->save();
+
+            
         });
 
         return redirect()->back()->with('success', 'Pengajuan pinjaman berhasil ditolak.');
@@ -84,23 +84,21 @@ class LoanApprovalController extends Controller
             foreach ($borrowingsToApprove as $borrowing) {
                 $approvalDate = Carbon::now();
 
-                // ==========================================================
-                // PERBAIKAN UTAMA (untuk Aksi Massal)
-                // ==========================================================
-                $borrowing->status = 'dipinjam'; // Diubah agar sinkron
-                $borrowing->borrowed_at = $approvalDate;
+                $borrowing->status = 'dipinjam';
+                $borrowing->approved_at = $approvalDate;
                 $borrowing->approved_by = auth()->id();
-                
                 $borrowing->due_date = $approvalDate->copy()->addWeekdays(7);
-                
                 $borrowing->save();
 
                 $bookCopy = $borrowing->bookCopy;
                 $bookCopy->status = 'dipinjam';
                 $bookCopy->save();
+
+                
             }
         });
 
         return redirect()->back()->with('success', $borrowingsToApprove->count() . ' peminjaman berhasil dikonfirmasi.');
     }
 }
+

@@ -48,10 +48,6 @@
             color: white;
         }
 
-        .navbar-title {
-            color: white;
-        }
-
         .navbar-title h1 {
             font-size: 1.5rem;
             font-weight: 600;
@@ -65,11 +61,6 @@
             opacity: 0.95;
         }
 
-        .user-info {
-            color: white;
-            font-weight: 500;
-        }
-
         .btn-logout {
             background-color: white;
             color: var(--primary-red);
@@ -80,198 +71,101 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             font-size: 0.875rem;
-            letter-spacing: 0.5px;
         }
 
         .btn-logout:hover {
             background-color: #f8f9fa;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
 
-        /* Main Content Area */
         .main-wrapper {
             min-height: calc(100vh - 100px);
         }
-
-        /* Enhanced Card Styles */
-        .card {
-            border: none;
-            border-radius: 0.75rem;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
+        
+        /* ========================================================== */
+        /* STYLE BARU: Untuk Lonceng Notifikasi */
+        /* ========================================================== */
+        .notification-dropdown .dropdown-toggle::after {
+            display: none; /* Sembunyikan panah default dropdown */
         }
-
-        .card:hover {
-            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-        }
-
-        .card-header {
-            background-color: white;
-            border-bottom: 2px solid #f0f0f0;
-            padding: 1.25rem 1.5rem;
-            border-radius: 0.75rem 0.75rem 0 0 !important;
-        }
-
-        /* Table Enhancements */
-        .table thead th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #dee2e6;
-            padding: 1rem;
-        }
-
-        .table tbody td {
-            padding: 1rem;
-            vertical-align: middle;
-            font-size: 0.9375rem;
-        }
-
-        .table-hover tbody tr {
-            transition: background-color 0.2s ease;
-        }
-
-        .table-hover tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        /* Button Enhancements */
-        .btn {
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            border: none;
-        }
-
-        .btn-sm {
-            padding: 0.375rem 0.875rem;
-            font-size: 0.875rem;
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        }
-
-        .btn-success:hover {
-            background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        }
-
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
-        }
-
-        .btn-outline-secondary {
-            border: 2px solid #6c757d;
-            color: #6c757d;
-            background: transparent;
-        }
-
-        .btn-outline-secondary:hover {
-            background-color: #6c757d;
+        .notification-icon {
+            position: relative;
+            font-size: 1.5rem;
             color: white;
-            border-color: #6c757d;
+            cursor: pointer;
         }
-
-        /* Badge Styles */
-        .badge {
-            padding: 0.5rem 0.875rem;
-            font-weight: 600;
-            border-radius: 0.375rem;
-            font-size: 0.8125rem;
-        }
-
-        /* Alert Styles */
-        .alert {
-            border-radius: 0.75rem;
-            border: none;
-            padding: 1rem 1.25rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Avatar Circle */
-        .avatar-circle {
-            width: 40px;
-            height: 40px;
+        .notification-count {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background-color: #ffc107;
+            color: #212529;
+            font-size: 0.7rem;
+            font-weight: 700;
             border-radius: 50%;
+            width: 20px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
-            font-size: 0.875rem;
-            flex-shrink: 0;
+            border: 2px solid var(--primary-red);
         }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .navbar-title h1 {
-                font-size: 1.125rem;
-            }
-            
-            .navbar-title p {
-                font-size: 0.75rem;
-            }
-            
-            .user-info {
-                display: none;
-            }
-            
-            .btn-logout {
-                padding: 0.4rem 0.875rem;
-                font-size: 0.8125rem;
-            }
+        .notification-dropdown .dropdown-menu {
+            width: 350px;
+            padding: 0;
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            border: 1px solid #dee2e6;
         }
-
-        /* Loading State */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
+        .notification-header {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
         }
-
-        /* Page Title */
-        .page-title {
+        .notification-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            text-decoration: none;
+            color: #212529;
+            transition: background-color 0.2s ease;
+        }
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+        .notification-item.unread {
+            background-color: #fff9e6;
+        }
+        .notification-item .icon {
+            font-size: 1.25rem;
+            margin-right: 1rem;
             color: var(--primary-red);
-            font-weight: 700;
-            margin-bottom: 0.5rem;
         }
-
-        /* Empty State */
-        .empty-state {
-            padding: 4rem 2rem;
-            text-align: center;
+        .notification-item .message {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        .notification-item .time {
+            font-size: 0.75rem;
             color: #6c757d;
         }
-
-        .empty-state i {
-            font-size: 4rem;
-            opacity: 0.3;
-            margin-bottom: 1.5rem;
+        .notification-footer {
+            display: block;
+            text-align: center;
+            padding: 0.75rem;
+            font-weight: 600;
+            color: var(--primary-red);
+            text-decoration: none;
         }
+
+        {{-- Menghapus style yang tidak perlu atau duplikat --}}
+
     </style>
 
-    @stack('styles')
+    @yield('styles')
 </head>
 <body>
     <div id="app">
@@ -281,26 +175,68 @@
                 <div class="d-flex justify-content-between align-items-center">
                     {{-- Left: Logo & Title --}}
                     <div class="d-flex align-items-center gap-3">
-                        <div class="logo-circle">
-                            LP
-                        </div>
-                        <div class="navbar-title">
-                            <h1>Selamat Datang, {{ Auth::user()->role ?? 'petugas' }}!</h1>
-                            <p>Dashboard Petugas</p>
+                        <div class="logo-circle">LP</div>
+                        <div class="navbar-title text-white">
+                            {{-- Memastikan Auth::user() ada sebelum mengakses propertinya --}}
+                            @auth
+                                <h1>Selamat Datang, {{ strtok(Auth::user()->name, " ") }}!</h1>
+                                <p>Dashboard {{ ucfirst(Auth::user()->role) }}</p>
+                            @endauth
                         </div>
                     </div>
 
                     {{-- Right: User & Logout --}}
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="user-info d-none d-md-inline">
-                            {{ Auth::user()->name ?? 'Petugas' }}
-                        </span>
-                        <form action="{{ route('logout') }}" method="POST" class="m-0">
-                            @csrf
-                            <button type="submit" class="btn-logout">
-                                LOGOUT
-                            </button>
-                        </form>
+                    <div class="d-flex align-items-center gap-4">
+                        @auth
+                            <span class="user-info d-none d-md-inline text-white fw-semibold">
+                                {{ Auth::user()->name }}
+                            </span>
+
+                            {{-- ========================================================== --}}
+                            {{-- KODE BARU: Lonceng Notifikasi --}}
+                            {{-- ========================================================== --}}
+                            @php
+                                // Ambil 5 notifikasi terbaru yang belum dibaca
+                                $unreadNotifications = Auth::user()->notifications()->whereNull('read_at')->latest()->take(5)->get();
+                                // Hitung semua notifikasi yang belum dibaca
+                                $unreadCount = Auth::user()->notifications()->whereNull('read_at')->count();
+                            @endphp
+                            <div class="dropdown notification-dropdown">
+                                <a class="notification-icon" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-bell-fill"></i>
+                                    @if($unreadCount > 0)
+                                        <span class="notification-count">{{ $unreadCount }}</span>
+                                    @endif
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
+                                    <div class="notification-header">
+                                        <h6 class="mb-0 fw-bold">Notifikasi</h6>
+                                    </div>
+                                    <div class="notification-list">
+                                        @forelse ($unreadNotifications as $notification)
+                                            <a href="{{ $notification->link ?? '#' }}" class="notification-item unread">
+                                                <div class="icon"><i class="bi bi-book-fill"></i></div>
+                                                <div class="flex-grow-1">
+                                                    <p class="message mb-1">{{ $notification->message }}</p>
+                                                    <p class="time mb-0">{{ $notification->created_at->diffForHumans() }}</p>
+                                                </div>
+                                            </a>
+                                        @empty
+                                            <div class="text-center p-4 text-muted">
+                                                <i class="bi bi-check2-circle d-block fs-1 mb-2"></i>
+                                                Tidak ada notifikasi baru.
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                    <a href="{{ route('borrow.history') }}" class="notification-footer">Lihat Semua Riwayat</a>
+                                </div>
+                            </div>
+
+                            <form action="{{ route('logout') }}" method="POST" class="m-0">
+                                @csrf
+                                <button type="submit" class="btn-logout">LOGOUT</button>
+                            </form>
+                        @endauth
                     </div>
                 </div>
             </div>
@@ -315,6 +251,7 @@
     {{-- Bootstrap JS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
-    @stack('scripts')
+    @yield('scripts')
 </body>
 </html>
+
