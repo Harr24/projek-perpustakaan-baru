@@ -192,7 +192,7 @@
                                 {{ Auth::user()->name }}
                             </span>
 
-                            {{-- ========================================================== --}}
+                            <!-- {{-- ========================================================== --}}
                             {{-- KODE BARU: Lonceng Notifikasi --}}
                             {{-- ========================================================== --}}
                             @php
@@ -230,7 +230,7 @@
                                     </div>
                                     <a href="{{ route('borrow.history') }}" class="notification-footer">Lihat Semua Riwayat</a>
                                 </div>
-                            </div>
+                            </div> -->
 
                             <form action="{{ route('logout') }}" method="POST" class="m-0">
                                 @csrf
