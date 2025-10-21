@@ -1,4 +1,4 @@
-@extends('layouts.app') {{-- Pastikan ini sesuai dengan layout admin-mu --}}
+@extends('layouts.app')
 
 @section('content')
 <div class="container-fluid px-3 px-md-4 py-4">
@@ -48,9 +48,6 @@
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="bi bi-funnel-fill me-1"></i> Filter
                         </button>
-                        {{-- ========================================================== --}}
-                        {{-- PERUBAHAN DI SINI: Tombol Export diaktifkan --}}
-                        {{-- ========================================================== --}}
                         <a href="{{ route('admin.petugas.reports.borrowings.export', request()->query()) }}" class="btn btn-success" title="Export ke Excel">
                             <i class="bi bi-file-earmark-excel"></i>
                         </a>
@@ -76,7 +73,12 @@
                             <th class="py-3">Kelas</th>
                             <th class="py-3">Buku yang Dipinjam</th>
                             <th class="py-3">Tgl. Pinjam</th>
-                            <th class="py-3 pe-4">Tgl. Kembali</th>
+                            <th class="py-3">Tgl. Kembali</th>
+                            {{-- ========================================================== --}}
+                            {{-- PENAMBAHAN 1: Kolom Header untuk Petugas --}}
+                            {{-- ========================================================== --}}
+                            <th class="py-3">Petugas Approval</th>
+                            <th class="py-3 pe-4">Petugas Pengembalian</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -92,11 +94,17 @@
                                 <td>{{ $borrowing->user->class_name ?? 'N/A' }}</td>
                                 <td>{{ $borrowing->bookCopy->book->title }}</td>
                                 <td>{{ \Carbon\Carbon::parse($borrowing->borrowed_at)->format('d M Y') }}</td>
-                                <td class="pe-4">{{ $borrowing->returned_at ? \Carbon\Carbon::parse($borrowing->returned_at)->format('d M Y') : '-' }}</td>
+                                <td>{{ $borrowing->returned_at ? \Carbon\Carbon::parse($borrowing->returned_at)->format('d M Y') : '-' }}</td>
+                                {{-- ========================================================== --}}
+                                {{-- PENAMBAHAN 2: Menampilkan Nama Petugas --}}
+                                {{-- ========================================================== --}}
+                                <td>{{ $borrowing->approvedBy->name ?? 'N/A' }}</td>
+                                <td class="pe-4">{{ $borrowing->returnedBy->name ?? 'N/A' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5">
+                                {{-- PENAMBAHAN 3: Menyesuaikan colspan --}}
+                                <td colspan="9" class="text-center py-5">
                                     <p class="text-muted mb-0">Tidak ada data peminjaman yang cocok dengan filter Anda.</p>
                                 </td>
                             </tr>

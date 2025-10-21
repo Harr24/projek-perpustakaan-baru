@@ -7,28 +7,25 @@ use App\Models\Borrowing;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth; // <-- Import class Auth
 
 class ReturnController extends Controller
 {
     /**
      * Menampilkan daftar buku yang sedang dipinjam, dengan fungsionalitas PENCARIAN.
      */
-    public function index(Request $request) // Terima object Request
+    public function index(Request $request)
     {
-        $search = $request->input('search'); // Ambil input dari form pencarian
+        $search = $request->input('search');
 
-        // Mulai query dasar
         $query = Borrowing::whereIn('status', ['dipinjam', 'overdue'])
                             ->with('user', 'bookCopy.book');
 
-        // Jika ada input pencarian, tambahkan filter
         if ($search) {
             $query->where(function ($q) use ($search) {
-                // Cari berdasarkan nama peminjam
                 $q->whereHas('user', function ($subq) use ($search) {
                     $subq->where('name', 'like', '%' . $search . '%');
                 })
-                // ATAU cari berdasarkan judul buku
                 ->orWhereHas('bookCopy.book', function ($subq) use ($search) {
                     $subq->where('title', 'like', '%' . $search . '%');
                 });
@@ -37,12 +34,11 @@ class ReturnController extends Controller
         
         $activeBorrowings = $query->latest('approved_at')->get();
 
-        // Kirim data dan variabel 'search' ke view
         return view('admin.petugas.returns.index', compact('activeBorrowings', 'search'));
     }
 
     /**
-     * Memproses pengembalian buku tunggal. (Tidak ada perubahan)
+     * Memproses pengembalian buku tunggal.
      */
     public function store(Borrowing $borrowing)
     {
@@ -51,8 +47,8 @@ class ReturnController extends Controller
         }
 
         DB::transaction(function () use ($borrowing) {
-            $dueDate = Carbon::parse($borrowing->due_date);
             $returnDate = Carbon::now();
+            $dueDate = Carbon::parse($borrowing->due_at); // Menggunakan due_at untuk konsistensi
             $lateDays = 0;
 
             if ($returnDate->isAfter($dueDate)) {
@@ -63,12 +59,20 @@ class ReturnController extends Controller
 
             $fine = $lateDays * 1000;
 
+            // Update record peminjaman
             $borrowing->status = 'returned';
             $borrowing->returned_at = $returnDate;
             $borrowing->fine_amount = $fine;
             $borrowing->late_days = $lateDays;
+            
+            // ==========================================================
+            // PENAMBAHAN: Simpan ID petugas yang memproses pengembalian
+            // ==========================================================
+            $borrowing->returned_by = Auth::id();
+            
             $borrowing->save();
 
+            // Update status salinan buku
             $bookCopy = $borrowing->bookCopy;
             $bookCopy->status = 'tersedia';
             $bookCopy->save();
@@ -83,7 +87,7 @@ class ReturnController extends Controller
     }
 
     /**
-     * Memproses pengembalian buku massal. (Tidak ada perubahan)
+     * Memproses pengembalian buku massal.
      */
     public function storeMultiple(Request $request)
     {
@@ -101,11 +105,12 @@ class ReturnController extends Controller
 
         $totalReturned = 0;
         $totalFine = 0;
+        $petugasId = Auth::id(); // Ambil ID petugas saat ini
 
-        DB::transaction(function () use ($borrowingsToReturn, &$totalReturned, &$totalFine) {
+        DB::transaction(function () use ($borrowingsToReturn, &$totalReturned, &$totalFine, $petugasId) {
             foreach ($borrowingsToReturn as $borrowing) {
-                $dueDate = Carbon::parse($borrowing->due_date);
                 $returnDate = Carbon::now();
+                $dueDate = Carbon::parse($borrowing->due_at); // Menggunakan due_at
                 $lateDays = 0;
 
                 if ($returnDate->isAfter($dueDate)) {
@@ -119,6 +124,12 @@ class ReturnController extends Controller
                 $borrowing->returned_at = $returnDate;
                 $borrowing->fine_amount = $fine;
                 $borrowing->late_days = $lateDays;
+
+                // ==========================================================
+                // PENAMBAHAN: Simpan ID petugas yang memproses pengembalian
+                // ==========================================================
+                $borrowing->returned_by = $petugasId;
+
                 $borrowing->save();
 
                 $bookCopy = $borrowing->bookCopy;
@@ -137,3 +148,4 @@ class ReturnController extends Controller
         return redirect()->back()->with('success', $message);
     }
 }
+

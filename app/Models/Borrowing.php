@@ -17,6 +17,7 @@ class Borrowing extends Model
         'returned_at',
         'status', // <-- TAMBAHKAN INI
     ];
+    
 
     // Relasi ke User (peminjam)
     public function user()
@@ -28,5 +29,18 @@ class Borrowing extends Model
     public function bookCopy()
     {
         return $this->belongsTo(BookCopy::class);
+    }
+
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Relasi untuk mengambil data user (petugas) yang memproses pengembalian.
+     */
+    public function returnedBy()
+    {
+        return $this->belongsTo(User::class, 'returned_by');
     }
 }
