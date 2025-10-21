@@ -44,7 +44,7 @@ class BookCatalogController extends Controller
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             // PENAMBAHAN: Hitung semua status kecuali yang ditolak
-            ->where('status', '!=', 'rejected') 
+            ->where('status', '!=', 'rejected')
             ->whereHas('user', function ($query) {
                 $query->where('role', 'siswa');
             })
@@ -54,18 +54,18 @@ class BookCatalogController extends Controller
             ->with('user')
             ->get();
         // ==========================================================
-            
+
         $learningMaterials = LearningMaterial::where('is_active', true)
-                                                ->with('user')
-                                                ->latest()
-                                                ->limit(4)
-                                                ->get();
+            ->with('user')
+            ->latest()
+            ->limit(4)
+            ->get();
 
         return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'learningMaterials'));
     }
 
     // ... (method-method lain tidak diubah) ...
-    
+
     public function allBooks(Request $request)
     {
         $genres = Genre::orderBy('name')->get();
@@ -77,9 +77,9 @@ class BookCatalogController extends Controller
             'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia')
         ]);
         $booksQuery->when($search, function ($query, $search) {
-            return $query->where(function($q) use ($search) {
+            return $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', '%' . $search . '%')
-                  ->orWhere('author', 'LIKE', '%' . $search . '%');
+                    ->orWhere('author', 'LIKE', '%' . $search . '%');
             });
         });
         $booksQuery->when($selectedGenreName, function ($query, $genreName) {
@@ -95,13 +95,15 @@ class BookCatalogController extends Controller
         $books = $booksQuery->paginate(12)->withQueryString();
         return view('public.catalog.all_books', compact('books', 'genres'));
     }
-    
+
     public function show(Book $book)
     {
         $book->load('genre', 'copies');
-        $book->loadCount(['copies as available_copies_count' => function ($query) {
-            $query->where('status', 'tersedia');
-        }]);
+        $book->loadCount([
+            'copies as available_copies_count' => function ($query) {
+                $query->where('status', 'tersedia');
+            }
+        ]);
         return view('public.catalog.show', compact('book'));
     }
 
@@ -115,20 +117,20 @@ class BookCatalogController extends Controller
         $type = Storage::disk('public')->mimeType($path);
         return response($file)->header('Content-Type', $type);
     }
-    
+
     public function showLibrarians()
     {
         $staff = User::whereIn('role', ['petugas', 'guru'])
-                       ->orderBy('name', 'asc')
-                       ->get();
+            ->orderBy('name', 'asc')
+            ->get();
         return view('public.librarians', compact('staff'));
     }
-    
+
     public function allMaterials(Request $request)
     {
         $query = LearningMaterial::where('is_active', true)
-                                   ->with('user')
-                                   ->latest();
+            ->with('user')
+            ->latest();
         if ($request->filled('search')) {
             $query->where('title', 'like', '%' . $request->search . '%');
         }
@@ -137,9 +139,9 @@ class BookCatalogController extends Controller
         }
         $materials = $query->paginate(10)->withQueryString();
         $teachers = User::where('role', 'guru')
-                        ->whereHas('learningMaterials') 
-                        ->orderBy('name')
-                        ->get();
+            ->whereHas('learningMaterials')
+            ->orderBy('name')
+            ->get();
         return view('public.catalog.all_materials', compact('materials', 'teachers'));
     }
 }
