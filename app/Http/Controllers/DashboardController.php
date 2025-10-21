@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+// Import Model yang sudah kita pastikan benar
+use App\Models\Book;
+use App\Models\Borrowing; 
+
 class DashboardController extends Controller
 {
     /**
@@ -22,21 +26,43 @@ class DashboardController extends Controller
         switch ($user->role) {
             case 'petugas':
             case 'superadmin':
-                // Untuk petugas & superadmin, hitung siswa yang menunggu verifikasi
+                
+                // (Logika lama untuk badge notifikasi)
                 $data['pendingStudentsCount'] = User::where('role', 'siswa')
                                                     ->where('account_status', 'pending')
                                                     ->count();
+
+                // === Logika untuk Kartu Statistik ===
+
+                // 1. Hitung total buku
+                $data['totalBuku'] = Book::count();
+
+                // 2. Hitung anggota aktif
+                $data['anggotaAktif'] = User::whereIn('role', ['siswa', 'guru'])
+                                            ->where('account_status', 'active') 
+                                            ->count();
+
+                // 3. Hitung pengajuan peminjaman (status 'pending')
+                // === PERBAIKAN: Menggunakan kolom 'status' ===
+                $data['pengajuanPinjaman'] = Borrowing::where('status', 'pending') 
+                                                       ->count();
+
+                // 4. Hitung buku yang terlambat
+                // === PERBAIKAN: Menggunakan kolom 'status' dan 'due_date' ===
+                $data['terlambat'] = Borrowing::where('status', 'dipinjam')
+                                             ->where('due_date', '<', now()) // <-- Diubah
+                                             ->count();
+                
                 break;
             
             case 'siswa':
             case 'guru':
-                // Untuk siswa & guru, cek apakah mereka punya riwayat peminjaman
+                // (Logika lama untuk member)
                 $data['hasBorrowings'] = $user->borrowings()->exists();
                 break;
         }
 
-        // Kirim data user dan data tambahan yang sudah disiapkan ke view 'dashboard'.
+        // Kirim semua data ke view
         return view('dashboard', array_merge(['user' => $user], $data));
     }
 }
-

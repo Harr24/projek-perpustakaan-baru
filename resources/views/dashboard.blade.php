@@ -15,6 +15,7 @@
             --accent:#d9534f;
             --accent-600:#b93a37;
             --success:#16a34a;
+            --info: #3498db;
             --radius:12px;
             --container-max:1100px;
             --glass: rgba(255,255,255,0.6);
@@ -51,6 +52,7 @@
             display:flex;
             align-items:center;
             gap:14px;
+            min-width: 0; /* <-- [PERBAIKAN 1] Ditambahkan */
         }
         .logo{
             width:48px;
@@ -64,7 +66,7 @@
             letter-spacing:0.6px;
             box-shadow:inset 0 -4px 12px rgba(0,0,0,0.08);
             overflow: hidden;
-            flex-shrink: 0; /* Mencegah logo menyusut */
+            flex-shrink: 0;
         }
         .title{
             display:flex;
@@ -75,18 +77,26 @@
             margin:0;
             font-size:1.1rem;
             font-weight:600;
+            /* [PERBAIKAN 2] Ditambahkan */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .title p{
             margin:0;
             font-size:0.85rem;
             opacity:0.95;
             color:rgba(255,255,255,0.92);
+            /* [PERBAIKAN 3] Ditambahkan */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .header-actions{
             display:flex;
             align-items:center;
             gap:12px;
-            flex-shrink: 0; /* Mencegah grup tombol menyusut */
+            flex-shrink: 0;
         }
         .btn{
             display:inline-flex;
@@ -119,8 +129,16 @@
         }
         .grid{
             display:grid;
-            gap:20px;
-            margin-top:20px;
+            gap:24px;
+            margin-top:24px;
+        }
+        @media (min-width: 992px) {
+            .grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .grid-full-width {
+                grid-column: 1 / -1; 
+            }
         }
         .card{
             background:var(--card);
@@ -147,12 +165,14 @@
         }
         .welcome h2{ margin:0 0 8px 0; font-size:1.1rem; }
         .welcome p{margin:0;color:var(--muted);font-size:0.95rem}
+        
         .nav-list{
             margin-top:18px;
             display:flex;
             flex-direction:column;
             gap:10px;
         }
+        
         .nav-item{
             display:flex;
             align-items:center;
@@ -199,21 +219,119 @@
             color: #fff;
             border-color: #fff;
         }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        .stat-card {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 16px;
+            border: 1px solid #eef2f5;
+            text-align: center;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-600);
+            line-height: 1.1;
+        }
+        .stat-card .label {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        .clock {
+            font-weight: 600;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 0.95rem;
+            min-width: 80px;
+            text-align: center;
+        }
+        .last-login {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            background: #eef2f5;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .guide-card h2 {
+            margin: 0 0 4px 0;
+            font-size: 1.2rem;
+            color: var(--accent-600);
+        }
+        .guide-card p.subtitle {
+            color:var(--muted); 
+            margin-top:0; 
+            margin-bottom:20px;
+            font-size: 0.95rem;
+        }
+        .guide-section {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 14px;
+        }
+        .guide-section span.icon {
+            position: absolute;
+            left: 0;
+            top: 2px;
+            font-size: 1.1rem;
+        }
+        .guide-section h4 {
+            margin: 0 0 2px 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .guide-section p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
         
-        /* ========================================================== */
-        /* PERBAIKAN UTAMA: Tambahkan Media Query untuk Responsif */
-        /* ========================================================== */
-        @media (max-width: 600px) {
+        .alert-pending {
+            background-color: #fff9f0;
+            border: 1px solid #ffe6b3;
+            color: #b96a00;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-top: 16px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .alert-pending a {
+            color: var(--accent-600);
+            text-decoration: underline;
+            font-weight: 700;
+        }
+        .alert-pending span {
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 700px) {
             header.header {
-                flex-wrap: wrap; /* Izinkan item turun ke baris baru */
-                justify-content: center; /* Pusatkan item saat baris baru terbentuk */
-                gap: 12px; /* Kurangi jarak antar item */
+                flex-wrap: wrap; 
+                justify-content: center;
+                gap: 12px;
             }
             .header-actions {
-                width: 100%; /* Buat grup tombol memenuhi lebar */
+                width: 100%; 
                 justify-content: space-between;
             }
+            .clock {
+                display: none;
+            }
         }
+        
     </style>
 </head>
 <body>
@@ -233,6 +351,7 @@
                 </div>
             </div>
             <div class="header-actions">
+                <div id="clock" class="clock">00:00:00</div>
                 <div class="profile-badge" role="img" aria-label="Role Pengguna">
                     {{ ucfirst(Auth::user()->role) }}
                 </div>
@@ -244,6 +363,29 @@
         </header>
 
         <main class="grid" role="main">
+
+            @if(Auth::user()->role == 'petugas' || Auth::user()->role == 'superadmin')
+            <section class="card grid-full-width">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="value">{{ $totalBuku ?? '0' }}</div>
+                        <div class="label">Total Buku</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">{{ $anggotaAktif ?? '0' }}</div>
+                        <div class="label">Anggota Aktif</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">{{ $pengajuanPinjaman ?? '0' }}</div>
+                        <div class="label">Pengajuan Baru</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="value">{{ $terlambat ?? '0' }}</div>
+                        <div class="label">Terlambat</div>
+                    </div>
+                </div>
+            </section>
+            @endif
             <section class="card" aria-labelledby="welcomeTitle">
                 <div class="welcome">
                     <div class="icon" aria-hidden="true">📚</div>
@@ -251,6 +393,17 @@
                         <h2 id="welcomeTitle">Anda berhasil login ke sistem perpustakaan.</h2>
                         <p>Pilih menu navigasi di bawah ini untuk memulai.</p>
                         
+                        @if(Auth::user()->role == 'petugas' || Auth::user()->role == 'superadmin')
+                            @if(isset($pendingStudentsCount) && $pendingStudentsCount > 0)
+                                <div class="alert-pending">
+                                    <span>🔔</span>
+                                    <div>
+                                        Ada <strong>{{ $pendingStudentsCount }} siswa</strong> menunggu verifikasi. 
+                                        <a href="{{ route('admin.petugas.verification.index') }}">Lihat di sini</a>
+                                    </div>
+                                </div>
+                            @endif
+                        @endif
                         <div class="nav-list" id="navList">
                             @switch(Auth::user()->role)
                                 @case('superadmin')
@@ -260,7 +413,7 @@
                                 @case('petugas')
                                     @include('dashboard-partials.petugas')
                                     @break
-
+                                
                                 @case('guru')
                                     <a href="{{ route('guru.materials.index') }}" class="nav-item">
                                         <div class="nav-item-main">
@@ -279,8 +432,94 @@
                     </div>
                 </div>
             </section>
-        </main>
+            @if(Auth::user()->role == 'petugas')
+            <section class="card guide-card" aria-labelledby="guideTitle">
+                <h2 id="guideTitle">🚀 Panduan Cepat Petugas</h2>
+                <p class="subtitle">Alur kerja utama Anda sebagai petugas.</p>
+            
+                <div class="guide-section">
+                    <span class="icon">🗃️</span>
+                    <h4>Data Master</h4>
+                    <p>Kelola data inti seperti genre dan daftar buku.</p>
+                </div>
+
+                <div class="guide-section">
+                    <span class="icon">👥</span>
+                    <h4>Anggota</h4>
+                    <p>Verifikasi siswa baru dan kelola akun guru.</p>
+                </div>
+
+                <div class="guide-section">
+                    <span class="icon">🔄</span>
+                    <h4>Sirkulasi Buku</h4>
+                    <p>Proses pengajuan pinjaman, pengembalian, dan denda.</p>
+                </div>
+
+                <div class="guide-section">
+                    <span class="icon">📊</span>
+                    <h4>Laporan</h4>
+                    <p>Lihat rekapitulasi data peminjaman di menu Laporan.</p>
+                </div>
+                
+                @if(Auth::user()->last_login_at)
+                <div class="last-login">
+                    Login terakhir: {{ Auth::user()->last_login_at->format('d M Y, H:i') }}
+                </div>
+                @endif
+            </section>
+
+            @elseif(Auth::user()->role == 'superadmin')
+            <section class="card guide-card" aria-labelledby="guideTitle">
+                <h2 id="guideTitle">🚀 Panduan Cepat Superadmin</h2>
+                <p class="subtitle">Alur kerja utama Anda sebagai superadmin.</p>
+            
+                <div class="guide-section">
+                    <span class="icon">👨‍💼</span>
+                    <h4>Manajemen Staf</h4>
+                    <p>Tambah, edit, atau hapus akun untuk petugas perpustakaan.</p>
+                </div>
+
+                <div class="guide-section">
+                    <span class="icon">👥</span>
+                    <h4>Kelola Anggota</h4>
+                    <p>Kelola semua data anggota (siswa & guru) yang terdaftar.</p>
+                </div>
+
+                <div class="guide-section">
+                    <span class="icon">🖥️</span>
+                    <h4>Tampilan Depan</h4>
+                    <p>Mengatur gambar dan tautan pada Hero Slider di halaman utama.</p>
+                </div>
+
+                <div class="guide-section">
+                    <span class="icon">⚙️</span>
+                    <h4>Akun</h4>
+                    <p>Mengelola profil dan kata sandi akun superadmin Anda.</p>
+                </div>
+                
+                @if(Auth::user()->last_login_at)
+                <div class="last-login">
+                    Login terakhir: {{ Auth::user()->last_login_at->format('d M Y, H:i') }}
+                </div>
+                @endif
+            </section>
+            @endif
+            </main>
     </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const options = { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const timeString = now.toLocaleTimeString('id-ID', options);
+            
+            const clockElement = document.getElementById('clock');
+            if (clockElement) {
+                clockElement.textContent = timeString.replace(/\./g, ':');
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
 </body>
 </html>
-
