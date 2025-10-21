@@ -81,11 +81,9 @@
             min-height: calc(100vh - 100px);
         }
         
-        /* ========================================================== */
-        /* STYLE BARU: Untuk Lonceng Notifikasi */
-        /* ========================================================== */
+        /* Style Lonceng Notifikasi */
         .notification-dropdown .dropdown-toggle::after {
-            display: none; /* Sembunyikan panah default dropdown */
+            display: none;
         }
         .notification-icon {
             position: relative;
@@ -160,9 +158,6 @@
             color: var(--primary-red);
             text-decoration: none;
         }
-
-        {{-- Menghapus style yang tidak perlu atau duplikat --}}
-
     </style>
 
     @yield('styles')
@@ -177,7 +172,6 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="logo-circle">LP</div>
                         <div class="navbar-title text-white">
-                            {{-- Memastikan Auth::user() ada sebelum mengakses propertinya --}}
                             @auth
                                 <h1>Selamat Datang, {{ strtok(Auth::user()->name, " ") }}!</h1>
                                 <p>Dashboard {{ ucfirst(Auth::user()->role) }}</p>
@@ -191,46 +185,6 @@
                             <span class="user-info d-none d-md-inline text-white fw-semibold">
                                 {{ Auth::user()->name }}
                             </span>
-
-                            <!-- {{-- ========================================================== --}}
-                            {{-- KODE BARU: Lonceng Notifikasi --}}
-                            {{-- ========================================================== --}}
-                            @php
-                                // Ambil 5 notifikasi terbaru yang belum dibaca
-                                $unreadNotifications = Auth::user()->notifications()->whereNull('read_at')->latest()->take(5)->get();
-                                // Hitung semua notifikasi yang belum dibaca
-                                $unreadCount = Auth::user()->notifications()->whereNull('read_at')->count();
-                            @endphp
-                            <div class="dropdown notification-dropdown">
-                                <a class="notification-icon" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-bell-fill"></i>
-                                    @if($unreadCount > 0)
-                                        <span class="notification-count">{{ $unreadCount }}</span>
-                                    @endif
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
-                                    <div class="notification-header">
-                                        <h6 class="mb-0 fw-bold">Notifikasi</h6>
-                                    </div>
-                                    <div class="notification-list">
-                                        @forelse ($unreadNotifications as $notification)
-                                            <a href="{{ $notification->link ?? '#' }}" class="notification-item unread">
-                                                <div class="icon"><i class="bi bi-book-fill"></i></div>
-                                                <div class="flex-grow-1">
-                                                    <p class="message mb-1">{{ $notification->message }}</p>
-                                                    <p class="time mb-0">{{ $notification->created_at->diffForHumans() }}</p>
-                                                </div>
-                                            </a>
-                                        @empty
-                                            <div class="text-center p-4 text-muted">
-                                                <i class="bi bi-check2-circle d-block fs-1 mb-2"></i>
-                                                Tidak ada notifikasi baru.
-                                            </div>
-                                        @endforelse
-                                    </div>
-                                    <a href="{{ route('borrow.history') }}" class="notification-footer">Lihat Semua Riwayat</a>
-                                </div>
-                            </div> -->
 
                             <form action="{{ route('logout') }}" method="POST" class="m-0">
                                 @csrf
@@ -251,7 +205,9 @@
     {{-- Bootstrap JS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
-    @yield('scripts')
+    {{-- ========================================================== --}}
+    {{-- PERBAIKAN KRITIS: Ganti @yield menjadi @stack --}}
+    {{-- ========================================================== --}}
+    @stack('scripts')
 </body>
 </html>
-

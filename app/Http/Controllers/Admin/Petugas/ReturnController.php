@@ -6,41 +6,52 @@ use App\Http\Controllers\Controller;
 use App\Models\Borrowing;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // <-- Jangan lupa import DB
+use Illuminate\Support\Facades\DB;
 
 class ReturnController extends Controller
 {
     /**
-     * Menampilkan daftar buku yang sedang dipinjam atau terlambat.
+     * Menampilkan daftar buku yang sedang dipinjam, dengan fungsionalitas PENCARIAN.
      */
-    public function index()
+    public function index(Request $request) // Terima object Request
     {
-        // ==========================================================
-        // PERBAIKAN UTAMA: Mencari status 'approved' yang sudah kita set
-        // saat menyetujui peminjaman. Status 'overdue' juga tetap dicari.
-        // ==========================================================
-        $activeBorrowings = Borrowing::whereIn('status', ['dipinjam', 'overdue'])
-                                        ->with('user', 'bookCopy.book')
-                                        // PERBAIKAN KECIL: Urutkan berdasarkan tanggal disetujui
-                                        ->latest('approved_at')
-                                        ->get();
+        $search = $request->input('search'); // Ambil input dari form pencarian
 
-        return view('admin.petugas.returns.index', compact('activeBorrowings'));
+        // Mulai query dasar
+        $query = Borrowing::whereIn('status', ['dipinjam', 'overdue'])
+                            ->with('user', 'bookCopy.book');
+
+        // Jika ada input pencarian, tambahkan filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                // Cari berdasarkan nama peminjam
+                $q->whereHas('user', function ($subq) use ($search) {
+                    $subq->where('name', 'like', '%' . $search . '%');
+                })
+                // ATAU cari berdasarkan judul buku
+                ->orWhereHas('bookCopy.book', function ($subq) use ($search) {
+                    $subq->where('title', 'like', '%' . $search . '%');
+                });
+            });
+        }
+        
+        $activeBorrowings = $query->latest('approved_at')->get();
+
+        // Kirim data dan variabel 'search' ke view
+        return view('admin.petugas.returns.index', compact('activeBorrowings', 'search'));
     }
 
     /**
-     * Memproses pengembalian buku tunggal.
+     * Memproses pengembalian buku tunggal. (Tidak ada perubahan)
      */
-    public function store(Borrowing $borrowing) // Hapus Request $request karena tidak dipakai
+    public function store(Borrowing $borrowing)
     {
-        // PERBAIKAN: Validasi juga harus mencari status 'approved'
         if (!in_array($borrowing->status, ['dipinjam', 'overdue'])) {
             return redirect()->back()->with('error', 'Peminjaman ini tidak dalam status aktif.');
         }
 
-        // BEST PRACTICE: Bungkus dengan transaction untuk keamanan data
         DB::transaction(function () use ($borrowing) {
-            $dueDate = Carbon::parse($borrowing->due_date); // Pastikan nama kolom 'due_date'
+            $dueDate = Carbon::parse($borrowing->due_date);
             $returnDate = Carbon::now();
             $lateDays = 0;
 
@@ -50,22 +61,19 @@ class ReturnController extends Controller
                 }, $returnDate);
             }
 
-            $fine = $lateDays * 1000; // Asumsi denda 1000 per hari
+            $fine = $lateDays * 1000;
 
-            // Update record peminjaman
             $borrowing->status = 'returned';
             $borrowing->returned_at = $returnDate;
             $borrowing->fine_amount = $fine;
             $borrowing->late_days = $lateDays;
             $borrowing->save();
 
-            // Update status salinan buku
             $bookCopy = $borrowing->bookCopy;
             $bookCopy->status = 'tersedia';
             $bookCopy->save();
         });
         
-        // Buat pesan dinamis setelah transaction berhasil
         $message = 'Buku berhasil dikembalikan.';
         if ($borrowing->fine_amount > 0) {
             $message .= ' Denda keterlambatan sebesar Rp ' . number_format($borrowing->fine_amount, 0, ',', '.') . ' (terlambat ' . $borrowing->late_days . ' hari kerja) tercatat.';
@@ -75,7 +83,7 @@ class ReturnController extends Controller
     }
 
     /**
-     * Memproses pengembalian buku massal.
+     * Memproses pengembalian buku massal. (Tidak ada perubahan)
      */
     public function storeMultiple(Request $request)
     {
@@ -85,8 +93,7 @@ class ReturnController extends Controller
         ]);
 
         $borrowingIds = $request->input('borrowing_ids');
-        // PERBAIKAN: Cari juga status 'approved'
-       $borrowingsToReturn = Borrowing::whereIn('id', $borrowingIds)->whereIn('status', ['dipinjam', 'overdue'])->get();
+        $borrowingsToReturn = Borrowing::whereIn('id', $borrowingIds)->whereIn('status', ['dipinjam', 'overdue'])->get();
 
         if ($borrowingsToReturn->isEmpty()) {
             return redirect()->back()->with('error', 'Tidak ada buku valid yang dipilih untuk dikembalikan.');
@@ -95,10 +102,9 @@ class ReturnController extends Controller
         $totalReturned = 0;
         $totalFine = 0;
 
-        // BEST PRACTICE: Satu transaction untuk semua proses
         DB::transaction(function () use ($borrowingsToReturn, &$totalReturned, &$totalFine) {
             foreach ($borrowingsToReturn as $borrowing) {
-                $dueDate = Carbon::parse($borrowing->due_date); // Pastikan nama kolom 'due_date'
+                $dueDate = Carbon::parse($borrowing->due_date);
                 $returnDate = Carbon::now();
                 $lateDays = 0;
 

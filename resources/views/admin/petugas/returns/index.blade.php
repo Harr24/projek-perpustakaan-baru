@@ -28,15 +28,29 @@
     </div>
     @endif
 
-    <form action="{{ route('admin.petugas.returns.storeMultiple') }}" method="POST" id="bulk-return-form" onsubmit="return confirm('Anda yakin ingin mengembalikan semua buku yang dipilih?');">
+    {{-- Form untuk Aksi Massal (dikelola oleh JS) --}}
+    <form action="{{ route('admin.petugas.returns.storeMultiple') }}" method="POST" id="bulk-return-form">
         @csrf
         @method('PUT')
+        {{-- Input tersembunyi akan ditambahkan oleh JavaScript --}}
     </form>
 
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+        <div class="card-header bg-danger text-white d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 py-3">
             <h5 class="mb-0 fw-semibold"><i class="bi bi-journal-arrow-up me-2"></i> Buku Sedang Dipinjam</h5>
-            <button type="submit" form="bulk-return-form" class="btn btn-light btn-sm fw-bold">
+            
+            {{-- Form Pencarian --}}
+            <form action="{{ route('admin.petugas.returns.index') }}" method="GET" class="d-flex w-100 w-md-auto">
+                <div class="input-group input-group-sm">
+                    <input type="search" name="search" class="form-control" placeholder="Cari peminjam atau buku..." value="{{ $search ?? '' }}">
+                    @if(isset($search) && $search)
+                        <a href="{{ route('admin.petugas.returns.index') }}" class="btn btn-light" title="Hapus Filter"><i class="bi bi-x"></i></a>
+                    @endif
+                    <button class="btn btn-light" type="submit"><i class="bi bi-search"></i></button>
+                </div>
+            </form>
+
+            <button type="submit" form="bulk-return-form" class="btn btn-light btn-sm fw-bold" id="btn-return-multiple" disabled>
                 <i class="bi bi-check2-all"></i> Kembalikan yang Dipilih
             </button>
         </div>
@@ -48,9 +62,6 @@
                             <th class="py-3 px-3" style="width: 5%;"><input class="form-check-input" type="checkbox" id="selectAll"></th>
                             <th class="py-3 px-3">Judul Buku</th>
                             <th class="py-3 px-3">Peminjam</th>
-                            {{-- ========================================================== --}}
-                            {{-- PERUBAHAN 1: Menambahkan judul kolom baru --}}
-                            {{-- ========================================================== --}}
                             <th class="py-3 px-3">Kelas</th>
                             <th class="py-3 px-3">Kontak (WA)</th>
                             <th class="py-3 px-3">Jatuh Tempo</th>
@@ -61,34 +72,24 @@
                     <tbody>
                         @forelse ($activeBorrowings as $borrow)
                             @php
-                                $dueDate = \Carbon\Carbon::parse($borrow->due_date);
-                                $isOverdue = $borrow->status == 'approved' && now()->isAfter($dueDate);
+                                $dueDate = \Carbon\Carbon::parse($borrow->due_at);
+                                $isOverdue = now()->gt($dueDate);
                             @endphp
                             <tr class="{{ $isOverdue ? 'table-danger' : '' }}">
                                 <td class="px-3">
-                                    <input class="form-check-input" type="checkbox" name="borrowing_ids[]" value="{{ $borrow->id }}" form="bulk-return-form">
+                                    <input class="form-check-input borrowing-checkbox" type="checkbox" value="{{ $borrow->id }}">
                                 </td>
                                 <td class="px-3">
                                     {{ $borrow->bookCopy->book->title }}
                                     <small class="d-block text-muted">{{ $borrow->bookCopy->book_code }}</small>
                                 </td>
                                 <td class="px-3">{{ $borrow->user->name }}</td>
-
-                                {{-- ========================================================== --}}
-                                {{-- PERUBAHAN 2: Menampilkan data kelas dan kontak --}}
-                                {{-- ========================================================== --}}
                                 <td class="px-3">{{ $borrow->user->class_name ?? 'N/A' }}</td>
                                 <td class="px-3">
                                     @if($borrow->user->phone_number)
                                         @php
-                                            // Membersihkan nomor telepon dari spasi, tanda hubung, dll.
                                             $cleanedPhone = preg_replace('/[^0-9]/', '', $borrow->user->phone_number);
-                                            // Mengganti awalan 0 dengan 62 untuk format internasional
-                                            if (substr($cleanedPhone, 0, 1) === '0') {
-                                                $waNumber = '62' . substr($cleanedPhone, 1);
-                                            } else {
-                                                $waNumber = $cleanedPhone;
-                                            }
+                                            $waNumber = '62' . ltrim($cleanedPhone, '0');
                                         @endphp
                                         <a href="https://wa.me/{{ $waNumber }}" target="_blank" class="btn btn-sm btn-outline-success" title="Chat {{ $borrow->user->name }} di WhatsApp">
                                             <i class="bi bi-whatsapp"></i> Chat
@@ -97,7 +98,6 @@
                                         <span class="text-muted small">N/A</span>
                                     @endif
                                 </td>
-                                
                                 <td class="px-3 fw-bold">{{ $dueDate->format('d M Y') }}</td>
                                 <td class="px-3">
                                     @if($isOverdue)
@@ -115,9 +115,6 @@
                                 </td>
                             </tr>
                         @empty
-                            {{-- ========================================================== --}}
-                            {{-- PERUBAHAN 3: Menyesuaikan colspan --}}
-                            {{-- ========================================================== --}}
                             <tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-check2-all d-block display-4 opacity-25"></i>Tidak ada buku yang sedang dipinjam.</td></tr>
                         @endforelse
                     </tbody>
@@ -130,11 +127,58 @@
 
 @push('scripts')
 <script>
-    document.getElementById('selectAll').addEventListener('click', function(event) {
-        const checkboxes = document.querySelectorAll('input[form="bulk-return-form"]');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = event.target.checked;
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllHeader = document.getElementById('selectAll');
+        const bulkReturnForm = document.getElementById('bulk-return-form');
+        const btnReturnMultiple = document.getElementById('btn-return-multiple');
+        const borrowingCheckboxes = document.querySelectorAll('.borrowing-checkbox');
+        const csrfToken = document.querySelector('input[name="_token"]').value;
+
+        function updateFormAndButton() {
+            bulkReturnForm.innerHTML = `
+                <input type="hidden" name="_token" value="${csrfToken}">
+                <input type="hidden" name="_method" value="PUT">
+            `;
+            
+            let checkedCount = 0;
+            borrowingCheckboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'borrowing_ids[]';
+                    hiddenInput.value = checkbox.value;
+                    bulkReturnForm.appendChild(hiddenInput);
+                    checkedCount++;
+                }
+            });
+            
+            btnReturnMultiple.disabled = checkedCount === 0;
+        }
+
+        function syncControls() {
+            const total = borrowingCheckboxes.length;
+            const checked = document.querySelectorAll('.borrowing-checkbox:checked').length;
+            
+            selectAllHeader.checked = total > 0 && total === checked;
+            selectAllHeader.indeterminate = checked > 0 && checked < total;
+        }
+
+        selectAllHeader.addEventListener('change', function() {
+            borrowingCheckboxes.forEach(cb => cb.checked = this.checked);
+            updateFormAndButton();
         });
+
+        borrowingCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                syncControls();
+                updateFormAndButton();
+            });
+        });
+        
+        // Initial state
+        updateFormAndButton();
+        syncControls();
     });
 </script>
 @endpush
+

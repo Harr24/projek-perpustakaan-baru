@@ -34,7 +34,7 @@
     {{-- Form untuk Aksi Massal --}}
     <form action="{{ route('admin.petugas.approvals.approveMultiple') }}" method="POST" id="bulk-approve-form">
         @csrf
-        {{-- Input Tersembunyi untuk ID Pinjaman akan diisi oleh JavaScript --}}
+        {{-- Input tersembunyi akan diisi oleh JavaScript --}}
     </form>
 
     <div class="card border-0 shadow-sm">
@@ -68,7 +68,6 @@
                 <table class="table table-hover align-middle mb-0" id="approvalTable">
                     <thead class="bg-light">
                         <tr>
-                            {{-- Checkbox header untuk Pilih Semua (total) --}}
                             <th class="py-3 ps-4" style="width: 5%;"><input class="form-check-input" type="checkbox" id="selectAll"></th>
                             <th class="py-3">Nama Peminjam</th>
                             <th class="py-3">Kelas</th>
@@ -86,19 +85,10 @@
                                 $currentUserId = $borrow->user_id;
                             @endphp
                         
-                        <tr data-borrowing-id="{{ $borrow->id }}" data-user-id="{{ $borrow->user_id }}">
+                        <tr data-user-id="{{ $borrow->user_id }}">
                             <td class="ps-4">
-                                {{-- Checkbox Pengelompokan (Hanya tampil jika user baru) --}}
-                                @if ($isNewUser)
-                                     <input class="form-check-input check-all-user" 
-                                        type="checkbox" 
-                                        data-user-id="{{ $borrow->user_id }}" 
-                                        id="user-{{ $borrow->user_id }}-check"
-                                        title="Pilih Semua Pengajuan {{ $borrow->user->name }}">
-                                @endif
-                                
-                                {{-- Checkbox Individual (Selalu ada di setiap baris, disembunyikan jika ada kontrol grup) --}}
-                                <input class="form-check-input borrowing-checkbox {{ $isNewUser ? 'd-none' : '' }}" 
+                                {{-- Setiap baris WAJIB memiliki checkbox ini untuk data --}}
+                                <input class="form-check-input borrowing-checkbox" 
                                     type="checkbox" 
                                     value="{{ $borrow->id }}"
                                     data-user-id="{{ $borrow->user_id }}"
@@ -106,16 +96,20 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="avatar-circle bg-primary text-white me-2" style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                                    <div class="avatar-circle bg-primary text-white me-2" style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items-center; justify-content: center; font-weight: 600;">
                                         {{ strtoupper(substr($borrow->user->name, 0, 1)) }}
                                     </div>
-                                    <span class="fw-medium">{{ $borrow->user->name }}</span>
+                                    <span class="fw-medium me-3">{{ $borrow->user->name }}</span>
                                     
-                                    {{-- Teks "Pilih Semua" (Hanya muncul di baris pertama per peminjam) --}}
+                                    {{-- Kontrol "Pilih Semua" per grup, HANYA muncul di baris pertama --}}
                                     @if ($isNewUser)
-                                        <label class="form-check-label small text-muted ms-2" for="user-{{ $borrow->user_id }}-check">
-                                            Pilih Semua
-                                        </label>
+                                        <span class="ms-1 border rounded px-2 py-1 bg-light-subtle" title="Pilih Semua Pengajuan {{ $borrow->user->name }}">
+                                            <input class="form-check-input check-all-user" 
+                                                type="checkbox" 
+                                                data-user-id="{{ $borrow->user_id }}" 
+                                                id="user-{{ $borrow->user_id }}-check">
+                                            <label class="form-check-label small text-muted" for="user-{{ $borrow->user_id }}-check">Pilih Semua</label>
+                                        </span>
                                     @endif
                                 </div>
                             </td>
@@ -159,24 +153,17 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const selectAllCheckbox = document.getElementById('selectAll');
+        const selectAllHeader = document.getElementById('selectAll');
         const bulkApproveForm = document.getElementById('bulk-approve-form');
         const btnApproveMultiple = document.getElementById('btn-approve-multiple');
-        const borrowingCheckboxes = document.querySelectorAll('.borrowing-checkbox');
-        const checkAllUserCheckboxes = document.querySelectorAll('.check-all-user');
 
-        // Fungsi Helper untuk mengelola input tersembunyi (payload yang dikirim)
-        function updateHiddenInputs() {
+        // Fungsi Helper untuk mengelola data yang dikirim dan status tombol
+        function updateFormPayloadAndButton() {
             // Hapus semua input tersembunyi yang ada
-            bulkApproveForm.querySelectorAll('input[type="hidden"][name="borrowing_ids[]"]').forEach(input => input.remove());
-
+            bulkApproveForm.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+            
             let checkedCount = 0;
-
-            // Ambil SEMUA borrowing-checkbox, termasuk yang tersembunyi (yang disembunyikan adalah kontrol per baris)
-            // Kita harus mengambil status centang dari KONTROL TERLIHAT, yaitu checkAllUser atau borrowing-checkbox yang tidak disembunyikan.
-
-            // 1. Kumpulkan ID dari semua yang dicentang secara individual (yang terlihat)
-            document.querySelectorAll('.borrowing-checkbox:not(.d-none):checked').forEach(checkbox => {
+            document.querySelectorAll('.borrowing-checkbox:checked').forEach(checkbox => {
                 const hiddenInput = document.createElement('input');
                 hiddenInput.type = 'hidden';
                 hiddenInput.name = 'borrowing_ids[]';
@@ -185,110 +172,68 @@
                 checkedCount++;
             });
             
-            // 2. Kumpulkan ID dari kontrol grup yang dicentang (yang akan mencakup item d-none di barisnya)
-            document.querySelectorAll('.check-all-user:checked').forEach(userCheck => {
-                const userId = userCheck.dataset.userId;
-                
-                // Cari ID peminjaman untuk baris yang memiliki kontrol grup ini (baris pertama)
-                const firstRowCheckbox = document.getElementById(`borrowing-${userId}`).value;
-                
-                // Cek apakah ID ini sudah masuk. Jika belum, masukkan.
-                if (!bulkApproveForm.querySelector(`input[type="hidden"][value="${firstRowCheckbox}"]`)) {
-                     const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'borrowing_ids[]';
-                    hiddenInput.value = firstRowCheckbox;
-                    bulkApproveForm.appendChild(hiddenInput);
-                    checkedCount++;
-                }
-            });
-
             // Aktifkan/Nonaktifkan tombol Konfirmasi Massal
             btnApproveMultiple.disabled = checkedCount === 0;
-            return checkedCount;
         }
 
-        // 1. Logika 'Pilih Semua' (Seluruh Tabel)
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function() {
-                const isChecked = this.checked;
-                
-                // Centang semua checkbox individu (termasuk yang tersembunyi)
-                document.querySelectorAll('.borrowing-checkbox').forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                });
-                
-                // Centang semua checkbox kontrol grup
-                checkAllUserCheckboxes.forEach(userCheck => {
-                    userCheck.checked = isChecked;
-                });
-                
-                updateHiddenInputs(); // Wajib dipanggil untuk update payload
-                updateSelectAllStatus(); // Update status header
-            });
-        }
-        
-        // 2. Logika 'Pilih Semua per Peminjam' (Centang Otomatis)
-        checkAllUserCheckboxes.forEach(userCheck => {
-            userCheck.addEventListener('change', function() {
-                const userId = this.dataset.userId;
-                const isChecked = this.checked;
-                
-                // Centang/Hapus centang semua checkbox individu yang memiliki data-user-id yang sama
-                const relatedCheckboxes = document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]`);
-                relatedCheckboxes.forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                });
-                
-                // Update status 'Pilih Semua' utama dan hidden inputs
-                updateSelectAllStatus();
-                updateHiddenInputs(); // Wajib dipanggil untuk update payload
-            });
-        });
+        // Fungsi untuk sinkronisasi semua checkbox kontrol
+        function syncControlCheckboxes() {
+            // Sinkronisasi header utama
+            const total = document.querySelectorAll('.borrowing-checkbox').length;
+            const checked = document.querySelectorAll('.borrowing-checkbox:checked').length;
+            if (selectAllHeader) {
+                selectAllHeader.checked = total > 0 && total === checked;
+                selectAllHeader.indeterminate = checked > 0 && checked < total;
+            }
 
-        // 3. Logika Update Status 'Pilih Semua' Utama & Per Peminjam (Manual Change)
-        borrowingCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                updateSelectAllStatus();
-                updateUserCheckStatus(this.dataset.userId);
-                updateHiddenInputs(); // Wajib dipanggil untuk update payload
-            });
-        });
-
-        // 4. Logika Update Status 'Pilih Semua per Peminjam'
-        function updateUserCheckStatus(userId) {
-            const userCheck = document.getElementById(`user-${userId}-check`);
-            if (userCheck) {
+            // Sinkronisasi kontrol per grup
+            document.querySelectorAll('.check-all-user').forEach(userCheck => {
+                const userId = userCheck.dataset.userId;
                 const relatedCheckboxes = document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]`);
                 const totalUser = relatedCheckboxes.length;
                 const checkedUser = document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]:checked`).length;
-                
-                if (checkedUser === 0) {
-                    userCheck.checked = false;
-                    userCheck.indeterminate = false;
-                } else if (checkedUser === totalUser) {
-                    userCheck.checked = true;
-                    userCheck.indeterminate = false;
-                } else {
-                    userCheck.checked = false;
-                    userCheck.indeterminate = true;
-                }
-            }
+
+                userCheck.checked = totalUser > 0 && totalUser === checkedUser;
+                userCheck.indeterminate = checkedUser > 0 && checkedUser < totalUser;
+            });
         }
 
-        // Helper: Memastikan status Pilih Semua Utama sudah benar
-        function updateSelectAllStatus() {
-            const total = borrowingCheckboxes.length;
-            const checked = document.querySelectorAll('.borrowing-checkbox:checked').length;
-            
-            if (selectAllCheckbox) {
-                selectAllCheckbox.checked = total > 0 && total === checked;
-                selectAllCheckbox.indeterminate = checked > 0 && checked < total;
-            }
+        // 1. Event Listener untuk 'Pilih Semua' di Header
+        if (selectAllHeader) {
+            selectAllHeader.addEventListener('change', function() {
+                const isChecked = this.checked;
+                document.querySelectorAll('.borrowing-checkbox').forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                syncControlCheckboxes();
+                updateFormPayloadAndButton();
+            });
         }
         
-        // Inisialisasi: Panggil updateHiddenInputs() saat DOMContentLoaded
-        updateHiddenInputs(); 
+        // 2. Event Listener untuk 'Pilih Semua per Peminjam'
+        document.querySelectorAll('.check-all-user').forEach(userCheck => {
+            userCheck.addEventListener('change', function() {
+                const userId = this.dataset.userId;
+                const isChecked = this.checked;
+                document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]`).forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                syncControlCheckboxes();
+                updateFormPayloadAndButton();
+            });
+        });
+
+        // 3. Event Listener untuk setiap checkbox individual
+        document.querySelectorAll('.borrowing-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                syncControlCheckboxes();
+                updateFormPayloadAndButton();
+            });
+        });
+        
+        // Inisialisasi saat halaman dimuat
+        updateFormPayloadAndButton();
+        syncControlCheckboxes();
     });
 </script>
 @endpush
