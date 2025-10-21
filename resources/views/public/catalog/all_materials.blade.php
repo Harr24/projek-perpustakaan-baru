@@ -22,20 +22,42 @@
             transform: translateY(-5px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         }
+        /* Pagination styles (jika diperlukan) */
+        .pagination .page-item.active .page-link { background-color: var(--brand-red); border-color: var(--brand-red); }
+        .pagination .page-link { color: var(--brand-red); }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ route('catalog.index') }}" style="color: var(--brand-red);"><i class="bi bi-book-half me-2"></i> Perpustakaan Multicomp</a>
-            @auth
-                <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-grid-fill"></i> Dashboard</a>
-            @else
-                <a href="{{ route('login') }}" class="btn btn-sm btn-danger"><i class="bi bi-box-arrow-in-right"></i> Login</a>
-            @endauth
+            <a class="navbar-brand fw-bold me-auto" href="{{ route('catalog.index') }}" style="color: var(--brand-red);">
+                <i class="bi bi-book-half me-2"></i> Perpustakaan Multicomp
+            </a>
+
+            <div class="d-flex align-items-center">
+
+                <a href="{{ route('catalog.index') }}" class="btn btn-sm btn-outline-secondary d-none d-md-flex align-items-center me-2">
+                    <i class="bi bi-house-door-fill me-1"></i>
+                    <span class="d-none d-lg-inline">Beranda</span>
+                </a>
+                 <a href="{{ route('catalog.index') }}" class="btn btn-sm btn-outline-secondary d-md-none me-2" aria-label="Kembali ke Beranda">
+                    <i class="bi bi-house-door-fill"></i>
+                </a>
+                {{-- Login/Dashboard Button --}}
+                @auth
+                    <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-danger" title="Dashboard">
+                         <i class="bi bi-grid-fill d-inline d-sm-none"></i>
+                         <span class="d-none d-sm-inline">Dashboard</span>
+                    </a>
+                @else
+                     <a href="{{ route('login') }}" class="btn btn-sm btn-danger" title="Login">
+                         <i class="bi bi-box-arrow-in-right d-inline d-sm-none"></i>
+                         <span class="d-none d-sm-inline">Login</span>
+                     </a>
+                @endauth
+            </div>
         </div>
     </nav>
-
     <main class="container py-5">
         <div class="text-center mb-5">
             <h1 class="fw-bold display-5">Materi Belajar</h1>
@@ -68,9 +90,6 @@
             </form>
         </div>
 
-        {{-- ========================================================== --}}
-        {{-- PERUBAHAN UTAMA: Menerapkan grid 3 kolom yang responsif --}}
-        {{-- ========================================================== --}}
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             @forelse($materials as $material)
                 <div class="col">
@@ -108,6 +127,7 @@
     </main>
 
     @include('layouts.footer')
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
