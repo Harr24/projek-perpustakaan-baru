@@ -41,7 +41,17 @@
                     {{-- Filter Nama Peminjam --}}
                     <div class="col-md-4">
                         <label for="search" class="form-label small">Nama Peminjam</label>
-                        <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama siswa atau guru..." value="{{ request('search') }}">
+                        <div class="input-group">
+                            <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama siswa atau guru..." value="{{ request('search') }}">
+                            {{-- ========================================================== --}}
+                            {{-- PENAMBAHAN: Tombol Clear untuk Search --}}
+                            {{-- ========================================================== --}}
+                            @if(request('search'))
+                                <a href="{{ route('admin.petugas.reports.borrowings.index', ['month' => request('month'), 'year' => request('year')]) }}" class="btn btn-outline-secondary" title="Hapus Filter Nama">
+                                    <i class="bi bi-x"></i>
+                                </a>
+                            @endif
+                        </div>
                     </div>
                     {{-- Tombol Aksi --}}
                     <div class="col-md-3 d-flex gap-2">
@@ -64,12 +74,10 @@
         </div>
         <div class="card-body p-0">
              <div class="table-responsive">
-                {{-- Tambahkan class `text-center` pada tabel untuk default perataan tengah --}}
                 <table class="table table-hover align-middle mb-0 text-center">
                     <thead>
                         <tr>
                             <th class="py-3 ps-4">No</th>
-                            {{-- Kolom Nama Peminjam dan Buku dibuat rata kiri --}}
                             <th class="py-3 text-start">Nama Peminjam</th>
                             <th class="py-3">Role</th>
                             <th class="py-3">Kelas</th>
@@ -85,7 +93,6 @@
                         @forelse($borrowings as $borrowing)
                             <tr>
                                 <td class="ps-4">{{ $loop->iteration + $borrowings->firstItem() - 1 }}</td>
-                                {{-- Kolom Nama Peminjam dibuat rata kiri --}}
                                 <td class="text-start">
                                     <a href="{{ route('admin.petugas.reports.users.history', $borrowing->user) }}" class="text-decoration-none fw-semibold">
                                         {{ $borrowing->user->name }}
@@ -93,7 +100,6 @@
                                 </td>
                                 <td><span class="badge bg-secondary">{{ ucfirst($borrowing->user->role) }}</span></td>
                                 <td>{{ $borrowing->user->class_name ?? 'N/A' }}</td>
-                                {{-- Kolom Buku dibuat rata kiri dan judulnya dibatasi --}}
                                 <td class="text-start" title="{{ $borrowing->bookCopy->book->title }}">
                                     {{ Str::limit($borrowing->bookCopy->book->title, 30) }}
                                 </td>
@@ -122,5 +128,3 @@
     </div>
 </div>
 @endsection
-  
-
