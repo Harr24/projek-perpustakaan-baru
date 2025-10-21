@@ -16,34 +16,36 @@
                 <p class="footer-description mb-3">
                     Sistem Manajemen Perpustakaan Modern untuk mendukung kegiatan literasi dan pembelajaran di SMK Multicomp Depok.
                 </p>
-                <div class="footer-address">
+                <a href="https://www.google.com/maps/search/?api=1&query=SMK+Multicomp+Depok" target="_blank" class="footer-address">
                     <i class="bi bi-geo-alt-fill"></i>
                     <span>Jl. Raya Depok, Kota Depok, Jawa Barat</span>
-                </div>
+                </a>
             </div>
 
-            {{-- Column 2: Quick Links --}}
             <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
                 <h6 class="footer-heading mb-3">Informasi</h6>
                 <ul class="footer-links">
                     <li><a href="#"><i class="bi bi-chevron-right"></i> Layanan</a></li>
                     <li><a href="{{ route('catalog.librarians') }}"><i class="bi bi-chevron-right"></i> Pustakawan</a></li>
-                    <li><a href="#"><i class="bi bi-chevron-right"></i> Area Anggota</a></li>
+                    <li><a href="{{ route('login') }}"><i class="bi bi-chevron-right"></i> Area Anggota</a></li>
+                    <li><a href="{{ route('register') }}"><i class="bi bi-chevron-right"></i> Mendaftar Anggota</a></li>
                 </ul>
             </div>
-
-            {{-- Column 3: Search - Lebih lebar --}}
+            {{-- Column 3: Tautan Penting --}}
             <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
-                <h6 class="footer-heading mb-3">Cari</h6>
-                <p class="footer-subtitle mb-3">
-                    Masukkan satu atau lebih kata kunci dari judul, pengarang, atau subjek
-                </p>
-                <div class="footer-search-wrapper">
-                    <input type="text" class="form-control footer-search-input mb-2" placeholder="Masukkan kata kunci">
-                    <button class="btn btn-search w-100" type="submit">
-                        <i class="bi bi-search"></i> Cari Koleksi
-                    </button>
-                </div>
+                <h6 class="footer-heading mb-3">Tautan Penting</h6>
+                <ul class="footer-links">
+                    <li>
+                        <a href="https://www.instagram.com/smkmulticompofficial/" target="_blank">
+                            <i class="bi bi-instagram"></i> Instagram Sekolah
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://smkmulticomp.sch.id/" target="_blank">
+                            <i class="bi bi-globe"></i> Website Utama
+                        </a>
+                    </li>
+                </ul>
             </div>
 
             {{-- Column 4: GitHub Info --}}
@@ -117,6 +119,13 @@
     padding: 0.75rem;
     background-color: rgba(255,255,255,0.05);
     border-radius: 8px;
+    text-decoration: none; 
+    transition: all 0.3s ease; 
+}
+
+.footer-address:hover { 
+    background-color: rgba(255,255,255,0.1);
+    color: white;
 }
 
 .footer-address i {
@@ -160,7 +169,7 @@
 }
 
 .footer-links a i {
-    font-size: 0.875rem;
+    font-size: 1rem; 
 }
 
 .footer-search-wrapper {
