@@ -72,11 +72,12 @@
                             <th class="py-3">Role</th>
                             <th class="py-3">Kelas</th>
                             <th class="py-3">Buku yang Dipinjam</th>
+                            {{-- ========================================================== --}}
+                            {{-- PENAMBAHAN 1: Kolom Header untuk Kode Eksemplar --}}
+                            {{-- ========================================================== --}}
+                            <th class="py-3">Kode Eksemplar</th>
                             <th class="py-3">Tgl. Pinjam</th>
                             <th class="py-3">Tgl. Kembali</th>
-                            {{-- ========================================================== --}}
-                            {{-- PENAMBAHAN 1: Kolom Header untuk Petugas --}}
-                            {{-- ========================================================== --}}
                             <th class="py-3">Petugas Approval</th>
                             <th class="py-3 pe-4">Petugas Pengembalian</th>
                         </tr>
@@ -93,18 +94,19 @@
                                 <td><span class="badge bg-secondary">{{ ucfirst($borrowing->user->role) }}</span></td>
                                 <td>{{ $borrowing->user->class_name ?? 'N/A' }}</td>
                                 <td>{{ $borrowing->bookCopy->book->title }}</td>
+                                {{-- ========================================================== --}}
+                                {{-- PENAMBAHAN 2: Menampilkan Kode Eksemplar --}}
+                                {{-- ========================================================== --}}
+                                <td><span class="badge bg-dark fw-normal">{{ $borrowing->bookCopy->book_code }}</span></td>
                                 <td>{{ \Carbon\Carbon::parse($borrowing->borrowed_at)->format('d M Y') }}</td>
                                 <td>{{ $borrowing->returned_at ? \Carbon\Carbon::parse($borrowing->returned_at)->format('d M Y') : '-' }}</td>
-                                {{-- ========================================================== --}}
-                                {{-- PENAMBAHAN 2: Menampilkan Nama Petugas --}}
-                                {{-- ========================================================== --}}
                                 <td>{{ $borrowing->approvedBy->name ?? 'N/A' }}</td>
                                 <td class="pe-4">{{ $borrowing->returnedBy->name ?? 'N/A' }}</td>
                             </tr>
                         @empty
                             <tr>
                                 {{-- PENAMBAHAN 3: Menyesuaikan colspan --}}
-                                <td colspan="9" class="text-center py-5">
+                                <td colspan="10" class="text-center py-5">
                                     <p class="text-muted mb-0">Tidak ada data peminjaman yang cocok dengan filter Anda.</p>
                                 </td>
                             </tr>
@@ -121,3 +123,4 @@
     </div>
 </div>
 @endsection
+
