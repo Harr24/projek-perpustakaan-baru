@@ -48,21 +48,20 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
     // ==========================================================
-    // PERBAIKAN UTAMA: Rute profil diperbarui
+    // RUTE PROFIL
     // ==========================================================
-    // Rute untuk menampilkan halaman profil (hanya lihat)
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
-    // Rute untuk menampilkan form edit profil
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-    // Rute untuk memproses pembaruan data profil
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // ==========================================================
 
+    // ==========================================================
+    // RUTE PEMINJAMAN (Perhatian: Rute spesifik diletakkan di atas rute dinamis)
+    // ==========================================================
+    Route::post('/borrow/bulk', [BorrowingController::class, 'storeBulk'])->name('borrow.store.bulk'); // Pindah ke atas!
     Route::get('/borrow/request/{book_copy}', [BorrowingController::class, 'create'])->name('borrow.create');
     Route::post('/borrow/{book_copy}', [BorrowingController::class, 'store'])->name('borrow.store');
     Route::get('/my-borrowings', [BorrowingController::class, 'index'])->name('borrow.history');
-    Route::post('/borrow/bulk', [BorrowingController::class, 'storeBulk'])->name('borrow.store.bulk');
-
+    
     // == RUTE KHUSUS UNTUK ROLE PETUGAS ==
     Route::middleware('role:petugas')->prefix('admin/petugas')->name('admin.petugas.')->group(function () {
         Route::get('/verifikasi-siswa', [VerificationController::class, 'index'])->name('verification.index');

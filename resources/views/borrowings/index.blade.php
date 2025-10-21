@@ -53,9 +53,9 @@
                         <tbody>
                             @forelse ($borrowings as $index => $borrow)
                                 @php
-                                    $isOverdue = $borrow->status == 'borrowed' && $borrow->due_at < now();
+                                    // SINKRONISASI STATUS: Menggunakan 'dipinjam' dari Controller
+                                    $isOverdue = $borrow->status == 'dipinjam' && \Carbon\Carbon::parse($borrow->due_at)->lt(now());
                                 @endphp
-                                {{-- Sentuhan UI: Baris yang ditolak akan sedikit pudar --}}
                                 <tr class="{{ $borrow->status == 'rejected' ? 'text-muted' : '' }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $borrow->bookCopy->book->title }}</td>
@@ -75,20 +75,19 @@
                                                 <span class="badge bg-warning text-dark">Menunggu Konfirmasi</span>
                                                 @break
                                             
-                                            {{-- =============================================== --}}
-                                            {{-- PENAMBAHAN BARU: Status Ditolak --}}
-                                            {{-- =============================================== --}}
                                             @case('rejected')
                                                 <span class="badge bg-danger">Ditolak</span>
                                                 @break
 
-                                            @case('borrowed')
+                                            {{-- PERUBAHAN UTAMA: Menggunakan status 'dipinjam' --}}
+                                            @case('dipinjam')
                                                 @if($isOverdue)
                                                     <span class="badge bg-danger">Terlambat</span>
                                                 @else
-                                                    <span class="badge bg-primary">Dipinjam</span>
+                                                    <span class="badge bg-primary">Sedang Meminjam</span>
                                                 @endif
                                                 @break
+
                                             @case('returned')
                                                 <span class="badge bg-success">Dikembalikan</span>
                                                 @break
