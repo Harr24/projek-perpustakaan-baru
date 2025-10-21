@@ -17,7 +17,6 @@ class BookCatalogController extends Controller
 {
     public function index(Request $request)
     {
-        // Bagian ini tidak diubah
         $heroSliders = HeroSlider::where('is_active', true)->latest()->get();
         $genres = Genre::take(6)->get();
         $nonTextbookQuery = Book::where('is_textbook', 0);
@@ -39,14 +38,16 @@ class BookCatalogController extends Controller
             ->get();
 
         // ==========================================================
-        // PERBAIKAN UTAMA: Menggunakan query yang sudah benar
+        // PERBAIKAN BUG: Hitung juga status 'pending'
         // ==========================================================
-        $topBorrowers = Borrowing::where('status', 'dipinjam') // 1. HANYA hitung yang statusnya 'dipinjam'
+        $topBorrowers = Borrowing::select('user_id', DB::raw('count(*) as loans_count'))
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            // PENAMBAHAN: Hitung semua status kecuali yang ditolak
+            ->where('status', '!=', 'rejected') 
             ->whereHas('user', function ($query) {
                 $query->where('role', 'siswa');
             })
-            // 2. Filter waktu dihapus agar menghitung semua buku yang SAAT INI sedang dipinjam
-            ->select('user_id', DB::raw('count(*) as loans_count'))
             ->groupBy('user_id')
             ->orderByDesc('loans_count')
             ->limit(3)
@@ -55,17 +56,18 @@ class BookCatalogController extends Controller
         // ==========================================================
             
         $learningMaterials = LearningMaterial::where('is_active', true)
-                                               ->with('user')
-                                               ->latest()
-                                               ->limit(4)
-                                               ->get();
+                                                ->with('user')
+                                                ->latest()
+                                                ->limit(4)
+                                                ->get();
 
         return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'learningMaterials'));
     }
 
+    // ... (method-method lain tidak diubah) ...
+    
     public function allBooks(Request $request)
     {
-        // Fungsi ini tidak diubah
         $genres = Genre::orderBy('name')->get();
         $search = $request->input('search');
         $selectedGenreName = $request->input('genre');
@@ -96,7 +98,6 @@ class BookCatalogController extends Controller
     
     public function show(Book $book)
     {
-        // Fungsi ini tidak diubah
         $book->load('genre', 'copies');
         $book->loadCount(['copies as available_copies_count' => function ($query) {
             $query->where('status', 'tersedia');
@@ -106,7 +107,6 @@ class BookCatalogController extends Controller
 
     public function showCover(Book $book)
     {
-        // Fungsi ini tidak diubah
         $path = $book->cover_image;
         if (!$path || !Storage::disk('public')->exists($path)) {
             abort(404, 'Gambar tidak ditemukan.');
@@ -118,7 +118,6 @@ class BookCatalogController extends Controller
     
     public function showLibrarians()
     {
-        // Fungsi ini tidak diubah
         $staff = User::whereIn('role', ['petugas', 'guru'])
                        ->orderBy('name', 'asc')
                        ->get();
@@ -127,10 +126,9 @@ class BookCatalogController extends Controller
     
     public function allMaterials(Request $request)
     {
-        // Fungsi ini tidak diubah
         $query = LearningMaterial::where('is_active', true)
-                                 ->with('user')
-                                 ->latest();
+                                   ->with('user')
+                                   ->latest();
         if ($request->filled('search')) {
             $query->where('title', 'like', '%' . $request->search . '%');
         }
@@ -145,4 +143,3 @@ class BookCatalogController extends Controller
         return view('public.catalog.all_materials', compact('materials', 'teachers'));
     }
 }
-
