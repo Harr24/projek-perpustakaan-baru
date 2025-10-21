@@ -161,9 +161,32 @@
             </div>
         </div>
         
-        @auth
+        {{-- Buku Terbaru --}}
+        <div class="bg-white py-5 mt-5 shadow-sm">
+             <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold mb-0"><i class="bi bi-arrow-down-up me-2"></i> 10 Buku Terbaru</h3>
+                    <a href="{{ route('catalog.all', ['sort' => 'latest']) }}" class="btn btn-outline-danger btn-sm">Lihat Semua Buku <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4">
+                    @forelse ($latestBooks as $book)
+                        <div class="col">
+                            @include('public.catalog.partials._book_card', ['book' => $book])
+                        </div>
+                    @empty
+                        <div class="col-12 text-center"><div class="alert alert-warning">Belum ada buku baru.</div></div>
+                    @endforelse
+                </div>
+                <div class="text-center mt-5">
+                     <a href="{{ route('catalog.all') }}" class="btn btn-lg btn-danger shadow-lg"><i class="bi bi-grid-3x3-gap-fill me-2"></i> Lihat Semua Buku di Katalog</a>
+                </div>
+            </div>
+        </div>
+
+        {{-- Materi Belajar (Sekarang Publik) --}}
+        {{-- Blok ini dipindahkan dari atas dan @auth-nya dihapus --}}
         @if(isset($learningMaterials) && $learningMaterials->isNotEmpty())
-        <div class="container py-5">
+        <div class="container py-5 mt-5"> {{-- Ditambahkan mt-5 untuk jarak --}}
             <div class="text-center mb-5">
                 <h2 class="fw-bold display-6">Materi Belajar Terbaru</h2>
                 <p class="lead text-muted">Akses materi tambahan yang dibagikan oleh para guru.</p>
@@ -193,29 +216,6 @@
             </div>
         </div>
         @endif
-        @endauth
-
-        {{-- Buku Terbaru --}}
-        <div class="bg-white py-5 mt-5 shadow-sm">
-             <div class="container">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="fw-bold mb-0"><i class="bi bi-arrow-down-up me-2"></i> 10 Buku Terbaru</h3>
-                    <a href="{{ route('catalog.all', ['sort' => 'latest']) }}" class="btn btn-outline-danger btn-sm">Lihat Semua Buku <i class="bi bi-arrow-right"></i></a>
-                </div>
-                <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4">
-                    @forelse ($latestBooks as $book)
-                        <div class="col">
-                            @include('public.catalog.partials._book_card', ['book' => $book])
-                        </div>
-                    @empty
-                        <div class="col-12 text-center"><div class="alert alert-warning">Belum ada buku baru.</div></div>
-                    @endforelse
-                </div>
-                <div class="text-center mt-5">
-                     <a href="{{ route('catalog.all') }}" class="btn btn-lg btn-danger shadow-lg"><i class="bi bi-grid-3x3-gap-fill me-2"></i> Lihat Semua Buku di Katalog</a>
-                </div>
-            </div>
-        </div>
 
         {{-- Peminjam Teratas --}}
         <div class="top-borrowers-section mt-5 py-5">
@@ -266,4 +266,3 @@
     @include('layouts.footer')
 </body>
 </html>
-
