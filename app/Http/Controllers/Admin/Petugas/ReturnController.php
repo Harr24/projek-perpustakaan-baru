@@ -19,7 +19,7 @@ class ReturnController extends Controller
         // PERBAIKAN UTAMA: Mencari status 'approved' yang sudah kita set
         // saat menyetujui peminjaman. Status 'overdue' juga tetap dicari.
         // ==========================================================
-        $activeBorrowings = Borrowing::whereIn('status', ['approved', 'overdue'])
+        $activeBorrowings = Borrowing::whereIn('status', ['dipinjam', 'overdue'])
                                         ->with('user', 'bookCopy.book')
                                         // PERBAIKAN KECIL: Urutkan berdasarkan tanggal disetujui
                                         ->latest('approved_at')
@@ -34,7 +34,7 @@ class ReturnController extends Controller
     public function store(Borrowing $borrowing) // Hapus Request $request karena tidak dipakai
     {
         // PERBAIKAN: Validasi juga harus mencari status 'approved'
-        if (!in_array($borrowing->status, ['approved', 'overdue'])) {
+        if (!in_array($borrowing->status, ['dipinjam', 'overdue'])) {
             return redirect()->back()->with('error', 'Peminjaman ini tidak dalam status aktif.');
         }
 
@@ -86,7 +86,7 @@ class ReturnController extends Controller
 
         $borrowingIds = $request->input('borrowing_ids');
         // PERBAIKAN: Cari juga status 'approved'
-        $borrowingsToReturn = Borrowing::whereIn('id', $borrowingIds)->whereIn('status', ['approved', 'overdue'])->get();
+       $borrowingsToReturn = Borrowing::whereIn('id', $borrowingIds)->whereIn('status', ['dipinjam', 'overdue'])->get();
 
         if ($borrowingsToReturn->isEmpty()) {
             return redirect()->back()->with('error', 'Tidak ada buku valid yang dipilih untuk dikembalikan.');
