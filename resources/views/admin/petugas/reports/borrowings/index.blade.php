@@ -64,17 +64,16 @@
         </div>
         <div class="card-body p-0">
              <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                {{-- Tambahkan class `text-center` pada tabel untuk default perataan tengah --}}
+                <table class="table table-hover align-middle mb-0 text-center">
                     <thead>
                         <tr>
                             <th class="py-3 ps-4">No</th>
-                            <th class="py-3">Nama Peminjam</th>
+                            {{-- Kolom Nama Peminjam dan Buku dibuat rata kiri --}}
+                            <th class="py-3 text-start">Nama Peminjam</th>
                             <th class="py-3">Role</th>
                             <th class="py-3">Kelas</th>
-                            <th class="py-3">Buku yang Dipinjam</th>
-                            {{-- ========================================================== --}}
-                            {{-- PENAMBAHAN 1: Kolom Header untuk Kode Eksemplar --}}
-                            {{-- ========================================================== --}}
+                            <th class="py-3 text-start">Buku yang Dipinjam</th>
                             <th class="py-3">Kode Eksemplar</th>
                             <th class="py-3">Tgl. Pinjam</th>
                             <th class="py-3">Tgl. Kembali</th>
@@ -86,17 +85,18 @@
                         @forelse($borrowings as $borrowing)
                             <tr>
                                 <td class="ps-4">{{ $loop->iteration + $borrowings->firstItem() - 1 }}</td>
-                                <td>
+                                {{-- Kolom Nama Peminjam dibuat rata kiri --}}
+                                <td class="text-start">
                                     <a href="{{ route('admin.petugas.reports.users.history', $borrowing->user) }}" class="text-decoration-none fw-semibold">
                                         {{ $borrowing->user->name }}
                                     </a>
                                 </td>
                                 <td><span class="badge bg-secondary">{{ ucfirst($borrowing->user->role) }}</span></td>
                                 <td>{{ $borrowing->user->class_name ?? 'N/A' }}</td>
-                                <td>{{ $borrowing->bookCopy->book->title }}</td>
-                                {{-- ========================================================== --}}
-                                {{-- PENAMBAHAN 2: Menampilkan Kode Eksemplar --}}
-                                {{-- ========================================================== --}}
+                                {{-- Kolom Buku dibuat rata kiri dan judulnya dibatasi --}}
+                                <td class="text-start" title="{{ $borrowing->bookCopy->book->title }}">
+                                    {{ Str::limit($borrowing->bookCopy->book->title, 30) }}
+                                </td>
                                 <td><span class="badge bg-dark fw-normal">{{ $borrowing->bookCopy->book_code }}</span></td>
                                 <td>{{ \Carbon\Carbon::parse($borrowing->borrowed_at)->format('d M Y') }}</td>
                                 <td>{{ $borrowing->returned_at ? \Carbon\Carbon::parse($borrowing->returned_at)->format('d M Y') : '-' }}</td>
@@ -105,7 +105,6 @@
                             </tr>
                         @empty
                             <tr>
-                                {{-- PENAMBAHAN 3: Menyesuaikan colspan --}}
                                 <td colspan="10" class="text-center py-5">
                                     <p class="text-muted mb-0">Tidak ada data peminjaman yang cocok dengan filter Anda.</p>
                                 </td>
@@ -123,4 +122,5 @@
     </div>
 </div>
 @endsection
+  
 
