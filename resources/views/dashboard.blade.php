@@ -52,7 +52,7 @@
             display:flex;
             align-items:center;
             gap:14px;
-            min-width: 0; /* <-- [PERBAIKAN 1] Ditambahkan */
+            min-width: 0; 
         }
         .logo{
             width:48px;
@@ -77,7 +77,6 @@
             margin:0;
             font-size:1.1rem;
             font-weight:600;
-            /* [PERBAIKAN 2] Ditambahkan */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -87,7 +86,6 @@
             font-size:0.85rem;
             opacity:0.95;
             color:rgba(255,255,255,0.92);
-            /* [PERBAIKAN 3] Ditambahkan */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -332,6 +330,113 @@
             }
         }
         
+        
+        {{-- ============================ --}}
+        {{-- CSS UNTUK WIDGET STATUS BARU --}}
+        {{-- ============================ --}}
+        .widget-title {
+            margin: 0 0 16px 0;
+            font-size: 1.2rem;
+            color: var(--accent-600);
+        }
+
+        /* Tampilan Kartu Kutipan */
+        .quote-card {
+            margin: 0;
+            padding: 16px;
+            background: #fdf8f8;
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+        }
+        .quote-card p {
+            margin: 0 0 8px 0;
+            font-size: 1rem;
+            font-style: italic;
+            color: #333;
+        }
+        .quote-card footer {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        /* Tampilan Tombol */
+        .btn-widget-full {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 12px;
+            margin-top: 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            background: var(--accent);
+            color: #fff;
+            border: 1px solid var(--accent);
+            transition: all .2s ease;
+        }
+        .btn-widget-full:hover {
+            background: var(--accent-600);
+        }
+        .btn-widget-full.btn-start-reading {
+             background: var(--success);
+             border-color: var(--success);
+        }
+        .btn-widget-full.btn-start-reading:hover {
+            background: #148a3e; /* Warna hijau lebih gelap */
+        }
+
+        /* Tampilan Kartu Sedang Pinjam */
+        .active-borrowing-card {
+            display: flex;
+            gap: 16px;
+            background: #f8fafc;
+            border: 1px solid #eef2f5;
+            border-radius: 10px;
+            padding: 14px;
+        }
+        .borrowed-cover {
+            width: 80px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .borrowed-cover-placeholder {
+            width: 80px;
+            height: 110px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            background: #eef2f5;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .borrowed-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Agar rapi */
+        }
+        .borrowed-info h4 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            line-height: 1.3;
+        }
+        .borrowed-meta {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        .borrowed-meta strong {
+            color: #0f1724;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        
     </style>
 </head>
 <body>
@@ -386,6 +491,8 @@
                 </div>
             </section>
             @endif
+            
+            {{-- KARTU 1: WELCOME & NAV-LIST --}}
             <section class="card" aria-labelledby="welcomeTitle">
                 <div class="welcome">
                     <div class="icon" aria-hidden="true">📚</div>
@@ -421,17 +528,39 @@
                                         </div>
                                         <span class="meta">Tambah/edit materi</span>
                                     </a>
-                                    @include('dashboard-partials.member')
+                                    {{-- ============================================= --}}
+                                    {{-- PERBAIKAN: Mengirim variabel $hasBorrowings --}}
+                                    {{-- ============================================= --}}
+                                    @include('dashboard-partials.member', ['hasBorrowings' => $hasBorrowings ?? false])
                                     @break
 
                                 @case('siswa')
-                                    @include('dashboard-partials.member')
+                                    {{-- ============================================= --}}
+                                    {{-- PERBAIKAN: Mengirim variabel $hasBorrowings --}}
+                                    {{-- ============================================= --}}
+                                    @include('dashboard-partials.member', ['hasBorrowings' => $hasBorrowings ?? false])
                                     @break
                             @endswitch
                         </div>
                     </div>
                 </div>
             </section>
+
+            {{-- =================================== --}}
+            {{-- KARTU BARU: WIDGET STATUS DINAMIS --}}
+            {{-- =================================== --}}
+            @if(Auth::user()->role == 'siswa' || Auth::user()->role == 'guru')
+            <section class="card" aria-labelledby="widgetTitle">
+                {{-- Memanggil partial widget baru dan mengirimkan datanya --}}
+                @include('dashboard-partials.status-widget', [
+                    'activeBorrowing' => $activeBorrowing ?? null,
+                    'quote' => $quote ?? null
+                ])
+            </section>
+            @endif
+
+
+            {{-- KARTU PANDUAN UNTUK ADMIN/PETUGAS --}}
             @if(Auth::user()->role == 'petugas')
             <section class="card guide-card" aria-labelledby="guideTitle">
                 <h2 id="guideTitle">🚀 Panduan Cepat Petugas</h2>
