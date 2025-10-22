@@ -1,4 +1,4 @@
-@extends('layouts.app') {{-- Pastikan ini sesuai dengan layout Anda --}}
+@extends('layouts.app')
 
 @section('styles')
 <style>
@@ -13,7 +13,7 @@
     label.required::after{ content: " *"; color:#d11; }
     .help-text{ font-size:0.9rem; color:#6c757d; }
     .img-preview{ width:100%; height:auto; max-width:160px; max-height:240px; object-fit:cover; border:1px solid #e9ecef; border-radius:6px; background:#fff; display:block; }
-    .copies-table th, .copies-table td { font-size: 0.9rem; padding: 0.5rem 0.75rem; }
+    .copies-table th, .copies-table td { font-size: 0.9rem; padding: 0.5rem 0.75rem; vertical-align: middle;} /* Tambah vertical-align */
     @media (max-width:575.98px){
         .actions-row .btn { width:100%; }
         .actions-row .btn + .btn { margin-top:10px; }
@@ -148,9 +148,7 @@
                             </div>
                         </div>
 
-                        {{-- ========================================================== --}}
-                        {{-- PENAMBAHAN: Form untuk Tambah Stok --}}
-                        {{-- ========================================================== --}}
+                        {{-- Form untuk Tambah Stok --}}
                         <div class="mb-4 pt-3 border-top">
                              <label for="add_stock" class="form-label fw-semibold">Tambah Jumlah Stok (Eksemplar)</label>
                              <input type="number" id="add_stock" name="add_stock"
@@ -164,8 +162,6 @@
                                 </div>
                              @enderror
                          </div>
-                        {{-- ========================================================== --}}
-
 
                         {{-- Tombol Aksi --}}
                         <div class="d-flex flex-column flex-sm-row gap-2 actions-row pt-3 border-top">
@@ -187,8 +183,9 @@
         {{-- Kolom Kanan: Daftar Eksemplar --}}
         <div class="col-lg-4">
             <div class="card">
-                <div class="card-header bg-light">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 fw-semibold"><i class="bi bi-list-ol me-2"></i> Daftar Eksemplar (Stok)</h6>
+                    <span class="badge bg-secondary">{{ $book->copies->count() }} Total</span>
                 </div>
                 <div class="card-body p-0">
                     @if ($book->copies->isNotEmpty())
@@ -198,6 +195,10 @@
                                     <tr>
                                         <th>Kode Buku</th>
                                         <th>Status</th>
+                                        {{-- ========================================================== --}}
+                                        {{-- PENAMBAHAN 1: Kolom Header Aksi --}}
+                                        {{-- ========================================================== --}}
+                                        <th class="text-end">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -211,10 +212,34 @@
                                                     <span class="badge bg-warning text-dark">Dipinjam</span>
                                                 @elseif ($copy->status == 'pending')
                                                     <span class="badge bg-info text-dark">Pending</span>
+                                                @elseif ($copy->status == 'overdue') {{-- Tambahkan status overdue jika ada --}}
+                                                    <span class="badge bg-danger">Terlambat</span>
                                                 @else
-                                                    <span class="badge bg-danger">{{ ucfirst($copy->status) }}</span>
+                                                     {{-- Status lain seperti 'rusak' atau 'hilang' mungkin? --}}
+                                                    <span class="badge bg-dark">{{ ucfirst($copy->status) }}</span>
                                                 @endif
                                             </td>
+                                            {{-- ========================================================== --}}
+                                            {{-- PENAMBAHAN 2: Tombol Hapus Eksemplar --}}
+                                            {{-- ========================================================== --}}
+                                            <td class="text-end">
+                                                {{-- Hanya tampilkan tombol hapus jika statusnya 'tersedia' --}}
+                                                @if ($copy->status == 'tersedia')
+                                                    <form action="{{ route('admin.petugas.books.copies.destroy', $copy->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus eksemplar {{ $copy->book_code }}?');" style="display: inline;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-danger btn-sm p-0 px-1" title="Hapus Eksemplar">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                     {{-- Beri ikon gembok jika tidak bisa dihapus --}}
+                                                    <span class="text-muted" title="Tidak dapat dihapus (status: {{ $copy->status }})">
+                                                        <i class="bi bi-lock-fill"></i>
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            {{-- ========================================================== --}}
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -225,16 +250,14 @@
                             Belum ada eksemplar untuk buku ini.
                         </div>
                     @endif
-                     <div class="card-footer text-muted small">
-                         Total Eksemplar: {{ $book->copies->count() }}
-                     </div>
+                     {{-- Footer card dihapus karena total sudah ada di header --}}
                 </div>
             </div>
         </div>
     </div>
  </main>
  
- {{-- Modal Konfirmasi Hapus --}}
+ {{-- Modal Konfirmasi Hapus Buku Utama --}}
  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
      <div class="modal-dialog">
          <div class="modal-content">
@@ -250,7 +273,7 @@
                  <form action="{{ route('admin.petugas.books.destroy', $book->id) }}" method="POST" style="display: inline;">
                      @csrf
                      @method('DELETE')
-                     <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+                     <button type="submit" class="btn btn-danger">Ya, Hapus Buku</button>
                  </form>
              </div>
          </div>
@@ -261,7 +284,6 @@
 
 @push('scripts')
 <script>
-    // Fungsi untuk preview gambar sampul baru
     function previewImage(event) {
         const reader = new FileReader();
         reader.onload = function(){
@@ -271,12 +293,10 @@
         if(event.target.files[0]){
             reader.readAsDataURL(event.target.files[0]);
         } else {
-            // Kembalikan ke placeholder jika tidak ada file dipilih
             document.getElementById('newCoverPreview').src = "https://placehold.co/160x240/eef0f2/6c757d?text=Preview";
         }
     }
 
-    // Aktifkan validasi Bootstrap
     (function () {
       'use strict'
       var forms = document.querySelectorAll('.needs-validation')
@@ -293,3 +313,4 @@
     })()
 </script>
 @endpush
+

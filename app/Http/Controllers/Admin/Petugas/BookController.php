@@ -20,14 +20,10 @@ class BookController extends Controller
         $search = $request->input('search');
         $genreId = $request->input('genre_id');
 
-        // ==========================================================
-        // PENAMBAHAN: withCount untuk menghitung buku yang dipinjam
-        // ==========================================================
         $query = Book::with('genre')
                     ->withCount([
-                        'copies', // Menghitung total eksemplar (copies_count)
+                        'copies',
                         'copies as borrowed_copies_count' => function ($query) {
-                            // Hitung salinan yang statusnya 'dipinjam' ATAU 'overdue'
                             $query->whereIn('status', ['dipinjam', 'overdue']);
                         }
                     ])
@@ -45,8 +41,6 @@ class BookController extends Controller
         $books = $query->paginate(10)->withQueryString();
         return view('admin.petugas.books.index', compact('books', 'genres'));
     }
-
-    // ... (method create, store, show, edit, update, destroy tetap sama) ...
 
     public function create()
     {
@@ -71,13 +65,12 @@ class BookController extends Controller
         $genre = Genre::find($validated['genre_id']);
         $prefix = ($genre ? $genre->genre_code : 'GEN') . '-' . Str::upper($validated['initial_code']) . '-';
 
-
         if (BookCopy::where('book_code', 'LIKE', $prefix . '%')->exists()) {
             throw ValidationException::withMessages([
                'initial_code' => 'Kombinasi Kode Awal dan Genre ini sudah digunakan.',
             ]);
         }
-        
+
         DB::transaction(function () use ($request, $validated, $prefix) {
             if ($request->hasFile('cover_image')) {
                 $path = $request->file('cover_image')->store('covers', 'public');
@@ -86,7 +79,7 @@ class BookController extends Controller
 
             $validated['is_textbook'] = $request->has('is_textbook');
             $book = Book::create($validated);
-            
+
             for ($i = 1; $i <= $validated['stock']; $i++) {
                 $copyNumber = str_pad($i, 3, '0', STR_PAD_LEFT);
                 BookCopy::create([
@@ -96,10 +89,10 @@ class BookController extends Controller
                 ]);
             }
         });
-        
+
         return redirect()->route('admin.petugas.books.index')->with('success', 'Buku berhasil ditambahkan.');
     }
-    
+
     public function show(Book $book)
     {
         $book->load('genre', 'copies');
@@ -109,7 +102,7 @@ class BookController extends Controller
     public function edit(Book $book)
     {
         $genres = Genre::orderBy('name')->get();
-        $book->load('copies'); 
+        $book->load('copies');
         return view('admin.petugas.books.edit', compact('book', 'genres'));
     }
 
@@ -123,7 +116,7 @@ class BookController extends Controller
             'genre_id' => 'required|exists:genres,id',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'is_textbook' => 'nullable|boolean',
-            'add_stock' => 'nullable|integer|min:1|max:100', 
+            'add_stock' => 'nullable|integer|min:1|max:100',
         ]);
 
         DB::transaction(function () use ($request, $validated, $book) {
@@ -136,34 +129,33 @@ class BookController extends Controller
             } else {
                  unset($validated['cover_image']);
             }
-            
+
             $validated['is_textbook'] = $request->has('is_textbook');
             $book->update($validated);
 
             if ($request->filled('add_stock')) {
-                $lastCopy = $book->copies()->orderBy('book_code', 'desc')->first(); 
+                $lastCopy = $book->copies()->orderBy('book_code', 'desc')->first();
                 $lastNumber = 0;
                 $prefix = '';
 
                 if ($lastCopy) {
                     $parts = explode('-', $lastCopy->book_code);
-                    if (count($parts) > 1) { // Pastikan ada pemisah '-'
-                        $lastNumber = (int)end($parts); 
-                        array_pop($parts); 
-                        $prefix = implode('-', $parts) . '-'; 
+                    if (count($parts) > 1) {
+                        $lastNumber = (int)end($parts);
+                        array_pop($parts);
+                        $prefix = implode('-', $parts) . '-';
                     } else {
-                         // Handle jika format kode buku tidak sesuai (misal tidak ada '-')
                          throw ValidationException::withMessages(['add_stock' => 'Format kode buku terakhir tidak valid untuk penambahan otomatis.']);
                     }
                 } else {
-                    $genre = Genre::find($book->genre_id); 
-                    $initialCode = Str::upper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $book->title), 0, 3)); 
+                    $genre = Genre::find($book->genre_id);
+                    $initialCode = Str::upper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $book->title), 0, 3));
                     $prefix = ($genre ? $genre->genre_code . '-' : 'GEN-') . $initialCode . '-';
                      if(!$genre){
                          \Log::warning("Genre not found for book ID: {$book->id} during stock addition.");
                      }
                 }
-                
+
                  if (empty(trim($prefix, '-'))) {
                      throw ValidationException::withMessages(['add_stock' => 'Gagal menentukan prefix kode buku. Pastikan buku memiliki genre atau format kode buku sebelumnya benar.']);
                  }
@@ -180,7 +172,7 @@ class BookController extends Controller
             }
         });
 
-        return redirect()->route('admin.petugas.books.edit', $book)->with('success', 'Data buku berhasil diperbarui.'); 
+        return redirect()->route('admin.petugas.books.edit', $book)->with('success', 'Data buku berhasil diperbarui.');
     }
 
     public function destroy(Book $book)
@@ -198,6 +190,30 @@ class BookController extends Controller
         });
 
         return redirect()->route('admin.petugas.books.index')->with('success', 'Buku dan semua salinannya berhasil dihapus.');
+    }
+
+    // ==========================================================
+    // METHOD BARU: Hapus satu eksemplar buku (BookCopy)
+    // ==========================================================
+    public function destroyCopy(BookCopy $copy) // Terima BookCopy via Route Model Binding
+    {
+        // 1. Validasi: Jangan hapus jika sedang dipinjam atau pending
+        if (in_array($copy->status, ['dipinjam', 'pending', 'overdue'])) {
+            // Redirect kembali ke halaman edit buku induknya
+            return redirect()->route('admin.petugas.books.edit', $copy->book_id) 
+                             ->with('error', "Eksemplar dengan kode {$copy->book_code} tidak dapat dihapus karena sedang dipinjam atau dalam proses peminjaman.");
+        }
+
+        // 2. Simpan ID buku induk sebelum menghapus (untuk redirect)
+        $bookId = $copy->book_id;
+        $bookCode = $copy->book_code; // Simpan kode untuk pesan sukses
+
+        // 3. Hapus record BookCopy
+        $copy->delete();
+
+        // 4. Redirect kembali ke halaman edit buku induknya dengan pesan sukses
+        return redirect()->route('admin.petugas.books.edit', $bookId)
+                         ->with('success', "Eksemplar buku dengan kode {$bookCode} berhasil dihapus.");
     }
 
 }

@@ -47,17 +47,13 @@ Route::middleware('auth')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-    // ==========================================================
     // RUTE PROFIL
-    // ==========================================================
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    // ==========================================================
-    // RUTE PEMINJAMAN (Perhatian: Rute spesifik diletakkan di atas rute dinamis)
-    // ==========================================================
-    Route::post('/borrow/bulk', [BorrowingController::class, 'storeBulk'])->name('borrow.store.bulk'); // Pindah ke atas!
+    // RUTE PEMINJAMAN
+    Route::post('/borrow/bulk', [BorrowingController::class, 'storeBulk'])->name('borrow.store.bulk');
     Route::get('/borrow/request/{book_copy}', [BorrowingController::class, 'create'])->name('borrow.create');
     Route::post('/borrow/{book_copy}', [BorrowingController::class, 'store'])->name('borrow.store');
     Route::get('/my-borrowings', [BorrowingController::class, 'index'])->name('borrow.history');
@@ -73,20 +69,27 @@ Route::middleware('auth')->group(function () {
         Route::resource('books', BookController::class);
         Route::resource('teachers', TeacherController::class)->except(['show']);
 
+        // ==========================================================
+        // PENAMBAHAN: Rute untuk menghapus BookCopy (Eksemplar)
+        // Parameter {copy} akan otomatis di-resolve menjadi model BookCopy
+        // ==========================================================
+        Route::delete('/book-copies/{copy}', [BookController::class, 'destroyCopy'])->name('books.copies.destroy');
+        // ==========================================================
+
+
         Route::get('/approvals', [LoanApprovalController::class, 'index'])->name('approvals.index');
         Route::post('/approvals/{borrowing}/approve', [LoanApprovalController::class, 'approve'])->name('approvals.approve');
         Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
         Route::post('/approvals/approve-multiple', [LoanApprovalController::class, 'approveMultiple'])->name('approvals.approveMultiple');
 
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
-        Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store'); 
+        Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store');
         Route::put('/returns-multiple', [ReturnController::class, 'storeMultiple'])->name('returns.storeMultiple');
         
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
         Route::delete('/fines/history/{borrowing}', [FineController::class, 'destroy'])->name('fines.destroy');
-        
         Route::get('/fines/history/export', [FineController::class, 'export'])->name('fines.export');
 
         Route::get('/reports/borrowings', [BorrowingReportController::class, 'index'])->name('reports.borrowings.index');
@@ -106,3 +109,4 @@ Route::middleware('auth')->group(function () {
         Route::resource('sliders', HeroSliderController::class);
     });
 });
+
