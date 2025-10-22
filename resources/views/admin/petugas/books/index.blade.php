@@ -1,4 +1,4 @@
-@extends('layouts.app') {{-- Pastikan ini sesuai dengan layout utama Anda --}}
+@extends('layouts.app')
 
 @section('content')
 <div class="container-fluid px-3 px-md-4 py-4">
@@ -25,12 +25,15 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
+     @if(session('error')) {{-- Tambahkan notifikasi error jika belum ada --}}
+     <div class="alert alert-danger alert-dismissible fade show" role="alert">
+         <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+     </div>
+     @endif
 
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom py-3">
-            {{-- ======================================================= --}}
-            {{-- PERUBAHAN 1: Mengganti Form Pencarian dengan Filter Lengkap --}}
-            {{-- ======================================================= --}}
             <form action="{{ route('admin.petugas.books.index') }}" method="GET" class="row g-2 align-items-center">
                 {{-- Filter by Genre --}}
                 <div class="col-md-4">
@@ -48,6 +51,12 @@
                 <div class="col-md-8">
                     <div class="input-group input-group-sm">
                         <input type="text" name="search" class="form-control" placeholder="Cari berdasarkan judul atau penulis..." value="{{ request('search') }}">
+                        {{-- Tombol Clear untuk Search --}}
+                        @if(request('search'))
+                            <a href="{{ route('admin.petugas.books.index', ['genre_id' => request('genre_id')]) }}" class="btn btn-outline-secondary" title="Hapus Filter Pencarian">
+                                <i class="bi bi-x"></i>
+                            </a>
+                        @endif
                         <button class="btn btn-danger" type="submit"><i class="bi bi-search"></i> Cari</button>
                     </div>
                 </div>
@@ -63,17 +72,20 @@
                             <th class="py-3">Judul & Penulis</th>
                             <th class="py-3">Genre</th>
                             <th class="py-3">Tahun</th>
-                            <th class="py-3">Stok</th>
+                            <th class="py-3 text-center">Stok Total</th>
+                            {{-- ======================================================= --}}
+                            {{-- PENAMBAHAN 1: Header Kolom Dipinjam --}}
+                            {{-- ======================================================= --}}
+                            <th class="py-3 text-center">Dipinjam</th>
                             <th class="py-3 pe-4 text-end" style="width: 15%;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($books as $book)
                         <tr>
-                            {{-- Penomoran yang benar untuk paginasi, kodemu sudah bagus! --}}
                             <td class="ps-4">{{ $loop->iteration + ($books->currentPage() - 1) * $books->perPage() }}</td>
                             <td>
-                                <img src="{{ $book->cover_image ? asset('storage/' . $book->cover_image) : 'https://placehold.co/80x120/E91E63/FFFFFF?text=No+Cover' }}" 
+                                <img src="{{ $book->cover_image && Storage::disk('public')->exists($book->cover_image) ? Storage::url($book->cover_image) : 'https://placehold.co/80x120/E91E63/FFFFFF?text=No+Cover' }}" 
                                      alt="Cover" class="img-fluid rounded" style="width: 60px; height: 90px; object-fit: cover;">
                             </td>
                             <td>
@@ -82,13 +94,23 @@
                             </td>
                             <td><span class="badge bg-secondary">{{ $book->genre->name ?? 'N/A' }}</span></td>
                             <td>{{ $book->publication_year ?? 'N/A' }}</td>
-                            <td>
+                            <td class="text-center">
                                 <span class="badge 
-                                    @if($book->copies_count > 10) bg-success
+                                    @if($book->copies_count > 5) bg-success
                                     @elseif($book->copies_count > 0) bg-warning text-dark
                                     @else bg-danger @endif">
                                     {{ $book->copies_count }} Salinan
                                 </span>
+                            </td>
+                            {{-- ======================================================= --}}
+                            {{-- PENAMBAHAN 2: Menampilkan Jumlah Dipinjam --}}
+                            {{-- ======================================================= --}}
+                            <td class="text-center">
+                                @if($book->borrowed_copies_count > 0)
+                                    <span class="badge bg-info text-dark">{{ $book->borrowed_copies_count }}</span>
+                                @else
+                                    <span class="text-muted small">0</span>
+                                @endif
                             </td>
                             <td class="pe-4 text-end">
                                 <div class="d-flex gap-2 justify-content-end">
@@ -104,13 +126,11 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-5">
+                            {{-- PENAMBAHAN 3: Update colspan --}}
+                            <td colspan="8" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="bi bi-search display-4 d-block mb-3 opacity-25"></i>
                                     <p class="mb-0">
-                                        {{-- ======================================================= --}}
-                                        {{-- PERUBAHAN 2: Pesan Kosong yang Lebih Informatif --}}
-                                        {{-- ======================================================= --}}
                                         @if(request('search') || request('genre_id'))
                                             Tidak ada buku yang cocok dengan kriteria filter Anda.
                                         @else
@@ -127,7 +147,6 @@
         </div>
         @if ($books->hasPages())
             <div class="card-footer bg-white">
-                {{-- Link Paginasi, kodemu sudah benar! --}}
                 {{ $books->links() }}
             </div>
         @endif

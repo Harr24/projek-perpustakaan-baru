@@ -14,13 +14,25 @@ use Illuminate\Validation\ValidationException;
 
 class BookController extends Controller
 {
-    // ... (method index, create, store tidak diubah) ...
     public function index(Request $request)
     {
         $genres = Genre::orderBy('name')->get();
         $search = $request->input('search');
         $genreId = $request->input('genre_id');
-        $query = Book::with('genre')->withCount('copies')->latest();
+
+        // ==========================================================
+        // PENAMBAHAN: withCount untuk menghitung buku yang dipinjam
+        // ==========================================================
+        $query = Book::with('genre')
+                    ->withCount([
+                        'copies', // Menghitung total eksemplar (copies_count)
+                        'copies as borrowed_copies_count' => function ($query) {
+                            // Hitung salinan yang statusnya 'dipinjam' ATAU 'overdue'
+                            $query->whereIn('status', ['dipinjam', 'overdue']);
+                        }
+                    ])
+                    ->latest();
+
         $query->when($search, function ($q) use ($search) {
             return $q->where(function ($subQuery) use ($search) {
                 $subQuery->where('title', 'LIKE', "%{$search}%")
@@ -33,6 +45,8 @@ class BookController extends Controller
         $books = $query->paginate(10)->withQueryString();
         return view('admin.petugas.books.index', compact('books', 'genres'));
     }
+
+    // ... (method create, store, show, edit, update, destroy tetap sama) ...
 
     public function create()
     {
@@ -55,7 +69,8 @@ class BookController extends Controller
         ]);
 
         $genre = Genre::find($validated['genre_id']);
-        $prefix = $genre->genre_code . '-' . Str::upper($validated['initial_code']) . '-';
+        $prefix = ($genre ? $genre->genre_code : 'GEN') . '-' . Str::upper($validated['initial_code']) . '-';
+
 
         if (BookCopy::where('book_code', 'LIKE', $prefix . '%')->exists()) {
             throw ValidationException::withMessages([
@@ -94,12 +109,7 @@ class BookController extends Controller
     public function edit(Book $book)
     {
         $genres = Genre::orderBy('name')->get();
-        
-        // ==========================================================
-        // PENAMBAHAN: Load data eksemplar (copies)
-        // ==========================================================
         $book->load('copies'); 
-        
         return view('admin.petugas.books.edit', compact('book', 'genres'));
     }
 
@@ -113,56 +123,50 @@ class BookController extends Controller
             'genre_id' => 'required|exists:genres,id',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'is_textbook' => 'nullable|boolean',
-            // Validasi untuk input penambahan stok
             'add_stock' => 'nullable|integer|min:1|max:100', 
         ]);
 
         DB::transaction(function () use ($request, $validated, $book) {
             if ($request->hasFile('cover_image')) {
-                if ($book->cover_image) { Storage::disk('public')->delete($book->cover_image); }
+                if ($book->cover_image && Storage::disk('public')->exists($book->cover_image)) {
+                     Storage::disk('public')->delete($book->cover_image);
+                 }
                 $path = $request->file('cover_image')->store('covers', 'public');
                 $validated['cover_image'] = $path;
             } else {
-                 // Jika tidak ada file baru, hapus 'cover_image' dari array $validated agar tidak menimpa
                  unset($validated['cover_image']);
             }
             
             $validated['is_textbook'] = $request->has('is_textbook');
             $book->update($validated);
 
-            // Logika penambahan stok
             if ($request->filled('add_stock')) {
-                // Gunakan relasi untuk query yang lebih efisien
                 $lastCopy = $book->copies()->orderBy('book_code', 'desc')->first(); 
-                
                 $lastNumber = 0;
                 $prefix = '';
 
                 if ($lastCopy) {
-                    // Jika sudah ada eksemplar, tentukan nomor terakhir dan prefix
                     $parts = explode('-', $lastCopy->book_code);
-                    $lastNumber = (int)end($parts); // Ambil nomor terakhir
-                    array_pop($parts); // Hapus nomor dari array
-                    $prefix = implode('-', $parts) . '-'; // Gabungkan kembali prefix
+                    if (count($parts) > 1) { // Pastikan ada pemisah '-'
+                        $lastNumber = (int)end($parts); 
+                        array_pop($parts); 
+                        $prefix = implode('-', $parts) . '-'; 
+                    } else {
+                         // Handle jika format kode buku tidak sesuai (misal tidak ada '-')
+                         throw ValidationException::withMessages(['add_stock' => 'Format kode buku terakhir tidak valid untuk penambahan otomatis.']);
+                    }
                 } else {
-                    // Jika BELUM ada eksemplar (misal buku baru dibuat tanpa stok awal)
-                    // Kita perlu membuat prefix berdasarkan data buku dan genre
-                    $genre = Genre::find($book->genre_id); // Ambil genre dari buku
-                    // Asumsi Anda perlu kode awal, tapi di form edit tidak ada. 
-                    // Kita perlu cara untuk menentukan kode awal (misal dari judul?)
-                    // Untuk sementara, kita buat prefix sederhana. Anda mungkin perlu menyesuaikan ini.
-                    $initialCode = Str::upper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $book->title), 0, 3)); // Ambil 3 huruf/angka dari judul
-                    $prefix = ($genre ? $genre->genre_code . '-' : '') . $initialCode . '-';
+                    $genre = Genre::find($book->genre_id); 
+                    $initialCode = Str::upper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $book->title), 0, 3)); 
+                    $prefix = ($genre ? $genre->genre_code . '-' : 'GEN-') . $initialCode . '-';
                      if(!$genre){
                          \Log::warning("Genre not found for book ID: {$book->id} during stock addition.");
                      }
                 }
                 
-                // Tambahkan validasi prefix, pastikan tidak kosong
                  if (empty(trim($prefix, '-'))) {
-                     throw ValidationException::withMessages(['add_stock' => 'Gagal menentukan prefix kode buku. Pastikan buku memiliki genre.']);
+                     throw ValidationException::withMessages(['add_stock' => 'Gagal menentukan prefix kode buku. Pastikan buku memiliki genre atau format kode buku sebelumnya benar.']);
                  }
-
 
                 for ($i = 1; $i <= $validated['add_stock']; $i++) {
                     $newNumber = $lastNumber + $i;
@@ -176,28 +180,25 @@ class BookController extends Controller
             }
         });
 
-        // Redirect kembali ke halaman edit agar petugas bisa lihat hasilnya
         return redirect()->route('admin.petugas.books.edit', $book)->with('success', 'Data buku berhasil diperbarui.'); 
     }
 
     public function destroy(Book $book)
     {
-        // Pindahkan pengecekan relasi sebelum menghapus
         if ($book->copies()->whereIn('status', ['dipinjam', 'pending'])->exists()) {
              return redirect()->route('admin.petugas.books.index')->with('error', 'Buku tidak dapat dihapus karena masih ada salinan yang sedang dipinjam atau dalam proses peminjaman.');
         }
 
         DB::transaction(function () use ($book) {
-            // Hapus cover image jika ada
-            if ($book->cover_image) {
+            if ($book->cover_image && Storage::disk('public')->exists($book->cover_image)) {
                 Storage::disk('public')->delete($book->cover_image);
             }
-            // Hapus semua book copies terlebih dahulu
              $book->copies()->delete();
-             // Baru hapus buku utamanya
             $book->delete();
         });
 
         return redirect()->route('admin.petugas.books.index')->with('success', 'Buku dan semua salinannya berhasil dihapus.');
     }
+
 }
+
