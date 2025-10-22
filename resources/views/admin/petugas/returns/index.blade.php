@@ -28,7 +28,7 @@
     </div>
     @endif
 
-    {{-- Form untuk Aksi Massal (dikelola oleh JS) --}}
+    {{-- Form untuk Aksi Massal --}}
     <form action="{{ route('admin.petugas.returns.storeMultiple') }}" method="POST" id="bulk-return-form">
         @csrf
         @method('PUT')
@@ -66,7 +66,7 @@
                             <th class="py-3 px-3">Kontak (WA)</th>
                             <th class="py-3 px-3">Jatuh Tempo</th>
                             <th class="py-3 px-3">Status</th>
-                            <th class="py-3 px-3 text-end">Aksi Individual</th>
+                            <th class="py-3 px-3 text-end" style="min-width: 190px;">Aksi Individual</th> {{-- Sedikit dilebarkan lagi --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -107,11 +107,27 @@
                                     @endif
                                 </td>
                                 <td class="px-3 text-end">
-                                    <form action="{{ route('admin.petugas.returns.store', $borrow) }}" method="POST" onsubmit="return confirm('Konfirmasi pengembalian buku ini?');">
-                                        @csrf
-                                        @method('PUT')
-                                        <button type="submit" class="btn btn-success btn-sm">Kembalikan</button>
-                                    </form>
+                                    {{-- ========================================================== --}}
+                                    {{-- PERBAIKAN: Menambahkan Tombol Tandai Hilang --}}
+                                    {{-- ========================================================== --}}
+                                    <div class="d-flex justify-content-end gap-2">
+                                        {{-- Tombol Kembalikan --}}
+                                        <form action="{{ route('admin.petugas.returns.store', $borrow) }}" method="POST" onsubmit="return confirm('Konfirmasi pengembalian buku ini?');" style="display: inline;">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="btn btn-success btn-sm" title="Proses Pengembalian">Kembalikan</button>
+                                        </form>
+                                        
+                                        {{-- Tombol Tandai Hilang --}}
+                                        <form action="{{ route('admin.petugas.returns.markAsLost', $borrow) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menandai buku ini HILANG? Denda penggantian akan diterapkan.');" style="display: inline;">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="btn btn-warning btn-sm text-dark" title="Tandai Buku Hilang">
+                                                 <i class="bi bi-exclamation-triangle-fill"></i> Hilang
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {{-- ========================================================== --}}
                                 </td>
                             </tr>
                         @empty
@@ -126,6 +142,7 @@
 @endsection
 
 @push('scripts')
+{{-- Script Select All tidak diubah, sudah benar --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const selectAllHeader = document.getElementById('selectAll');

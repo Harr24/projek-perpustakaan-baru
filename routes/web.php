@@ -57,35 +57,36 @@ Route::middleware('auth')->group(function () {
     Route::get('/borrow/request/{book_copy}', [BorrowingController::class, 'create'])->name('borrow.create');
     Route::post('/borrow/{book_copy}', [BorrowingController::class, 'store'])->name('borrow.store');
     Route::get('/my-borrowings', [BorrowingController::class, 'index'])->name('borrow.history');
-    
+
     // == RUTE KHUSUS UNTUK ROLE PETUGAS ==
     Route::middleware('role:petugas')->prefix('admin/petugas')->name('admin.petugas.')->group(function () {
         Route::get('/verifikasi-siswa', [VerificationController::class, 'index'])->name('verification.index');
         Route::post('/verifikasi-siswa/{user}/approve', [VerificationController::class, 'approve'])->name('verification.approve');
         Route::post('/verifikasi-siswa/{user}/reject', [VerificationController::class, 'reject'])->name('verification.reject');
         Route::get('/verifikasi-siswa/lihat-kartu/{user}', [VerificationController::class, 'showStudentCard'])->name('verification.showCard');
-        
+
         Route::resource('genres', GenreController::class);
         Route::resource('books', BookController::class);
         Route::resource('teachers', TeacherController::class)->except(['show']);
-
-        // ==========================================================
-        // PENAMBAHAN: Rute untuk menghapus BookCopy (Eksemplar)
-        // Parameter {copy} akan otomatis di-resolve menjadi model BookCopy
-        // ==========================================================
         Route::delete('/book-copies/{copy}', [BookController::class, 'destroyCopy'])->name('books.copies.destroy');
-        // ==========================================================
-
 
         Route::get('/approvals', [LoanApprovalController::class, 'index'])->name('approvals.index');
         Route::post('/approvals/{borrowing}/approve', [LoanApprovalController::class, 'approve'])->name('approvals.approve');
         Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
         Route::post('/approvals/approve-multiple', [LoanApprovalController::class, 'approveMultiple'])->name('approvals.approveMultiple');
 
+        // Rute Pengembalian
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
-        Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store');
-        Route::put('/returns-multiple', [ReturnController::class, 'storeMultiple'])->name('returns.storeMultiple');
-        
+        Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store'); // Pengembalian normal
+        Route::put('/returns-multiple', [ReturnController::class, 'storeMultiple'])->name('returns.storeMultiple'); // Pengembalian massal
+
+        // ==========================================================
+        // PENAMBAHAN: Rute untuk menandai buku hilang
+        // Menggunakan PUT karena ini adalah update status peminjaman
+        // ==========================================================
+        Route::put('/returns/{borrowing}/mark-lost', [ReturnController::class, 'markAsLost'])->name('returns.markAsLost');
+        // ==========================================================
+
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
