@@ -15,9 +15,29 @@ class Borrowing extends Model
         'borrowed_at',
         'due_at',
         'returned_at',
-        'status', // <-- TAMBAHKAN INI
+        'status', 
+        'due_date', // Sebaiknya tambahkan juga due_date jika bisa diisi
+        'fine_amount', // dan field lain yang relevan
+        'fine_status',
     ];
     
+    // ==========================================================
+    // TAMBAHAN: Properti $casts untuk mengubah string jadi Objek Tanggal
+    // Ini akan memperbaiki error "Call to a member function format() on string"
+    // ==========================================================
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'borrowed_at' => 'datetime',
+        'due_at' => 'datetime',
+        'returned_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
+        'due_date' => 'date', // 'due_date' dari SQL kamu adalah 'date'
+    ];
 
     // Relasi ke User (peminjam)
     public function user()
@@ -28,7 +48,8 @@ class Borrowing extends Model
     // Relasi ke salinan buku yang dipinjam
     public function bookCopy()
     {
-        return $this->belongsTo(BookCopy::class);
+        // Pastikan nama foreign key 'book_copy_id' sudah benar
+        return $this->belongsTo(BookCopy::class, 'book_copy_id');
     }
 
     public function approvedBy()
@@ -41,6 +62,7 @@ class Borrowing extends Model
      */
     public function returnedBy()
     {
+        // Jika kamu punya kolom 'returned_by'
         return $this->belongsTo(User::class, 'returned_by');
     }
 }
