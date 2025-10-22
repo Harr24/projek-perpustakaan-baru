@@ -17,14 +17,31 @@
             overflow: hidden;
             text-decoration: none;
             color: #212529;
+            background-color: #fff; /* Tambahkan background putih */
         }
         .material-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
         }
-        /* Pagination styles (jika diperlukan) */
-        .pagination .page-item.active .page-link { background-color: var(--brand-red); border-color: var(--brand-red); }
-        .pagination .page-link { color: var(--brand-red); }
+        /* Style untuk pagination agar sesuai tema */
+        .pagination .page-item.active .page-link {
+            background-color: var(--brand-red);
+            border-color: var(--brand-red);
+            color: white; /* Warna teks putih */
+        }
+        .pagination .page-link {
+            color: var(--brand-red);
+             box-shadow: none !important; /* Hilangkan shadow focus bootstrap */
+        }
+         .pagination .page-link:hover {
+             background-color: #f8d7da; /* Warna hover lebih lembut */
+             border-color: #f5c2c7;
+         }
+         .pagination .page-item.disabled .page-link {
+             color: #6c757d;
+             background-color: #e9ecef;
+             border-color: #dee2e6;
+         }
     </style>
 </head>
 <body>
@@ -35,7 +52,6 @@
             </a>
 
             <div class="d-flex align-items-center">
-
                 <a href="{{ route('catalog.index') }}" class="btn btn-sm btn-outline-secondary d-none d-md-flex align-items-center me-2">
                     <i class="bi bi-house-door-fill me-1"></i>
                     <span class="d-none d-lg-inline">Beranda</span>
@@ -118,12 +134,17 @@
             @endforelse
         </div>
 
-        {{-- Tampilkan Link Paginasi --}}
+        {{-- ========================================================== --}}
+        {{-- PENAMBAHAN: Tampilkan Link Paginasi --}}
+        {{-- ========================================================== --}}
         @if($materials->hasPages())
         <div class="d-flex justify-content-center mt-5">
+            {{-- Ini akan merender link pagination Bootstrap secara otomatis --}}
             {{ $materials->links() }}
         </div>
         @endif
+        {{-- ========================================================== --}}
+
     </main>
 
     @include('layouts.footer')
