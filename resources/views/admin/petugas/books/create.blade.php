@@ -35,13 +35,14 @@
                 </div>
 
                 @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <strong>Error:</strong>
-                        <ul class="mb-0">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                         <strong>Error:</strong>
+                        <ul class="mb-0 small ps-3">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
                         </ul>
+                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
@@ -81,6 +82,21 @@
                                 @error('genre_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
+                            {{-- ========================================================== --}}
+                            {{-- PENAMBAHAN: Input Tahun Terbit --}}
+                            {{-- ========================================================== --}}
+                            <div class="mb-3">
+                                 <label for="publication_year" class="form-label">Tahun Terbit</label>
+                                 <input type="number" id="publication_year" name="publication_year"
+                                        class="form-control @error('publication_year') is-invalid @enderror"
+                                        placeholder="Contoh: {{ date('Y') }}"
+                                        min="1900" max="{{ date('Y') }}" value="{{ old('publication_year') }}">
+                                 <div class="form-text help-text">Tahun buku diterbitkan (4 digit). (Opsional)</div>
+                                 @error('publication_year')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            {{-- ========================================================== --}}
+
+
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" name="is_textbook" id="is_textbook" value="1" {{ old('is_textbook') ? 'checked' : '' }}>
                                 <label class="form-check-label" for="is_textbook">
@@ -92,14 +108,14 @@
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
                                     <label for="initial_code" class="form-label required">Kode Awal Buku</label>
-                                    <input type="text" id="initial_code" name="initial_code" value="{{ old('initial_code') }}" required class="form-control @error('initial_code') is-invalid @enderror">
-                                    <div class="form-text help-text">Kode singkat unik per genre (Contoh: BIND, MTK).</div>
+                                    <input type="text" id="initial_code" name="initial_code" value="{{ old('initial_code') }}" required maxlength="10" class="form-control @error('initial_code') is-invalid @enderror">
+                                    <div class="form-text help-text">Kode singkat unik per genre (Contoh: BIND, MTK). Maks 10 karakter.</div>
                                     @error('initial_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 </div>
                                 <div class="col-md-6">
                                     <label for="stock" class="form-label required">Jumlah Stok</label>
-                                    <input type="number" id="stock" name="stock" min="1" value="{{ old('stock', 1) }}" required class="form-control @error('stock') is-invalid @enderror">
-                                    <div class="form-text help-text">Jumlah eksemplar fisik yang ditambahkan.</div>
+                                    <input type="number" id="stock" name="stock" min="1" max="100" value="{{ old('stock', 1) }}" required class="form-control @error('stock') is-invalid @enderror">
+                                    <div class="form-text help-text">Jumlah eksemplar fisik yang ditambahkan (1-100).</div>
                                     @error('stock')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 </div>
                             </div>
@@ -107,24 +123,28 @@
                             <div class="row g-3 align-items-center mb-3">
                                 <div class="col-sm-8">
                                     <label for="cover_image" class="form-label">Sampul Buku (Cover)</label>
-                                    <input class="form-control @error('cover_image') is-invalid @enderror" type="file" id="cover_image" name="cover_image" accept="image/*">
+                                    <input class="form-control @error('cover_image') is-invalid @enderror" type="file" id="cover_image" name="cover_image" accept="image/jpeg,image/png,image/jpg" onchange="previewCover(event)">
+                                     <div class="form-text help-text">Format: JPG, PNG, JPEG. Maks 2MB. (Opsional)</div>
                                     @error('cover_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 </div>
                                 <div class="col-sm-4 preview-col text-center">
-                                    <label class="form-label d-block">Preview Sampul</label>
-                                    <img id="coverPreview" class="img-preview" src="{{ asset('images/placeholder-cover.png') }}" alt="Preview Sampul">
+                                    <label class="form-label d-block mb-1">Preview Sampul</label>
+                                    {{-- Menggunakan placeholder jika path gambar Anda salah --}}
+                                    <img id="coverPreview" class="img-preview mt-1" src="{{ asset('images/placeholder-cover.png') }}"
+                                         onerror="this.onerror=null; this.src='https://placehold.co/160x220/EFEFEF/AAAAAA?text=No+Preview';"
+                                         alt="Preview Sampul">
                                 </div>
                             </div>
-                            
+
                             <div class="d-flex flex-column flex-sm-row gap-2 actions-row mt-4">
-                                <button type="submit" class="btn btn-danger"><i class="bi bi-save"></i> Simpan Buku</button>
-                                <a href="{{ route('admin.petugas.books.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Kembali</a>
+                                <button type="submit" class="btn btn-danger"><i class="bi bi-save-fill me-1"></i> Simpan Buku</button>
+                                <a href="{{ route('admin.petugas.books.index') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg me-1"></i> Batal</a>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-4">
                 {{-- ... Kode sidebar Anda ... --}}
             </div>
@@ -133,7 +153,20 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ... Kode JavaScript Anda ...
+        // Fungsi preview gambar sampul (jika Anda belum punya)
+        function previewCover(event) {
+            const reader = new FileReader();
+            reader.onload = function(){
+                const output = document.getElementById('coverPreview');
+                output.src = reader.result;
+            };
+            if(event.target.files[0]){
+                 reader.readAsDataURL(event.target.files[0]);
+            } else {
+                 // Kembalikan ke placeholder jika file dibatalkan
+                 document.getElementById('coverPreview').src = "{{ asset('images/placeholder-cover.png') }}";
+            }
+        }
     </script>
 </body>
 </html>

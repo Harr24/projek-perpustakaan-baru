@@ -6,6 +6,16 @@
     <div class="nav-item-main"><span>Kelola Anggota</span></div>
     <span class="meta">Siswa & Guru</span>
 </a>
+
+{{-- ========================================================== --}}
+{{-- PENAMBAHAN: Link ke Riwayat Denda Superadmin --}}
+{{-- ========================================================== --}}
+<a class="nav-item" href="{{ route('admin.superadmin.fines.history') }}">
+    <div class="nav-item-main"><span>Kelola Riwayat Denda</span></div>
+    <span class="meta">Keuangan/Laporan</span>
+</a>
+{{-- ========================================================== --}}
+
 <a class="nav-item" href="{{ route('profile.edit') }}">
     <div class="nav-item-main"><span>Edit Profil Saya</span></div>
     <span class="meta">Akun</span>

@@ -19,11 +19,12 @@ class Book extends Model
     protected $fillable = [
         'title',
         'author',
-        'synopsis', // Ditambahkan
+        'synopsis',
         'genre_id',
         'cover_image',
-        'stock',
+        'stock', // <-- DIKEMBALIKAN: Kolom ini ada di tabel DB Anda
         'is_textbook',
+        'publication_year',
     ];
 
     /**
@@ -39,6 +40,6 @@ class Book extends Model
      */
     public function copies()
     {
-        return $this->hasMany(BookCopy::class); 
+        return $this->hasMany(BookCopy::class);
     }
 }

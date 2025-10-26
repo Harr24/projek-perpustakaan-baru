@@ -1,37 +1,23 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riwayat Denda</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        /* Sesuaikan warna brand Anda jika perlu */
-        .btn-danger { background-color: #d9534f; border-color: #d9534f;}
-        .btn-outline-danger { border-color: #d9534f; color: #d9534f;}
-        .btn-outline-danger:hover { background-color: #d9534f; color: white;}
-        .card-header.bg-danger { background-color: #d9534f !important;} /* Pastikan override */
-    </style>
-</head>
-<body class="bg-light">
+{{-- Menggunakan layout admin umum, ganti jika Superadmin punya layout khusus --}}
+@extends('layouts.app')
 
+@section('content')
 <div class="container py-4">
     {{-- Header --}}
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
-            <h1 class="h3 fw-bold mb-1" style="color: #d9534f;">Riwayat Denda</h1>
-            <p class="text-muted mb-0 small">Daftar denda keterlambatan yang sudah lunas.</p>
+            {{-- Sesuaikan Judul untuk Superadmin --}}
+            <h1 class="h3 fw-bold mb-1" style="color: #d9534f;">Manajemen Riwayat Denda (Superadmin)</h1>
+            <p class="text-muted mb-0 small">Daftar semua denda keterlambatan yang sudah lunas.</p>
         </div>
          <div class="d-flex gap-2">
              <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
             </a>
-            <a href="{{ route('admin.petugas.fines.index') }}" class="btn btn-outline-danger btn-sm">
+            {{-- Tambahkan link ke Denda Aktif jika Superadmin perlu melihatnya --}}
+            {{-- <a href="{{ route('admin.superadmin.fines.index') }}" class="btn btn-outline-danger btn-sm">
                 <i class="bi bi-clock-history me-1"></i> Lihat Denda Aktif
-            </a>
+            </a> --}}
          </div>
     </div>
 
@@ -51,8 +37,9 @@
 
     {{-- Form Filter --}}
     <div class="card shadow-sm mb-4 border-0">
-        <div class="card-body p-3"> {{-- Perkecil padding --}}
-            <form action="{{ route('admin.petugas.fines.history') }}" method="GET" class="row gx-2 gy-3 align-items-end"> {{-- Ubah gutter --}}
+        <div class="card-body p-3">
+            {{-- Form action mengarah ke rute history Superadmin --}}
+            <form action="{{ route('admin.superadmin.fines.history') }}" method="GET" class="row gx-2 gy-3 align-items-end">
                 <div class="col-md-3 col-sm-6">
                     <label for="search" class="form-label small">Cari Nama/Judul</label>
                     <input type="text" name="search" id="search" class="form-control form-control-sm" value="{{ request('search') }}" placeholder="Nama peminjam atau judul...">
@@ -91,13 +78,13 @@
                 <div class="col-md-3 col-sm-6">
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-danger btn-sm flex-grow-1"><i class="bi bi-funnel-fill"></i> Filter</button>
-                        {{-- Tombol Export tetap ada --}}
-                        <a href="{{ route('admin.petugas.fines.export', request()->query()) }}" class="btn btn-success btn-sm" title="Export ke Excel">
+                        {{-- Tambahkan tombol Export jika diperlukan --}}
+                        {{-- <a href="{{ route('admin.superadmin.fines.export', request()->query()) }}" class="btn btn-success btn-sm" title="Export ke Excel">
                             <i class="bi bi-file-earmark-excel-fill"></i> <span class="d-none d-lg-inline">Export</span>
-                        </a>
-                         {{-- Tombol Reset Filter --}}
+                        </a> --}}
                          @if(request()->has('search') || request()->has('year') || request()->has('month'))
-                            <a href="{{ route('admin.petugas.fines.history') }}" class="btn btn-outline-secondary btn-sm" title="Reset Filter">
+                            {{-- Link reset mengarah ke rute history Superadmin --}}
+                            <a href="{{ route('admin.superadmin.fines.history') }}" class="btn btn-outline-secondary btn-sm" title="Reset Filter">
                                 <i class="bi bi-x-lg"></i>
                             </a>
                         @endif
@@ -109,21 +96,24 @@
 
     {{-- Tabel Riwayat Denda --}}
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-danger text-white py-2"> {{-- Perkecil padding header --}}
+        <div class="card-header bg-danger text-white py-2">
             <h6 class="mb-0 fw-semibold"><i class="bi bi-check-circle-fill me-2"></i>Denda Lunas</h6>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-striped align-middle mb-0 small"> {{-- Tambah striped, perkecil font --}}
+                <table class="table table-hover table-striped align-middle mb-0 small">
                     <thead class="table-light text-muted">
                         <tr>
                             <th class="py-2 px-3">Nama Peminjam</th>
                             <th class="py-2 px-3">Kelas</th>
-                            {{-- <th class="py-2 px-3">Kontak (WA)</th> --}} {{-- Dihapus agar lebih ringkas --}}
                             <th class="py-2 px-3">Judul Buku</th>
                             <th class="py-2 px-3 text-end">Jml Denda</th>
                             <th class="py-2 px-3">Tgl Lunas</th>
-                            {{-- <th class="py-2 px-3 text-center">Aksi</th> --}} {{-- Kolom Aksi Dihapus --}}
+                            {{-- ========================================================== --}}
+                            {{-- PENAMBAHAN: Kolom Aksi untuk Superadmin --}}
+                            {{-- ========================================================== --}}
+                            <th class="py-2 px-3 text-center">Aksi</th>
+                            {{-- ========================================================== --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -131,22 +121,30 @@
                             <tr>
                                 <td class="px-3">{{ $fine->user->name ?? 'Pengguna Dihapus' }}</td>
                                 <td class="px-3">{{ $fine->user->class_name ?? 'N/A' }}</td>
-                                {{-- <td class="px-3"> --}}
-                                    {{-- ... (kode WA link dihilangkan) ... --}}
-                                {{-- </td> --}}
                                 <td class="px-3">
                                     {{ $fine->bookCopy->book->title ?? 'Buku Dihapus' }}
                                     <span class="d-block text-muted" style="font-size: 0.8em;">{{ $fine->bookCopy->book_code ?? 'Kode Dihapus' }}</span>
                                 </td>
                                 <td class="px-3 text-end">Rp{{ number_format($fine->fine_amount, 0, ',', '.') }}</td>
-                                <td class="px-3">{{ $fine->updated_at ? $fine->updated_at->format('d/m/Y H:i') : 'N/A' }}</td> {{-- Format tanggal lebih singkat --}}
-                                {{-- <td class="px-3 text-center"> --}}
-                                    {{-- Form Hapus Dihilangkan --}}
-                                {{-- </td> --}}
+                                <td class="px-3">{{ $fine->updated_at ? $fine->updated_at->format('d/m/Y H:i') : 'N/A' }}</td>
+                                {{-- ========================================================== --}}
+                                {{-- PENAMBAHAN: Tombol Aksi Hapus untuk Superadmin --}}
+                                {{-- ========================================================== --}}
+                                <td class="px-3 text-center">
+                                    {{-- Form action mengarah ke rute destroy Superadmin --}}
+                                    <form action="{{ route('admin.superadmin.fines.destroy', $fine->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus riwayat denda ini secara permanen? Ini tidak bisa dibatalkan.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Riwayat Permanen">
+                                            <i class="bi bi-trash3-fill"></i> {{-- Icon berbeda --}}
+                                        </button>
+                                    </form>
+                                </td>
+                                {{-- ========================================================== --}}
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4"> {{-- Update colspan jadi 5 --}}
+                                <td colspan="6" class="text-center text-muted py-4"> {{-- Update colspan jadi 6 --}}
                                     <i class="bi bi-search d-block fs-1 mb-2 opacity-50"></i>
                                     Tidak ada data riwayat denda yang cocok.
                                 </td>
@@ -157,10 +155,10 @@
                     <tfoot class="table-light fw-bold">
                         <tr>
                             <td colspan="3" class="px-3 py-2 text-end">Total Pemasukan (sesuai filter):</td> {{-- Update colspan --}}
-                            <td class="px-3 py-2 text-end" colspan="2"> {{-- Update colspan --}}
+                            <td class="px-3 py-2 text-end"> {{-- Pindahkan total ke kolom denda --}}
                                 Rp {{ number_format($totalFine, 0, ',', '.') }}
                             </td>
-                           {{-- <td class="px-3 py-2"></td> --}} {{-- Hapus cell untuk kolom Aksi --}}
+                           <td class="px-3 py-2" colspan="2"></td> {{-- Tambah cell kosong untuk kolom Tgl Lunas & Aksi --}}
                         </tr>
                     </tfoot>
                     @endif
@@ -177,5 +175,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+@endsection {{-- Tambahkan jika menggunakan @extends --}}
+{{-- @push('scripts') --}} {{-- Hapus jika tidak pakai @push --}}
+{{-- @endpush --}}

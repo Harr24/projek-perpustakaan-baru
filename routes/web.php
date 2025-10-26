@@ -18,14 +18,10 @@ use App\Http\Controllers\Admin\Petugas\FineController;
 use App\Http\Controllers\Guru\LearningMaterialController;
 use App\Http\Controllers\Admin\Superadmin\HeroSliderController;
 use App\Http\Controllers\Admin\Petugas\BorrowingReportController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Admin\Superadmin\SuperadminFineController; // <-- Tambahkan use statement ini
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
-
-// == RUTE PUBLIK & TAMU ==
+// RUTE PUBLIK & TAMU
 Route::get('/', [BookCatalogController::class, 'index'])->name('catalog.index');
 Route::get('/catalog/all', [BookCatalogController::class, 'allBooks'])->name('catalog.all');
 Route::get('/book/{book}', [BookCatalogController::class, 'show'])->name('catalog.show');
@@ -41,9 +37,9 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
 });
 
-// == RUTE UNTUK PENGGUNA YANG SUDAH LOGIN ==
+// RUTE UNTUK PENGGUNA YANG SUDAH LOGIN
 Route::middleware('auth')->group(function () {
-    Route::post('/notifications/mark-as-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markasread');
+    Route::post('/notifications/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markasread');
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
@@ -58,7 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/borrow/{book_copy}', [BorrowingController::class, 'store'])->name('borrow.store');
     Route::get('/my-borrowings', [BorrowingController::class, 'index'])->name('borrow.history');
 
-    // == RUTE KHUSUS UNTUK ROLE PETUGAS ==
+    // RUTE KHUSUS UNTUK ROLE PETUGAS
     Route::middleware('role:petugas')->prefix('admin/petugas')->name('admin.petugas.')->group(function () {
         Route::get('/verifikasi-siswa', [VerificationController::class, 'index'])->name('verification.index');
         Route::post('/verifikasi-siswa/{user}/approve', [VerificationController::class, 'approve'])->name('verification.approve');
@@ -66,6 +62,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/verifikasi-siswa/lihat-kartu/{user}', [VerificationController::class, 'showStudentCard'])->name('verification.showCard');
 
         Route::resource('genres', GenreController::class);
+
+        Route::get('/books/create-bulk', [BookController::class, 'showCreateBulkForm'])->name('books.create.bulk');
+        Route::post('/books/store-bulk', [BookController::class, 'storeBulkForm'])->name('books.store.bulk.form');
+
         Route::resource('books', BookController::class);
         Route::resource('teachers', TeacherController::class)->except(['show']);
         Route::delete('/book-copies/{copy}', [BookController::class, 'destroyCopy'])->name('books.copies.destroy');
@@ -75,22 +75,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
         Route::post('/approvals/approve-multiple', [LoanApprovalController::class, 'approveMultiple'])->name('approvals.approveMultiple');
 
-        // Rute Pengembalian
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
-        Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store'); // Pengembalian normal
-        Route::put('/returns-multiple', [ReturnController::class, 'storeMultiple'])->name('returns.storeMultiple'); // Pengembalian massal
-
-        // ==========================================================
-        // PENAMBAHAN: Rute untuk menandai buku hilang
-        // Menggunakan PUT karena ini adalah update status peminjaman
-        // ==========================================================
+        Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store');
+        Route::put('/returns-multiple', [ReturnController::class, 'storeMultiple'])->name('returns.storeMultiple');
         Route::put('/returns/{borrowing}/mark-lost', [ReturnController::class, 'markAsLost'])->name('returns.markAsLost');
-        // ==========================================================
 
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
         Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
-        Route::delete('/fines/history/{borrowing}', [FineController::class, 'destroy'])->name('fines.destroy');
         Route::get('/fines/history/export', [FineController::class, 'export'])->name('fines.export');
 
         Route::get('/reports/borrowings', [BorrowingReportController::class, 'index'])->name('reports.borrowings.index');
@@ -108,6 +100,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('petugas', SuperadminPetugasController::class);
         Route::resource('members', MemberController::class)->except(['create', 'store']);
         Route::resource('sliders', HeroSliderController::class);
+
+        // ==========================================================
+        // PENAMBAHAN: Rute Riwayat Denda untuk Superadmin
+        // ==========================================================
+        Route::get('/fines/history', [SuperadminFineController::class, 'history'])->name('fines.history');
+        Route::delete('/fines/history/{fine}', [SuperadminFineController::class, 'destroy'])->name('fines.destroy');
+        // Route::get('/fines/history/export', [SuperadminFineController::class, 'export'])->name('fines.export'); // Tambahkan jika perlu export
+        // ==========================================================
+
     });
 });
-
