@@ -79,16 +79,30 @@
         }
         
         /* ========================================================== */
-        /* HERO SLIDER DENGAN ANIMASI LEBIH SMOOTH */
+        /* HERO SLIDER (VERSI BARU - Teks di Kiri) */
         /* ========================================================== */
         .hero-slider .carousel-item {
             height: 60vh !important;
             max-height: 580px !important;
             min-height: 400px !important; 
-            background-color: #212529;
             position: relative;
+            /* Menggunakan background properties, bukan <img> */
+            background-size: cover;
+            background-position: center;
+            animation: kenBurns 20s ease infinite;
+        }
+
+        /* Hapus animasi Ken Burns dari <img> karena <img> akan dihapus */
+        .hero-slider .carousel-item img { 
+           display: none; /* Sembunyikan img tag lama */
         }
         
+        @keyframes kenBurns {
+            0% { background-position: center 45%; }
+            50% { background-position: center 55%; } /* Efek 'pan' pelan */
+            100% { background-position: center 45%; }
+        }
+
         .hero-slider .carousel-item::after {
             content: '';
             position: absolute;
@@ -96,44 +110,42 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5));
+            /* Gradient dari kiri ke kanan agar teks terbaca */
+            background: linear-gradient(to right, rgba(0,0,0,0.65) 30%, rgba(0,0,0,0.1) 70%);
             z-index: 1;
         }
-        
-        .hero-slider .carousel-item img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-            object-position: center; 
-            animation: kenBurns 20s ease infinite;
-        }
-        
-        @keyframes kenBurns {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        
+
+        /* Mengubah posisi caption ke kiri */
         .hero-slider .carousel-caption { 
-            top: 50%; 
-            transform: translateY(-50%); 
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
             bottom: auto;
+            left: 10%; /* Posisi dari kiri */
+            right: auto; /* Matikan posisi kanan */
+            width: 50%; /* Batasi lebar teks */
+            text-align: left; /* Teks rata kiri */
             z-index: 2;
+            padding-top: 0;
+            padding-bottom: 0;
         }
-        
+
         .hero-slider .carousel-caption h1 {
             animation: fadeInUp 1s ease;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+            font-size: 2.75rem; /* Sedikit lebih besar */
+            font-weight: 700;
         }
-        
+
         .hero-slider .carousel-caption p {
             animation: fadeInUp 1.2s ease;
+            font-size: 1.1rem;
         }
-        
+
         .hero-slider .carousel-caption .btn {
             animation: fadeInUp 1.4s ease;
         }
-        
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -144,14 +156,18 @@
                 transform: translateY(0);
             }
         }
-        
-        @media (max-width: 768px) {
+
+        @media (max-width: 768px) { 
             .hero-slider .carousel-item { 
                 height: 50vh !important; 
                 min-height: 300px !important; 
             }
+            .hero-slider .carousel-caption {
+                left: 8%;
+                width: 80%;
+            }
             .hero-slider .carousel-caption h1 { font-size: 1.75rem; }
-            .hero-slider .carousel-caption .lead { display: none; }
+            .hero-slider .carousel-caption p { display: none; } /* Sembunyikan deskripsi di HP */
         }
         
         .carousel-control-prev-icon, .carousel-control-next-icon { 
@@ -160,7 +176,7 @@
             border-radius: 50%;
             transition: all 0.3s ease;
         }
-        
+
         .carousel-control-prev-icon:hover, .carousel-control-next-icon:hover {
             background-color: rgba(198, 40, 40, 1);
             transform: scale(1.1);
@@ -468,18 +484,30 @@
                     <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}" aria-current="{{ $index === 0 ? 'true' : 'false' }}" aria-label="Slide {{ $index + 1 }}"></button>
                 @endforeach
             </div>
+            
             <div class="carousel-inner">
                 @foreach($heroSliders as $index => $slider)
-                    <div class="carousel-item {{ $index === 0 ? 'active' : '' }}">
-                        <img src="{{ asset('storage/' . $slider->image_path) }}" class="d-block" alt="{{ $slider->title }}">
-                        <div class="carousel-caption text-center">
-                            @if($slider->title)<h1 class="display-4 fw-bold mb-3">{{ $slider->title }}</h1>@endif
-                            @if($slider->description)<p class="lead d-none d-md-block">{{ $slider->description }}</p>@endif
-                            @if($slider->button_link)
-                                <a href="{{ $slider->button_link }}" class="btn btn-danger btn-lg mt-3" target="_blank" rel="noopener noreferrer">
-                                    {{ $slider->button_text ?? 'Lihat Selengkapnya' }} <i class="bi bi-arrow-right ms-2"></i>
+                    <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" 
+                         style="background-image: url('{{ asset('storage/' . $slider->image_path) }}');">
+                        
+                        {{-- Konten Teks di Kiri --}}
+                        <div class="carousel-caption"> {{-- Hapus class text-center --}}
+                            
+                            @if($slider->title)
+                                <h1 class="display-4 fw-bold mb-3">{{ $slider->title }}</h1>
+                            @endif
+
+                            @if($slider->description)
+                                <p class="lead d-none d-md-block">{{ $slider->description }}</p>
+                            @endif
+
+                            {{-- Link tombol diperbaiki --}}
+                            @if($slider->link_url)
+                                <a href="{{ $slider->link_url }}" class="btn btn-danger btn-lg mt-3" target="_blank" rel="noopener noreferrer">
+                                    BACA SELENGKAPNYA <i class="bi bi-arrow-right ms-2"></i>
                                 </a>
                             @endif
+
                         </div>
                     </div>
                 @endforeach

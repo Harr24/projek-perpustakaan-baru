@@ -5,21 +5,22 @@ namespace App\Http\Controllers\Admin\Superadmin;
 use App\Http\Controllers\Controller;
 use App\Models\HeroSlider;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage; // <-- Tambahkan ini
+use Illuminate\Support\Facades\Storage;
 
 class HeroSliderController extends Controller
 {
     /**
-     * Menampilkan daftar semua slider.
+     * Display a listing of the resource.
      */
     public function index()
     {
-        $sliders = HeroSlider::latest()->get();
+        // DIUBAH: Mengurutkan berdasarkan 'order' dulu, baru tanggal
+        $sliders = HeroSlider::orderBy('order')->orderBy('created_at', 'desc')->get();
         return view('admin.superadmin.sliders.index', compact('sliders'));
     }
 
     /**
-     * Menampilkan form untuk menambah slider baru.
+     * Show the form for creating a new resource.
      */
     public function create()
     {
@@ -27,31 +28,46 @@ class HeroSliderController extends Controller
     }
 
     /**
-     * Menyimpan slider baru ke database.
+     * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        // ==========================================================
+        // DIUBAH: Validasi ditambahkan untuk field baru
+        // ==========================================================
+        $validatedData = $request->validate([
             'title' => 'nullable|string|max:255',
-            'image_path' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'description' => 'nullable|string', // <-- BARU
+            'image_path' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'link_url' => 'nullable|url',
+            'is_active' => 'required|boolean', // <-- DIUBAH (lebih baik)
+            'order' => 'required|integer',     // <-- BARU
         ]);
+        // ==========================================================
 
         if ($request->hasFile('image_path')) {
             $path = $request->file('image_path')->store('sliders', 'public');
-            $validated['image_path'] = $path;
+            $validatedData['image_path'] = $path;
         }
-
-        $validated['is_active'] = $request->has('is_active');
-        HeroSlider::create($validated);
+        
+        // $validatedData sudah mencakup semua field
+        HeroSlider::create($validatedData);
 
         return redirect()->route('admin.superadmin.sliders.index')
-                         ->with('success', 'Slider baru berhasil ditambahkan.');
+                         ->with('success', 'Hero Slider berhasil ditambahkan.');
     }
 
     /**
-     * Menampilkan form untuk mengedit slider.
-     * Menggunakan Route-Model Binding untuk otomatis mengambil data slider.
+     * Display the specified resource.
+     */
+    public function show(HeroSlider $slider)
+    {
+        // Biasanya tidak digunakan, redirect ke edit
+        return redirect()->route('admin.superadmin.sliders.edit', $slider);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
      */
     public function edit(HeroSlider $slider)
     {
@@ -59,47 +75,52 @@ class HeroSliderController extends Controller
     }
 
     /**
-     * Memperbarui data slider di database.
+     * Update the specified resource in storage.
      */
     public function update(Request $request, HeroSlider $slider)
     {
-        $validated = $request->validate([
+        // ==========================================================
+        // DIUBAH: Validasi ditambahkan untuk field baru
+        // ==========================================================
+        $validatedData = $request->validate([
             'title' => 'nullable|string|max:255',
-            'image_path' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Nullable karena gambar tidak wajib diubah
+            'description' => 'nullable|string', // <-- BARU
+            'image_path' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Opsional saat update
             'link_url' => 'nullable|url',
+            'is_active' => 'required|boolean', // <-- DIUBAH (lebih baik)
+            'order' => 'required|integer',     // <-- BARU
         ]);
-
+        // ==========================================================
+        
         if ($request->hasFile('image_path')) {
-            // Hapus gambar lama sebelum upload yang baru
+            // Hapus gambar lama jika ada
             if ($slider->image_path) {
                 Storage::disk('public')->delete($slider->image_path);
             }
             // Simpan gambar baru
             $path = $request->file('image_path')->store('sliders', 'public');
-            $validated['image_path'] = $path;
+            $validatedData['image_path'] = $path;
         }
 
-        $validated['is_active'] = $request->has('is_active');
-        $slider->update($validated);
+        $slider->update($validatedData);
 
         return redirect()->route('admin.superadmin.sliders.index')
-                         ->with('success', 'Slider berhasil diperbarui.');
+                         ->with('success', 'Hero Slider berhasil diperbarui.');
     }
 
     /**
-     * Menghapus slider dari database.
+     * Remove the specified resource from storage.
      */
     public function destroy(HeroSlider $slider)
     {
-        // Hapus file gambar dari storage
+        // Hapus gambar dari storage
         if ($slider->image_path) {
             Storage::disk('public')->delete($slider->image_path);
         }
 
-        // Hapus data dari database
         $slider->delete();
 
         return redirect()->route('admin.superadmin.sliders.index')
-                         ->with('success', 'Slider berhasil dihapus.');
+                         ->with('success', 'Hero Slider berhasil dihapus.');
     }
 }
