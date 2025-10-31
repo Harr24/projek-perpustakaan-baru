@@ -528,16 +528,10 @@
                                         </div>
                                         <span class="meta">Tambah/edit materi</span>
                                     </a>
-                                    {{-- ============================================= --}}
-                                    {{-- PERBAIKAN: Mengirim variabel $hasBorrowings --}}
-                                    {{-- ============================================= --}}
                                     @include('dashboard-partials.member', ['hasBorrowings' => $hasBorrowings ?? false])
                                     @break
 
                                 @case('siswa')
-                                    {{-- ============================================= --}}
-                                    {{-- PERBAIKAN: Mengirim variabel $hasBorrowings --}}
-                                    {{-- ============================================= --}}
                                     @include('dashboard-partials.member', ['hasBorrowings' => $hasBorrowings ?? false])
                                     @break
                             @endswitch
@@ -546,9 +540,7 @@
                 </div>
             </section>
 
-            {{-- =================================== --}}
-            {{-- KARTU BARU: WIDGET STATUS DINAMIS --}}
-            {{-- =================================== --}}
+            {{-- KARTU 2: WIDGET STATUS DINAMIS --}}
             @if(Auth::user()->role == 'siswa' || Auth::user()->role == 'guru')
             <section class="card" aria-labelledby="widgetTitle">
                 {{-- Memanggil partial widget baru dan mengirimkan datanya --}}
@@ -556,6 +548,27 @@
                     'activeBorrowing' => $activeBorrowing ?? null,
                     'quote' => $quote ?? null
                 ])
+            </section>
+            
+            <section class="card guide-card grid-full-width" aria-labelledby="infoTitle">
+                <h2 id="infoTitle" style="color: var(--accent-600);">📢 Informasi Penting</h2>
+                
+                <div class="guide-section" style="margin-top: 20px;">
+                    <span class="icon">🧑‍🎓</span>
+                    <h4>Update Kelas</h4>
+                    <p>
+                        Jika Anda naik kelas atau pindah kelas, Anda **wajib** memperbarui data kelas Anda.
+                        Silakan edit profil di <a href="{{ route('profile.edit') }}" style="color: var(--accent-600); font-weight: 600; text-decoration: underline;">halaman profil Anda</a>.
+                    </p>
+                </div>
+
+                <div class="guide-section">
+                    <span class="icon">📤</span>
+                    <h4>Cara Pengembalian Buku</h4>
+                    <p>
+                        Untuk mengembalikan buku, silakan **datang langsung** ke perpustakaan dan serahkan buku Anda kepada petugas yang berjaga.
+                    </p>
+                </div>
             </section>
             @endif
 
