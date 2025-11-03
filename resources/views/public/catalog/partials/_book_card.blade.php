@@ -1,12 +1,30 @@
-{{-- 
-============================================================================
-== KARTU BUKU VERSI FINAL -- PERBAIKAN LOGIKA TOMBOL ==
-============================================================================
---}}
+
 <div class="card h-100 book-card shadow-sm">
-    <img src="{{ $book->cover_image ? route('book.cover', $book) : 'https://placehold.co/300x400/0284C7/ffffff?text=' . urlencode(substr($book->title, 0, 15)) }}" 
-         onerror="this.onerror=null;this.src='https://placehold.co/300x400/D9534F/ffffff?text=No+Cover'"
-         class="card-img-top book-cover" alt="Sampul {{ $book->title }}" loading="lazy">
+    
+    {{-- ========================================================== --}}
+    {{-- BAGIAN GAMBAR YANG DIUPDATE (menggunakan Tome.png) --}}
+    {{-- ========================================================== --}}
+    @if($book->cover_image)
+        {{-- Jika BUKU PUNYA cover, tampilkan via route --}}
+        <img src="{{ route('book.cover', $book) }}" 
+             class="card-img-top book-cover" 
+             alt="Sampul {{ $book->title }}" 
+             loading="lazy"
+             style="object-fit: cover;" {{-- Style 'cover' untuk gambar buku asli --}}
+             {{-- Fallback jika gambar asli error, akan memuat Tome.png --}}
+             onerror="this.onerror=null;this.src='{{ asset('images/Tome.png') }}';this.style.objectFit='scale-down';this.style.padding='2rem';this.style.backgroundColor='#f4f4f4';">
+    @else
+        {{-- Jika BUKU TIDAK PUNYA cover, tampilkan Tome.png --}}
+        <img src="{{ asset('images/Tome.png') }}" 
+             class="card-img-top book-cover" 
+             alt="Gambar default buku" 
+             loading="lazy"
+             style="object-fit: scale-down; padding: 2rem; background-color: #f4f4f4;"> {{-- Style 'scale-down' untuk placeholder --}}
+    @endif
+    {{-- ========================================================== --}}
+    {{-- AKHIR BAGIAN GAMBAR YANG DIUPDATE --}}
+    {{-- ========================================================== --}}
+
     
     <div class="card-body d-flex flex-column">
         <h6 class="card-title fw-bold text-truncate" title="{{ $book->title }}">{{ $book->title }}</h6>
@@ -48,4 +66,3 @@
         </div>
     </div>
 </div>
-

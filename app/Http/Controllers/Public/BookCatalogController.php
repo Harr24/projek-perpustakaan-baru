@@ -20,30 +20,53 @@ class BookCatalogController extends Controller
         $heroSliders = HeroSlider::where('is_active', true)->latest()->get();
         $genres = Genre::take(6)->get();
         $nonTextbookQuery = Book::where('is_textbook', 0);
+
+        // ==========================================================
+        // PERBAIKAN LOGIKA BUKU FAVORIT (Chat-038)
+        // Kita tambahkan kembali 'available_copies_count' and 'copies_count'
+        // ==========================================================
         $favoriteBooks = (clone $nonTextbookQuery)
             ->withCount([
-                'copies',
-                'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia')
+                // 1. Dihitung untuk tombol "Stok Habis"
+                'copies as available_copies_count' => function ($query) {
+                    $query->where('status', 'tersedia');
+                },
+                // 2. Dihitung untuk teks "X / Y Tersedia"
+                'copies as copies_count',
+                // 3. Dihitung untuk sorting popularitas
+                'borrowings' => function ($query) {
+                    $query->where('borrowings.status', '!=', 'pending')
+                          ->where('borrowings.status', '!=', 'ditolak');
+                }
             ])
-            ->orderByDesc('available_copies_count')
+            ->orderByDesc('borrowings_count') // Diurutkan berdasarkan popularitas
             ->limit(10)
             ->get();
+        // ==========================================================
+        // AKHIR PERBAIKAN
+        // ==========================================================
+
+        // ==========================================================
+        // PERBAIKAN LOGIKA BUKU TERBARU (Chat-038)
+        // Kita pastikan 'copies_count' juga dihitung dengan benar
+        // ==========================================================
         $latestBooks = (clone $nonTextbookQuery)
             ->withCount([
-                'copies',
-                'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia')
+                // 1. Dihitung untuk tombol "Stok Habis"
+                'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia'),
+                // 2. Dihitung untuk teks "X / Y Tersedia"
+                'copies as copies_count'
             ])
             ->latest()
             ->limit(10)
             ->get();
+        // ==========================================================
+        // AKHIR PERBAIKAN
+        // ==========================================================
 
-        // ==========================================================
-        // PERBAIKAN BUG: Hitung juga status 'pending'
-        // ==========================================================
         $topBorrowers = Borrowing::select('user_id', DB::raw('count(*) as loans_count'))
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
-            // PENAMBAHAN: Hitung semua status kecuali yang ditolak
             ->where('status', '!=', 'rejected')
             ->whereHas('user', function ($query) {
                 $query->where('role', 'siswa');
@@ -53,7 +76,6 @@ class BookCatalogController extends Controller
             ->limit(3)
             ->with('user')
             ->get();
-        // ==========================================================
 
         $learningMaterials = LearningMaterial::where('is_active', true)
             ->with('user')
@@ -64,18 +86,22 @@ class BookCatalogController extends Controller
         return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'learningMaterials'));
     }
 
-    // ... (method-method lain tidak diubah) ...
-
     public function allBooks(Request $request)
     {
         $genres = Genre::orderBy('name')->get();
         $search = $request->input('search');
         $selectedGenreName = $request->input('genre');
         $sort = $request->input('sort', 'latest');
+
         $booksQuery = Book::query()->withCount([
-            'copies',
-            'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia')
+            'copies as copies_count', // <-- Diperbaiki
+            'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia'),
+            'borrowings' => function ($query) {
+                $query->where('borrowings.status', '!=', 'pending')
+                      ->where('borrowings.status', '!=', 'ditolak');
+            }
         ]);
+
         $booksQuery->when($search, function ($query, $search) {
             return $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', '%' . $search . '%')
@@ -87,11 +113,13 @@ class BookCatalogController extends Controller
                 $q->where('name', $genreName);
             });
         });
+
         if ($sort === 'popular') {
-            $booksQuery->orderByDesc('available_copies_count');
+            $booksQuery->orderByDesc('borrowings_count'); 
         } else {
             $booksQuery->latest();
         }
+
         $books = $booksQuery->paginate(12)->withQueryString();
         return view('public.catalog.all_books', compact('books', 'genres'));
     }
@@ -99,7 +127,9 @@ class BookCatalogController extends Controller
     public function show(Book $book)
     {
         $book->load('genre', 'copies');
+        // Memuat semua count yang relevan
         $book->loadCount([
+            'copies as copies_count',
             'copies as available_copies_count' => function ($query) {
                 $query->where('status', 'tersedia');
             }
@@ -111,7 +141,12 @@ class BookCatalogController extends Controller
     {
         $path = $book->cover_image;
         if (!$path || !Storage::disk('public')->exists($path)) {
-            abort(404, 'Gambar tidak ditemukan.');
+            // Jika gambar tidak ada, kita bisa return placeholder Tome.png
+            // Tapi untuk sekarang, kita kembalikan 404 saja agar tidak error di 'file()'
+             abort(404, 'Gambar tidak ditemukan.');
+
+            // Alternatif: Redirect ke gambar default
+            // return redirect(asset('images/Tome.png'));
         }
         $file = Storage::disk('public')->get($path);
         $type = Storage::disk('public')->mimeType($path);

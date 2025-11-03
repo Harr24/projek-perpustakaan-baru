@@ -453,6 +453,58 @@
         html {
             scroll-behavior: smooth;
         }
+
+        /* ========================================================== */
+        /* CSS BARU UNTUK INFO KONTAK (DARI INSPIRASI) */
+        /* ========================================================== */
+        .info-block {
+            display: flex;
+            align-items: flex-start; /* Ikon di atas */
+            gap: 1.25rem; /* Jarak antara ikon dan teks */
+        }
+        
+        .info-icon {
+            flex-shrink: 0;
+            width: 60px;
+            height: 60px;
+            border-radius: 12px; /* Rounded square, looks modern */
+            background-color: #fff5f5; /* Warna merah muda/pink */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--brand-red);
+            font-size: 1.75rem; /* Ukuran ikon */
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .info-block:hover .info-icon {
+            transform: scale(1.1);
+            background-color: var(--brand-red);
+            color: #fff;
+        }
+        
+        .info-text {
+            flex-grow: 1;
+        }
+        
+        .info-title {
+            font-size: 1.25rem; /* Ukuran heading (Alamat, Email, etc.) */
+            font-weight: 700;
+            color: var(--brand-red);
+            margin-top: 0;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-text p {
+            font-size: 1rem; /* Ukuran teks info */
+            line-height: 1.6;
+            color: #333; /* Warna teks lebih gelap agar mudah dibaca */
+            margin-bottom: 0;
+        }
+        /* ========================================================== */
+        /* AKHIR CSS BARU */
+        /* ========================================================== */
     </style>
 </head>
 <body>
@@ -519,9 +571,38 @@
         </div>
         @endif
 
+        {{-- Section Baru: Tentang Kami (Intro) --}}
+        <div class="bg-white py-5 shadow-sm">
+            <div class="container">
+                <div class="row g-5 align-items-center">
+        
+                    <div class="col-lg-5" data-aos="fade-right">
+                        <img src="{{ asset('images/orangsekolah.png') }}" 
+                             alt="Ilustrasi siswi membaca buku" 
+                             class="img-fluid rounded-3 shadow-lg" 
+                             style="width: 100%; height: auto; max-height: 450px; object-fit: cover;">
+                    </div>
+        
+                    <div class="col-lg-7" data-aos="fade-left" data-aos-delay="100">
+                        <h2 class="fw-bold display-6" style="color: var(--brand-red);">
+                            Apa itu MyMulticompLibrary?
+                        </h2>
+                        <p class="lead text-muted mt-3">
+                            Ini adalah web perpustakaan digital resmi SMK Multicomp Depok.
+                        </p>
+                        <p style="font-size: 1.1rem; line-height: 1.7;">
+                            Kami hadir untuk membawa perpustakaan ke dalam genggaman Anda. Di era digital ini, <strong>pentingnya membaca</strong> menjadi semakin krusial untuk membuka wawasan. MyMulticompLibrary menyediakan akses mudah ke ribuan koleksi buku, materi pelajaran, dan sumber ilmu pengetahuan lainnya.
+                        </p>
+                        <a href="#search-section" class="btn btn-danger btn-lg mt-3">
+                            <i class="bi bi-search me-2"></i> Mulai Cari Buku
+                        </a>
+                    </div>
+        
+                </div>
+            </div>
+        </div>
         {{-- Section 1: Kategori/Genre --}}
-        <div class="container py-5">
-            <div class="text-center mb-5" data-aos="fade-up">
+        <div class="container py-5" id="search-section"> <div class="text-center mb-5" data-aos="fade-up">
                 <h2 class="fw-bold display-6">Jelajahi Berdasarkan Kategori</h2>
                 <p class="lead text-muted">Temukan koleksi buku favorit Anda berdasarkan subjek.</p>
             </div>
@@ -676,6 +757,81 @@
                         <div class="col-12"><p class="text-center text-muted">Belum ada data peminjaman di bulan ini.</p></div>
                     @endforelse
                 </div>
+            </div>
+        </div>
+
+        {{-- Section 4: Tentang Kami (Kontak & Peta) --}}
+        <div class="bg-white py-5 mt-5 shadow-sm">
+            <div class="container">
+                
+                <div class="text-center mb-5" data-aos="fade-up">
+                    <h2 class="fw-bold display-6">TENTANG KAMI</h2>
+                </div>
+
+                <div class="row" data-aos="fade-up" data-aos-delay="100">
+
+                    <div class="col-lg-6 mb-4 mb-lg-0">
+                        
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.912777178121!2d106.8021481747806!3d-6.40539886262445!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69e9b047a55c27%3A0x82f0a8c237c164a!2sSMK%20Multi%20Comp!5e0!3m2!1sen!2sid!4v1730628682705!5m2!1sen!2sid" 
+                            style="border:0; width: 100%; height: 100%; min-height: 450px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                        
+                    </div>
+
+                    <div class="col-lg-6">
+                        
+                        <div class="info-block d-flex align-items-start mb-4">
+                            <div class="info-icon">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div class="info-text">
+                                <h4 class="info-title">Alamat</h4>
+                                <p>Jl. Raya Kalimulya, Kp. Kebun Duren, Pd. Rajeg, No.7, Kel. Kalimulya, Kec. Cilodong, Depok, Jawa Barat, Indonesia.
+                                <br>Kode Pos: 16413</p>
+                            </div>
+                        </div>
+
+                        <div class="info-block d-flex align-items-start mb-4">
+                            <div class="info-icon">
+                                <i class="bi bi-envelope-fill"></i>
+                            </div>
+                            <div class="info-text">
+                                <h4 class="info-title">Email</h4>
+                                <p>-</p>
+                            </div>
+                        </div>
+
+                        <div class="info-block d-flex align-items-start mb-4">
+                            <div class="info-icon">
+                                <i class="bi bi-telephone-fill"></i>
+                            </div>
+                            <div class="info-text">
+                                <h4 class="info-title">Telepon</h4>
+                                <p>-</p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-block d-flex align-items-start mb-4">
+                            <div class="info-icon">
+                                <i class="bi bi-clock-fill"></i>
+                            </div>
+                            <div class="info-text">
+                                <h4 class="info-title">Jam Buka Perpustakaan</h4>
+                                <p>Senin - Jumat = 08:00-14:00 WIB
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <h4 class="text-center fw-bold mt-5 text-muted" data-aos="fade-up" data-aos-delay="200" style="font-size: 1.1rem; letter-spacing: 1px;">
+                    UPT PERPUSTAKAAN MULTICOMP
+                </h4>
+
             </div>
         </div>
     </main>

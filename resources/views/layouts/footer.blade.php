@@ -18,7 +18,7 @@
                 </p>
                 <a href="https://www.google.com/maps/search/?api=1&query=SMK+Multicomp+Depok" target="_blank" class="footer-address">
                     <i class="bi bi-geo-alt-fill"></i>
-                    <span>Jl. Raya Depok, Kota Depok, Jawa Barat</span>
+                    <span>Jl. Raya Kalimulya No.7, Kalimulya, Kec. Cilodong, Kota Depok, Jawa Barat 16413</span>
                 </a>
             </div>
 
