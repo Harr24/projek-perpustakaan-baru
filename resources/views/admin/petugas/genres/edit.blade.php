@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Edit Genre - {{ $genre->name }}</title>
 
-  <!-- Bootstrap 5 CSS CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
@@ -27,7 +25,6 @@
 </head>
 <body>
 
-  <!-- Topbar -->
   <header class="topbar py-3">
     <div class="container d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center gap-3">
@@ -78,6 +75,16 @@
               @method('PUT')
 
               <div class="mb-3">
+                  <label for="genre_code" class="form-label required">Kode Genre (DDC)</label>
+                  <input type="text" id="genre_code" name="genre_code" 
+                         value="{{ old('genre_code', $genre->genre_code) }}" required
+                         class="form-control @error('genre_code') is-invalid @enderror" 
+                         placeholder="Contoh: 000, 100, 200">
+                  @error('genre_code')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+              </div>
+              <div class="mb-3">
                 <label for="name" class="form-label required">Nama Genre</label>
                 <input type="text" id="name" name="name" value="{{ old('name', $genre->name) }}" required
                        class="form-control @error('name') is-invalid @enderror" placeholder="Contoh: Fiksi, Sejarah">
@@ -103,7 +110,6 @@
           </div>
         </div>
 
-        <!-- Delete confirmation modal -->
         <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -128,7 +134,6 @@
 
       </div>
 
-      <!-- Sidebar -->
       <div class="col-lg-4">
         <div class="card sidebar-card mb-3">
           <div class="card-body">
@@ -152,7 +157,6 @@
     </div>
   </main>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // simple client-side validation feedback

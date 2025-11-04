@@ -142,7 +142,7 @@ class ReturnController extends Controller
     }
 
     // ==========================================================
-    // METHOD BARU: Tandai Buku Hilang
+    // METHOD BARU: Tandai Buku Hilang (LOGIKA DIUBAH)
     // ==========================================================
     public function markAsLost(Borrowing $borrowing)
     {
@@ -151,9 +151,8 @@ class ReturnController extends Controller
             return redirect()->back()->with('error', 'Peminjaman ini tidak dalam status aktif.');
         }
 
-        // 2. Tentukan Denda Buku Hilang (misal Rp 50.000)
-        // Anda bisa membuat nilai ini dinamis dari database/config nanti
-        $lostFineAmount = 50000;
+        // --- MODIFIKASI: Denda buku hilang diatur menjadi 0 ---
+        $lostFineAmount = 0; // Sebelumnya 50000
 
         DB::transaction(function () use ($borrowing, $lostFineAmount) {
             $processDate = Carbon::now();
@@ -169,14 +168,15 @@ class ReturnController extends Controller
             }
 
             // 4. Update Status Peminjaman (Borrowing)
-            $borrowing->status = 'returned'; // Anggap transaksi selesai
+            $borrowing->status = 'returned'; // Anggap transaksi selesai (bisa juga 'lost' jika Anda mau)
             $borrowing->returned_at = $processDate; // Catat tanggal hilang
-            $borrowing->late_days = 0; // Tidak ada denda terlambat jika hilang
-            $borrowing->fine_amount = $lostFineAmount; // Tetapkan denda hilang
-            $borrowing->fine_status = 'unpaid'; // Denda hilang pasti belum lunas
+            $borrowing->late_days = 0; // Denda terlambat dihapus
+            
+            // --- MODIFIKASI: Tetapkan denda menjadi 0 dan status lunas ---
+            $borrowing->fine_amount = $lostFineAmount; // Set denda ke 0
+            $borrowing->fine_status = 'paid'; // Set status lunas (karena 0)
+            
             $borrowing->returned_by = Auth::id(); // Catat petugas
-            // Opsional: Tambahkan catatan
-            // $borrowing->notes = 'Buku dinyatakan hilang oleh petugas.';
             $borrowing->save();
         });
         
@@ -185,10 +185,10 @@ class ReturnController extends Controller
         $bookTitle = $borrowing->bookCopy && $borrowing->bookCopy->book ? $borrowing->bookCopy->book->title : '[Judul Tidak Ditemukan]';
         $bookCode = $borrowing->bookCopy ? $borrowing->bookCopy->book_code : '[Kode Tidak Ditemukan]';
         
+        // --- MODIFIKASI: Hapus pesan denda ---
         $message = "Buku '{$bookTitle}' (Eksemplar: {$bookCode}) berhasil ditandai sebagai hilang.";
-        $message .= " Denda penggantian sebesar Rp " . number_format($lostFineAmount, 0, ',', '.') . " tercatat.";
+        // $message .= " Denda penggantian sebesar Rp ... tercatat."; // Baris ini dihapus
 
         return redirect()->back()->with('success', $message);
     }
 }
-

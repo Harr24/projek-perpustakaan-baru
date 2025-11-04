@@ -86,7 +86,7 @@
                             @error('author') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         
-                         {{-- Tahun Terbit --}}
+                        {{-- Tahun Terbit --}}
                         <div class="mb-3 col-md-4">
                             <label for="publication_year" class="form-label">Tahun Terbit</label>
                             <input type="number" id="publication_year" name="publication_year" value="{{ old('publication_year', $book->publication_year) }}"
@@ -150,18 +150,18 @@
 
                         {{-- Form untuk Tambah Stok --}}
                         <div class="mb-4 pt-3 border-top">
-                             <label for="add_stock" class="form-label fw-semibold">Tambah Jumlah Stok (Eksemplar)</label>
-                             <input type="number" id="add_stock" name="add_stock"
-                                    class="form-control @error('add_stock') is-invalid @enderror"
-                                    placeholder="Masukkan jumlah stok baru" min="1" max="100">
-                             @error('add_stock')
+                            <label for="add_stock" class="form-label fw-semibold">Tambah Jumlah Stok (Eksemplar)</label>
+                            <input type="number" id="add_stock" name="add_stock"
+                                   class="form-control @error('add_stock') is-invalid @enderror"
+                                   placeholder="Masukkan jumlah stok baru" min="1" max="100">
+                            @error('add_stock')
                                 <div class="invalid-feedback">{{ $message }}</div>
-                             @else
+                            @else
                                 <div class="form-text help-text">
-                                     Masukkan jumlah eksemplar baru yang ingin ditambahkan. Kode buku akan dibuat otomatis melanjutkan nomor terakhir. Kosongkan jika tidak ingin menambah stok.
+                                    Masukkan jumlah eksemplar baru yang ingin ditambahkan. Kode buku akan dibuat otomatis melanjutkan nomor terakhir. Kosongkan jika tidak ingin menambah stok.
                                 </div>
-                             @enderror
-                         </div>
+                            @enderror
+                        </div>
 
                         {{-- Tombol Aksi --}}
                         <div class="d-flex flex-column flex-sm-row gap-2 actions-row pt-3 border-top">
@@ -195,9 +195,6 @@
                                     <tr>
                                         <th>Kode Buku</th>
                                         <th>Status</th>
-                                        {{-- ========================================================== --}}
-                                        {{-- PENAMBAHAN 1: Kolom Header Aksi --}}
-                                        {{-- ========================================================== --}}
                                         <th class="text-end">Aksi</th>
                                     </tr>
                                 </thead>
@@ -215,16 +212,19 @@
                                                 @elseif ($copy->status == 'overdue') {{-- Tambahkan status overdue jika ada --}}
                                                     <span class="badge bg-danger">Terlambat</span>
                                                 @else
-                                                     {{-- Status lain seperti 'rusak' atau 'hilang' mungkin? --}}
+                                                    {{-- Status lain seperti 'rusak' atau 'hilang' mungkin? --}}
                                                     <span class="badge bg-dark">{{ ucfirst($copy->status) }}</span>
                                                 @endif
                                             </td>
-                                            {{-- ========================================================== --}}
-                                            {{-- PENAMBAHAN 2: Tombol Hapus Eksemplar --}}
-                                            {{-- ========================================================== --}}
+                                            
+                                            <!-- ========================================================== -->
+                                            <!-- ===== MODIFIKASI LOGIKA TOMBOL AKSI DIMULAI DI SINI ===== -->
+                                            <!-- ========================================================== -->
                                             <td class="text-end">
-                                                {{-- Hanya tampilkan tombol hapus jika statusnya 'tersedia' --}}
+                                                
                                                 @if ($copy->status == 'tersedia')
+                                                    
+                                                    <!-- FUNGSI LAMA: Hapus jika 'tersedia' -->
                                                     <form action="{{ route('admin.petugas.books.copies.destroy', $copy->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus eksemplar {{ $copy->book_code }}?');" style="display: inline;">
                                                         @csrf
                                                         @method('DELETE')
@@ -232,14 +232,32 @@
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>
+
+                                                @elseif ($copy->status == 'hilang')
+                                                
+                                                    <!-- FUNGSI BARU: Tandai Ditemukan jika 'hilang' -->
+                                                    <!-- PERHATIAN: Ini membutuhkan route & controller baru -->
+                                                    <form action="{{ route('admin.petugas.books.copies.markFound', $copy->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menandai eksemplar {{ $copy->book_code }} sebagai DITEMUKAN?');" style="display: inline;">
+                                                        @csrf
+                                                        @method('PUT') <!-- Menggunakan PUT/PATCH untuk update status -->
+                                                        <button type="submit" class="btn btn-success btn-sm p-0 px-1" title="Tandai Ditemukan">
+                                                            <i class="bi bi-check-circle-fill"></i>
+                                                        </button>
+                                                    </form>
+                                                
                                                 @else
-                                                     {{-- Beri ikon gembok jika tidak bisa dihapus --}}
+                                                
+                                                    <!-- FUNGSI LAMA: Gembok jika 'dipinjam', 'pending', dll. -->
                                                     <span class="text-muted" title="Tidak dapat dihapus (status: {{ $copy->status }})">
                                                         <i class="bi bi-lock-fill"></i>
                                                     </span>
+
                                                 @endif
                                             </td>
-                                            {{-- ========================================================== --}}
+                                            <!-- ========================================================== -->
+                                            <!-- ===== MODIFIKASI LOGIKA TOMBOL AKSI SELESAI ===== -->
+                                            <!-- ========================================================== -->
+
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -250,7 +268,6 @@
                             Belum ada eksemplar untuk buku ini.
                         </div>
                     @endif
-                     {{-- Footer card dihapus karena total sudah ada di header --}}
                 </div>
             </div>
         </div>
@@ -259,25 +276,25 @@
  
  {{-- Modal Konfirmasi Hapus Buku Utama --}}
  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-     <div class="modal-dialog">
-         <div class="modal-content">
-             <div class="modal-header">
-                 <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus Buku</h5>
-                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-             </div>
-             <div class="modal-body">
-                 Apakah Anda yakin ingin menghapus buku <strong>"{{ $book->title }}"</strong> beserta semua salinannya? Tindakan ini tidak dapat diurungkan.
-             </div>
-             <div class="modal-footer">
-                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                 <form action="{{ route('admin.petugas.books.destroy', $book->id) }}" method="POST" style="display: inline;">
-                     @csrf
-                     @method('DELETE')
-                     <button type="submit" class="btn btn-danger">Ya, Hapus Buku</button>
-                 </form>
-             </div>
-         </div>
-     </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus Buku</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Apakah Anda yakin ingin menghapus buku <strong>"{{ $book->title }}"</strong> beserta semua salinannya? Tindakan ini tidak dapat diurungkan.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form action="{{ route('admin.petugas.books.destroy', $book->id) }}" method="POST" style="display: inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Ya, Hapus Buku</button>
+                </form>
+            </div>
+        </div>
+    </div>
  </div>
 
 @endsection
@@ -313,4 +330,3 @@
     })()
 </script>
 @endpush
-

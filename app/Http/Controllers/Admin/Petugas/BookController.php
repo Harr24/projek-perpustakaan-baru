@@ -161,14 +161,14 @@ class BookController extends Controller
                 $path = $request->file('cover_image')->store('covers', 'public');
                 $updateData['cover_image'] = $path;
             } else {
-                 unset($updateData['cover_image']);
+                unset($updateData['cover_image']);
             }
 
             $updateData['is_textbook'] = $request->has('is_textbook');
 
             // Update stok di tabel books jika ada penambahan
             if ($addStockAmount > 0) {
-                 $updateData['stock'] = $book->stock + $addStockAmount;
+                $updateData['stock'] = $book->stock + $addStockAmount;
             }
 
             $book->update($updateData);
@@ -233,7 +233,7 @@ class BookController extends Controller
         return redirect()->route('admin.petugas.books.index')->with('success', 'Buku dan semua salinannya berhasil dihapus.');
     }
 
-     /**
+    /**
      * Remove the specified book copy from storage.
      */
     public function destroyCopy(BookCopy $copy)
@@ -256,6 +256,48 @@ class BookController extends Controller
         return redirect()->route('admin.petugas.books.edit', $bookId)
             ->with('success', "Eksemplar buku {$bookCode} berhasil dihapus.");
     }
+
+
+    // ==========================================================
+    // FUNGSI BARU: Tandai Eksemplar Hilang sebagai Ditemukan
+    // ==========================================================
+    /**
+     * Menandai eksemplar yang hilang sebagai ditemukan.
+     */
+    public function markCopyAsFound(BookCopy $copy) // Parameter $copy didapat dari Route-Model Binding
+    {
+        // 1. Validasi: Pastikan statusnya memang 'hilang'
+        if ($copy->status !== 'hilang') {
+            return redirect()->route('admin.petugas.books.edit', $copy->book_id)
+                ->with('error', "Eksemplar {$copy->book_code} tidak dalam status 'hilang'.");
+        }
+
+        try {
+            DB::transaction(function () use ($copy) {
+                // 2. Update status eksemplar
+                $copy->status = 'tersedia';
+                $copy->save();
+
+                // 3. Update (tambah) stok di buku utama
+                $book = $copy->book;
+                if ($book) {
+                    $book->increment('stock');
+                }
+            });
+        } catch (\Exception $e) {
+            // Tangani jika ada error database
+            return redirect()->route('admin.petugas.books.edit', $copy->book_id)
+                ->with('error', 'Gagal memperbarui status eksemplar. Terjadi kesalahan database.');
+        }
+
+        // 4. Redirect kembali dengan pesan sukses
+        return redirect()->route('admin.petugas.books.edit', $copy->book_id)
+            ->with('success', "Eksemplar {$copy->book_code} berhasil ditandai sebagai DITEMUKAN.");
+    }
+    // ==========================================================
+    // AKHIR FUNGSI BARU
+    // ==========================================================
+
 
     // ==========================================================
     // METODE UNTUK FORM TAMBAH BUKU MULTI-BARIS (BULK)
@@ -313,12 +355,12 @@ class BookController extends Controller
         // 2. Validasi Logika Bisnis (Duplikasi Kode Awal + Genre)
         // (Kode validasi duplikasi tetap sama)
         $existingPrefixes = BookCopy::pluck('book_code')->map(function($code) {
-             $parts = explode('-', $code);
-             if (count($parts) > 1) {
-                 array_pop($parts);
-                 return implode('-', $parts) . '-';
-             }
-             return null;
+            $parts = explode('-', $code);
+            if (count($parts) > 1) {
+                array_pop($parts);
+                return implode('-', $parts) . '-';
+            }
+            return null;
         })->filter()->unique()->toArray();
 
         $prefixesInForm = [];
@@ -329,14 +371,14 @@ class BookController extends Controller
                 $prefix = $genre->genre_code . '-' . Str::upper($bookData['initial_code']) . '-';
                 if (in_array($prefix, $existingPrefixes)) {
                     $errors["books.{$index}.initial_code"] = "Kombinasi Kode Awal + Genre di baris " . ($index + 1) . " sudah ada di database.";
-                 }
-                 elseif (in_array($prefix, $prefixesInForm)) {
+                }
+                elseif (in_array($prefix, $prefixesInForm)) {
                     $errors["books.{$index}.initial_code"] = "Kombinasi Kode Awal + Genre di baris " . ($index + 1) . " duplikat dengan baris lain di form ini.";
-                 } else {
-                     $prefixesInForm[] = $prefix;
-                 }
+                } else {
+                    $prefixesInForm[] = $prefix;
+                }
             } else {
-                 $errors["books.{$index}.genre_id"] = "Genre di baris " . ($index + 1) . " tidak ditemukan.";
+                $errors["books.{$index}.genre_id"] = "Genre di baris " . ($index + 1) . " tidak ditemukan.";
             }
         }
 
@@ -349,10 +391,10 @@ class BookController extends Controller
             DB::transaction(function () use ($allBooksData, $genres, $prefixesInForm) {
                 foreach ($allBooksData as $index => $bookData) {
                     $prefix = $prefixesInForm[$index] ?? null;
-                     if (!$prefix) {
-                         $genre = $genres->get($bookData['genre_id']);
-                         $prefix = ($genre ? $genre->genre_code : 'GEN') . '-' . Str::upper($bookData['initial_code']) . '-';
-                     }
+                    if (!$prefix) {
+                        $genre = $genres->get($bookData['genre_id']);
+                        $prefix = ($genre ? $genre->genre_code : 'GEN') . '-' . Str::upper($bookData['initial_code']) . '-';
+                    }
 
                     // ===============================================
                     // PERBAIKAN: Tambahkan 'stock' ke Book::create()
@@ -380,7 +422,7 @@ class BookController extends Controller
                 }
             });
         } catch (\Exception $e) {
-             \Log::error('Error saving bulk books: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            \Log::error('Error saving bulk books: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return back()->withErrors(['general' => 'Terjadi kesalahan sistem saat menyimpan data. Error: ' . $e->getMessage()])->withInput();
         }
 
@@ -388,4 +430,3 @@ class BookController extends Controller
     }
 
 } // End of BookController class
-

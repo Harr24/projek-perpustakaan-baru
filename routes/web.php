@@ -70,6 +70,12 @@ Route::middleware('auth')->group(function () {
         Route::resource('teachers', TeacherController::class)->except(['show']);
         Route::delete('/book-copies/{copy}', [BookController::class, 'destroyCopy'])->name('books.copies.destroy');
 
+        // ==========================================================
+        // ===== PENAMBAHAN BARIS BARU UNTUK BUKU DITEMUKAN =====
+        // ==========================================================
+        Route::put('/book-copies/{copy}/mark-found', [BookController::class, 'markCopyAsFound'])->name('books.copies.markFound');
+        // ==========================================================
+
         Route::get('/approvals', [LoanApprovalController::class, 'index'])->name('approvals.index');
         Route::post('/approvals/{borrowing}/approve', [LoanApprovalController::class, 'approve'])->name('approvals.approve');
         Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');

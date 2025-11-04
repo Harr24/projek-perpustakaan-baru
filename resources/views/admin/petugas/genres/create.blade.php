@@ -7,7 +7,7 @@
     {{-- Import Bootstrap CSS untuk styling tombol yang konsisten --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -45,12 +45,12 @@
         }
 
         .form-control {
-             border-radius: 6px;
-             padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
         }
         .form-control:focus {
-             border-color: #d32f2f;
-             box-shadow: 0 0 0 0.25rem rgba(211, 47, 47, 0.25);
+            border-color: #d32f2f;
+            box-shadow: 0 0 0 0.25rem rgba(211, 47, 47, 0.25);
         }
 
         .invalid-feedback {
@@ -80,6 +80,17 @@
         <h1>Tambah Genre Baru</h1>
         <form action="{{ route('admin.petugas.genres.store') }}" method="POST">
             @csrf
+
+            <div class="mb-3">
+                <label for="genre_code" class="form-label">Kode Genre (DDC):</label>
+                <input type="text" id="genre_code" name="genre_code" 
+                       class="form-control @error('genre_code') is-invalid @enderror" 
+                       value="{{ old('genre_code') }}" required 
+                       placeholder="Contoh: 000, 100, 200">
+                @error('genre_code')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
             <div class="mb-3">
                 <label for="name" class="form-label">Nama Genre:</label>
                 <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required>
@@ -87,8 +98,6 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
-
-            {{-- Input untuk genre_code dihapus dari sini --}}
 
             <div class="button-group">
                 <button type="submit" class="btn btn-danger">
@@ -105,4 +114,3 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
