@@ -511,7 +511,7 @@
     <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ route('catalog.index') }}">
-                <img src="{{ asset('images/smkmulticomp.png') }}" alt="Logo Perpustakaan Multicomp">
+                <img src="{{ asset('images/MCP.jpg') }}" alt="Logo Perpustakaan Multicomp">
             </a>
 
             <div class="d-flex align-items-center">
