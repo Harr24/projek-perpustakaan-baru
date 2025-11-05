@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid px-3 px-md-4 py-4">
-    {{-- Header Halaman --}}
+    {{-- Header Halaman xoy--}}
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
             <h1 class="h3 fw-bold mb-2" style="color: #d9534f;">Kelola Buku</h1>
@@ -98,7 +98,7 @@
                                 <small class="text-muted">{{ $book->author }}</small>
                             </td>
                             <td><span class="badge bg-secondary">{{ $book->genre->name ?? 'N/A' }}</span></td>
-                            
+                           
                             {{-- ================================================== --}}
                             {{-- --- PERBAIKAN: Tampilkan Tipe Buku --- --}}
                             {{-- ================================================== --}}
@@ -139,7 +139,7 @@
                                 <div class="d-flex gap-2 justify-content-end">
                                     <a href="{{ route('admin.petugas.books.show', $book) }}" class="btn btn-info btn-sm" title="Detail"><i class="bi bi-eye-fill"></i></a>
                                     <a href="{{ route('admin.petugas.books.edit', $book) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                                    
+                                   
                                     {{-- Tombol Hapus hanya muncul jika tidak ada buku dipinjam --}}
                                     @if($book->borrowed_copies_count == 0)
                                         <form action="{{ route('admin.petugas.books.destroy', $book) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus buku ini dan semua salinannya?');">
@@ -182,4 +182,4 @@
         @endif
     </div>
 </div>
-@endsection
+@endsection 
