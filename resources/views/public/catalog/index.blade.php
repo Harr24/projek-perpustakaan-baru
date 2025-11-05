@@ -721,7 +721,11 @@
         <div class="top-borrowers-section mt-5 py-5" data-aos="fade-up">
             <div class="container">
                 <div class="text-center mb-5">
-                    <h2 class="fw-bold display-6">Peminjam Teratas Bulan Ini</h2>
+                    {{-- ========================================================== --}}
+                    {{-- --- PERBAIKAN: Gunakan Title Semester Dinamis --- --}}
+                    {{-- ========================================================== --}}
+                    <h2 class="fw-bold display-6">{{ $semesterTitle ?? 'Peminjam Teratas' }}</h2>
+                    {{-- ========================================================== --}}
                     <p class="lead text-muted">Apresiasi bagi para penikmat koleksi kami.</p>
                 </div>
                 <div class="row g-4 justify-content-center">
@@ -754,7 +758,11 @@
                             </div>
                         </div>
                     @empty
-                        <div class="col-12"><p class="text-center text-muted">Belum ada data peminjaman di bulan ini.</p></div>
+                        {{-- ========================================================== --}}
+                        {{-- --- PERBAIKAN: Ubah Pesan Kosong --- --}}
+                        {{-- ========================================================== --}}
+                        <div class="col-12"><p class="text-center text-muted">Belum ada data peminjaman di semester ini.</p></div>
+                        {{-- ========================================================== --}}
                     @endforelse
                 </div>
             </div>

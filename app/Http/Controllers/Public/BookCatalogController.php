@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon; // <-- PASTIKAN CARBON DI-IMPORT
 
 class BookCatalogController extends Controller
 {
@@ -19,11 +20,16 @@ class BookCatalogController extends Controller
     {
         $heroSliders = HeroSlider::where('is_active', true)->latest()->get();
         $genres = Genre::take(6)->get();
-        $nonTextbookQuery = Book::where('is_textbook', 0);
+        
+        // ==========================================================
+        // PERBAIKAN: Mengganti 'is_textbook' dengan 'book_type'
+        // ==========================================================
+        $nonTextbookQuery = Book::where('book_type', 'reguler');
+        // ==========================================================
 
         // ==========================================================
         // PERBAIKAN LOGIKA BUKU FAVORIT (Chat-038)
-        // Kita tambahkan kembali 'available_copies_count' and 'copies_count'
+        // ...
         // ==========================================================
         $favoriteBooks = (clone $nonTextbookQuery)
             ->withCount([
@@ -48,7 +54,7 @@ class BookCatalogController extends Controller
 
         // ==========================================================
         // PERBAIKAN LOGIKA BUKU TERBARU (Chat-038)
-        // Kita pastikan 'copies_count' juga dihitung dengan benar
+        // ...
         // ==========================================================
         $latestBooks = (clone $nonTextbookQuery)
             ->withCount([
@@ -64,9 +70,29 @@ class BookCatalogController extends Controller
         // AKHIR PERBAIKAN
         // ==========================================================
 
+
+        // ==========================================================
+        // --- PERBAIKAN: Logika Peminjam Teratas (Semester) ---
+        // ==========================================================
+        $now = now();
+        $currentYear = $now->year;
+        
+        // Tentukan rentang tanggal semester
+        if ($now->month >= 1 && $now->month <= 6) {
+            // Semester 1: 1 Januari - 30 Juni
+            $startDate = Carbon::create($currentYear, 1, 1)->startOfDay();
+            $endDate = Carbon::create($currentYear, 6, 30)->endOfDay();
+            $semesterTitle = "Semester Ini (Jan - Jun)";
+        } else {
+            // Semester 2: 1 Juli - 31 Desember
+            $startDate = Carbon::create($currentYear, 7, 1)->startOfDay();
+            $endDate = Carbon::create($currentYear, 12, 31)->endOfDay();
+            $semesterTitle = "Semester Ini (Jul - Des)";
+        }
+
         $topBorrowers = Borrowing::select('user_id', DB::raw('count(*) as loans_count'))
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
+            // Ganti 'whereMonth' dan 'whereYear' dengan 'whereBetween'
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->where('status', '!=', 'rejected')
             ->whereHas('user', function ($query) {
                 $query->where('role', 'siswa');
@@ -76,6 +102,9 @@ class BookCatalogController extends Controller
             ->limit(3)
             ->with('user')
             ->get();
+        // ==========================================================
+        // --- AKHIR PERBAIKAN ---
+        // ==========================================================
 
         $learningMaterials = LearningMaterial::where('is_active', true)
             ->with('user')
@@ -83,7 +112,15 @@ class BookCatalogController extends Controller
             ->limit(4)
             ->get();
 
-        return view('public.catalog.index', compact('heroSliders', 'genres', 'favoriteBooks', 'latestBooks', 'topBorrowers', 'learningMaterials'));
+        return view('public.catalog.index', compact(
+            'heroSliders', 
+            'genres', 
+            'favoriteBooks', 
+            'latestBooks', 
+            'topBorrowers', 
+            'learningMaterials',
+            'semesterTitle' // <-- Kirim title baru ke view
+        ));
     }
 
     public function allBooks(Request $request)
@@ -105,7 +142,7 @@ class BookCatalogController extends Controller
         $booksQuery->when($search, function ($query, $search) {
             return $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', '%' . $search . '%')
-                    ->orWhere('author', 'LIKE', '%' . $search . '%');
+                  ->orWhere('author', 'LIKE', '%' . $search . '%');
             });
         });
         $booksQuery->when($selectedGenreName, function ($query, $genreName) {

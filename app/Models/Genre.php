@@ -19,5 +19,17 @@ class Genre extends Model
         'name',
         'genre_code',
     ];
-}
 
+    // ==========================================================
+    // --- FUNGSI INI YANG HILANG (PENYEBAB ERROR HAPUS) ---
+    // ==========================================================
+    /**
+     * Mendefinisikan relasi 'hasMany' (satu-ke-banyak) ke model Book.
+     * Satu Genre bisa memiliki banyak Buku.
+     */
+    public function books()
+    {
+        // Ini akan menghubungkan Genre ke Book melalui 'genre_id'
+        return $this->hasMany(Book::class);
+    }
+}

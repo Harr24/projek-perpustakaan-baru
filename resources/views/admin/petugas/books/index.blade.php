@@ -78,6 +78,7 @@
                             <th class="py-3" style="width: 10%;">Sampul</th>
                             <th class="py-3">Judul & Penulis</th>
                             <th class="py-3">Genre</th>
+                            <th class="py-3">Tipe</th> <!-- TAMBAHAN TIPE BUKU -->
                             <th class="py-3">Tahun</th>
                             <th class="py-3 text-center">Stok Total</th>
                             <th class="py-3 text-center">Dipinjam</th>
@@ -97,6 +98,27 @@
                                 <small class="text-muted">{{ $book->author }}</small>
                             </td>
                             <td><span class="badge bg-secondary">{{ $book->genre->name ?? 'N/A' }}</span></td>
+                            
+                            {{-- ================================================== --}}
+                            {{-- --- PERBAIKAN: Tampilkan Tipe Buku --- --}}
+                            {{-- ================================================== --}}
+                            <td>
+                                @switch($book->book_type)
+                                    @case('reguler')
+                                        <span class="badge bg-primary">Reguler</span>
+                                        @break
+                                    @case('paket')
+                                        <span class="badge bg-info text-dark">Paket</span>
+                                        @break
+                                    @case('laporan')
+                                        <span class="badge bg-secondary">Laporan</span>
+                                        @break
+                                    @default
+                                        <span class="badge bg-dark">{{ ucfirst($book->book_type) }}</span>
+                                @endswitch
+                            </td>
+                            {{-- ================================================== --}}
+
                             <td>{{ $book->publication_year ?? 'N/A' }}</td>
                             <td class="text-center">
                                 <span class="badge
@@ -117,17 +139,25 @@
                                 <div class="d-flex gap-2 justify-content-end">
                                     <a href="{{ route('admin.petugas.books.show', $book) }}" class="btn btn-info btn-sm" title="Detail"><i class="bi bi-eye-fill"></i></a>
                                     <a href="{{ route('admin.petugas.books.edit', $book) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                                    <form action="{{ route('admin.petugas.books.destroy', $book) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus buku ini dan semua salinannya?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash-fill"></i></button>
-                                    </form>
+                                    
+                                    {{-- Tombol Hapus hanya muncul jika tidak ada buku dipinjam --}}
+                                    @if($book->borrowed_copies_count == 0)
+                                        <form action="{{ route('admin.petugas.books.destroy', $book) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus buku ini dan semua salinannya?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash-fill"></i></button>
+                                        </form>
+                                    @else
+                                        <button type="button" class="btn btn-danger btn-sm" disabled title="Tidak bisa dihapus (masih ada buku dipinjam)">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center py-5"> {{-- Colspan updated to 8 --}}
+                            <td colspan="9" class="text-center py-5"> {{-- Colspan diubah jadi 9 --}}
                                 <div class="text-muted">
                                     <i class="bi bi-search display-4 d-block mb-3 opacity-25"></i>
                                     <p class="mb-0">
@@ -153,4 +183,3 @@
     </div>
 </div>
 @endsection
-

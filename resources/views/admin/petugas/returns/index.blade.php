@@ -71,10 +71,35 @@
                     </thead>
                     <tbody>
                         @forelse ($activeBorrowings as $borrow)
+                            {{-- ========================================================== --}}
+                            {{-- --- PERBAIKAN LOGIKA JATUH TEMPO --- --}}
+                            {{-- ========================================================== --}}
                             @php
-                                $dueDate = \Carbon\Carbon::parse($borrow->due_at);
-                                $isOverdue = now()->gt($dueDate);
+                                // Ambil 'due_date' (tanggal resmi dari admin), BUKAN 'due_at'
+                                $officialDueDate = $borrow->due_date; 
+                                $bookType = $borrow->bookCopy->book->book_type;
+                                
+                                $displayDate = 'N/A';
+                                $isOverdue = false; // Default tidak terlambat
+
+                                if ($officialDueDate) {
+                                    // Jika ADA due date (misal: buku 'IPS')
+                                    $dueDateCarbon = \Carbon\Carbon::parse($officialDueDate);
+                                    $displayDate = $dueDateCarbon->format('d M Y');
+                                    
+                                    // Cek keterlambatan HANYA JIKA ADA due date
+                                    // startOfDay() untuk memastikan perbandingan tanggal berjalan adil
+                                    // (Jatuh tempo tgl 5, dikembalikan tgl 5 jam 10 malam tidak dihitung telat)
+                                    $isOverdue = now()->startOfDay()->isAfter($dueDateCarbon);
+
+                                } else if ($bookType == 'laporan' || $bookType == 'paket_semester') {
+                                    // Jika TIDAK ADA due date (NULL) karena ini buku laporan/semester
+                                    $displayDate = 'Tanpa Batas Waktu';
+                                    $isOverdue = false; // Buku ini tidak bisa terlambat
+                                }
                             @endphp
+                            {{-- ========================================================== --}}
+
                             <tr class="{{ $isOverdue ? 'table-danger' : '' }}">
                                 <td class="px-3">
                                     <input class="form-check-input borrowing-checkbox" type="checkbox" value="{{ $borrow->id }}">
@@ -98,7 +123,13 @@
                                         <span class="text-muted small">N/A</span>
                                     @endif
                                 </td>
-                                <td class="px-3 fw-bold">{{ $dueDate->format('d M Y') }}</td>
+                                
+                                {{-- ========================================================== --}}
+                                {{-- --- PERBAIKAN TAMPILAN TANGGAL --- --}}
+                                {{-- ========================================================== --}}
+                                <td class="px-3 fw-bold">{{ $displayDate }}</td>
+                                {{-- ========================================================== --}}
+                                
                                 <td class="px-3">
                                     @if($isOverdue)
                                         <span class="badge bg-danger">Terlambat</span>
@@ -107,9 +138,6 @@
                                     @endif
                                 </td>
                                 <td class="px-3 text-end">
-                                    {{-- ========================================================== --}}
-                                    {{-- PERBAIKAN: Menambahkan Tombol Tandai Hilang --}}
-                                    {{-- ========================================================== --}}
                                     <div class="d-flex justify-content-end gap-2">
                                         {{-- Tombol Kembalikan --}}
                                         <form action="{{ route('admin.petugas.returns.store', $borrow) }}" method="POST" onsubmit="return confirm('Konfirmasi pengembalian buku ini?');" style="display: inline;">
@@ -119,15 +147,17 @@
                                         </form>
                                         
                                         {{-- Tombol Tandai Hilang --}}
-                                        <form action="{{ route('admin.petugas.returns.markAsLost', $borrow) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menandai buku ini HILANG? Denda penggantian akan diterapkan.');" style="display: inline;">
+                                        {{-- Kita tambahkan cek, jangan tandai hilang buku laporan/semester karena denda beda --}}
+                                        @if($bookType != 'laporan' && $bookType != 'paket_semester')
+                                        <form action="{{ route('admin.petugas.returns.markAsLost', $borrow) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menandai buku ini HILANG?');" style="display: inline;">
                                             @csrf
                                             @method('PUT')
                                             <button type="submit" class="btn btn-warning btn-sm text-dark" title="Tandai Buku Hilang">
-                                                 <i class="bi bi-exclamation-triangle-fill"></i> Hilang
+                                                <i class="bi bi-exclamation-triangle-fill"></i> Hilang
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
-                                    {{-- ========================================================== --}}
                                 </td>
                             </tr>
                         @empty
@@ -198,4 +228,3 @@
     });
 </script>
 @endpush
-

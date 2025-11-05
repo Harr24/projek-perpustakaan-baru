@@ -19,7 +19,11 @@ use App\Http\Controllers\Guru\LearningMaterialController;
 use App\Http\Controllers\Admin\Superadmin\HeroSliderController;
 use App\Http\Controllers\Admin\Petugas\BorrowingReportController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\Admin\Superadmin\SuperadminFineController; // <-- Tambahkan use statement ini
+use App\Http\Controllers\Admin\Superadmin\SuperadminFineController;
+// ==========================================================
+// --- TAMBAHAN: Import HolidayController ---
+// ==========================================================
+use App\Http\Controllers\Admin\Superadmin\HolidayController;
 
 // RUTE PUBLIK & TAMU
 Route::get('/', [BookCatalogController::class, 'index'])->name('catalog.index');
@@ -61,7 +65,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/verifikasi-siswa/{user}/reject', [VerificationController::class, 'reject'])->name('verification.reject');
         Route::get('/verifikasi-siswa/lihat-kartu/{user}', [VerificationController::class, 'showStudentCard'])->name('verification.showCard');
 
-        Route::resource('genres', GenreController::class);
+        // ==========================================================
+        // --- PERBAIKAN: Nonaktifkan rute 'show' untuk Genre ---
+        // ==========================================================
+        Route::resource('genres', GenreController::class)->except(['show']);
+        // ==========================================================
 
         Route::get('/books/create-bulk', [BookController::class, 'showCreateBulkForm'])->name('books.create.bulk');
         Route::post('/books/store-bulk', [BookController::class, 'storeBulkForm'])->name('books.store.bulk.form');
@@ -81,13 +89,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
         Route::post('/approvals/approve-multiple', [LoanApprovalController::class, 'approveMultiple'])->name('approvals.approveMultiple');
 
+        // ==========================================================
+        // ===== PENAMBAHAN: Rute untuk Tolak Massal =====
+        // ==========================================================
+        Route::post('/approvals/reject-multiple', [LoanApprovalController::class, 'rejectMultiple'])->name('approvals.rejectMultiple');
+        // ==========================================================
+
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
         Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store');
         Route::put('/returns-multiple', [ReturnController::class, 'storeMultiple'])->name('returns.storeMultiple');
         Route::put('/returns/{borrowing}/mark-lost', [ReturnController::class, 'markAsLost'])->name('returns.markAsLost');
 
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
-        Route::post('/fines/{borrowing}/pay', [FineController::class, 'markAsPaid'])->name('fines.pay');
+        Route::post('/fines/{borrowing}/pay-installment', [FineController::class, 'payInstallment'])->name('fines.pay'); // Sudah benar (untuk cicilan)
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
         Route::get('/fines/history/export', [FineController::class, 'export'])->name('fines.export');
 
@@ -113,6 +127,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/fines/history', [SuperadminFineController::class, 'history'])->name('fines.history');
         Route::delete('/fines/history/{fine}', [SuperadminFineController::class, 'destroy'])->name('fines.destroy');
         // Route::get('/fines/history/export', [SuperadminFineController::class, 'export'])->name('fines.export'); // Tambahkan jika perlu export
+        // ==========================================================
+        
+
+        // ==========================================================
+        // --- TAMBAHAN: Rute Manajemen Tanggal Merah ---
+        // ==========================================================
+        Route::get('/holidays', [HolidayController::class, 'index'])->name('holidays.index');
+        Route::post('/holidays', [HolidayController::class, 'store'])->name('holidays.store');
+        
+        // --- TAMBAHAN: Rute untuk EDIT dan UPDATE ---
+        Route::get('/holidays/{holiday}/edit', [HolidayController::class, 'edit'])->name('holidays.edit');
+        Route::put('/holidays/{holiday}', [HolidayController::class, 'update'])->name('holidays.update');
+        // --- AKHIR TAMBAHAN EDIT/UPDATE ---
+        
+        Route::delete('/holidays/{holiday}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
         // ==========================================================
 
     });

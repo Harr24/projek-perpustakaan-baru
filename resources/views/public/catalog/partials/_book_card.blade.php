@@ -4,11 +4,6 @@
     {{-- BAGIAN GAMBAR YANG DIPERBAIKI --}}
     {{-- ========================================================== --}}
     @if($book->cover_image)
-        {{-- 
-            PERBAIKAN: 
-            Kita panggil gambar langsung menggunakan 'asset()', 
-            bukan 'route()' yang rawan error. 
-        --}}
         <img src="{{ asset('storage/' . $book->cover_image) }}" 
              class="card-img-top book-cover" 
              alt="Sampul {{ $book->title }}" 
@@ -44,6 +39,23 @@
             @else
                 <span class="badge bg-success">Tersedia</span>
             @endif
+
+            <!-- ========================================================== -->
+            <!-- ===== PERBAIKAN: Menampilkan SEMUA Tipe Buku ===== -->
+            <!-- ========================================================== -->
+            @switch($book->book_type)
+                @case('reguler')
+                    <span class="badge bg-primary">Buku Reguler</span>
+                    @break
+                @case('paket')
+                    <span class="badge bg-info text-dark">Buku Paket</span>
+                    @break
+                @case('laporan')
+                    <span class="badge bg-secondary">Buku Laporan</span>
+                    @break
+            @endswitch
+            <!-- ========================================================== -->
+
         </div>
     </div>
 

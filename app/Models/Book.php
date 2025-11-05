@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Models\BookCopy;
 use App\Models\Genre;
-use App\Models\Borrowing; // <-- 1. TAMBAHKAN BARIS INI
+use App\Models\Borrowing; // Ini sudah benar, tetap ada
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,8 +24,28 @@ class Book extends Model
         'genre_id',
         'cover_image',
         'stock', 
-        'is_textbook',
+        // 'is_textbook', // <-- DIHAPUS DARI FILLABLE
+        'book_type',     // <-- DITAMBAHKAN
         'publication_year',
+    ];
+
+    /**
+     * The model's default values for attributes.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'book_type' => 'reguler', // <-- TAMBAHAN: Atur 'reguler' sebagai default
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        // Kita biarkan cast ini untuk menangani data lama di database
+        'is_textbook' => 'boolean', 
     ];
 
     /**
@@ -46,7 +66,7 @@ class Book extends Model
 
     /**
      * ==========================================================
-     * 2. TAMBAHKAN FUNGSI BARU INI
+     * FUNGSI LAMA ANDA - INI TETAP ADA
      * ==========================================================
      * Relasi untuk menghitung semua peminjaman melalui book copies.
      */

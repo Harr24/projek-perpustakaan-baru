@@ -13,7 +13,7 @@
     label.required::after{ content: " *"; color:#d11; }
     .help-text{ font-size:0.9rem; color:#6c757d; }
     .img-preview{ width:100%; height:auto; max-width:160px; max-height:240px; object-fit:cover; border:1px solid #e9ecef; border-radius:6px; background:#fff; display:block; }
-    .copies-table th, .copies-table td { font-size: 0.9rem; padding: 0.5rem 0.75rem; vertical-align: middle;} /* Tambah vertical-align */
+    .copies-table th, .copies-table td { font-size: 0.9rem; padding: 0.5rem 0.75rem; vertical-align: middle;}
     @media (max-width:575.98px){
         .actions-row .btn { width:100%; }
         .actions-row .btn + .btn { margin-top:10px; }
@@ -115,15 +115,26 @@
                             @error('genre_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         
-                        {{-- Checkbox Buku Paket --}}
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" name="is_textbook" id="is_textbook" value="1" {{ old('is_textbook', $book->is_textbook) ? 'checked' : '' }}>
-                            <label class="form-check-label" for="is_textbook">
-                                Apakah ini Buku Paket?
-                            </label>
-                            <div class="form-text help-text">Centang jika buku ini adalah buku pelajaran wajib.</div>
+                        <!-- ========================================================== -->
+                        <!-- --- PERBAIKAN: Ganti 'paket_7_hari' menjadi 'paket' --- -->
+                        <!-- ========================================================== -->
+                        <div class="mb-3">
+                            <label for="book_type" class="form-label required">Tipe Buku</label>
+                            <select id="book_type" name="book_type" required class="form-select @error('book_type') is-invalid @enderror">
+                                <option value="reguler" {{ (old('book_type', $book->book_type) == 'reguler') ? 'selected' : '' }}>
+                                    Buku Reguler
+                                </option>
+                                <option value="paket" {{ (old('book_type', $book->book_type) == 'paket') ? 'selected' : '' }}>
+                                    Buku Paket
+                                </option>
+                                <option value="laporan" {{ (old('book_type', $book->book_type) == 'laporan') ? 'selected' : '' }}>
+                                    Buku Laporan
+                                </option>
+                            </select>
+                            <div class="form-text help-text mt-0">Pilih tipe buku untuk menentukan aturan peminjaman.</div>
+                            @error('book_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-
+                        <!-- ========================================================== -->
 
                         {{-- Sampul Buku --}}
                         <div class="row g-3 align-items-center mb-3">
@@ -209,22 +220,17 @@
                                                     <span class="badge bg-warning text-dark">Dipinjam</span>
                                                 @elseif ($copy->status == 'pending')
                                                     <span class="badge bg-info text-dark">Pending</span>
-                                                @elseif ($copy->status == 'overdue') {{-- Tambahkan status overdue jika ada --}}
+                                                @elseif ($copy->status == 'overdue')
                                                     <span class="badge bg-danger">Terlambat</span>
                                                 @else
-                                                    {{-- Status lain seperti 'rusak' atau 'hilang' mungkin? --}}
                                                     <span class="badge bg-dark">{{ ucfirst($copy->status) }}</span>
                                                 @endif
                                             </td>
                                             
-                                            <!-- ========================================================== -->
-                                            <!-- ===== MODIFIKASI LOGIKA TOMBOL AKSI DIMULAI DI SINI ===== -->
-                                            <!-- ========================================================== -->
                                             <td class="text-end">
                                                 
                                                 @if ($copy->status == 'tersedia')
                                                     
-                                                    <!-- FUNGSI LAMA: Hapus jika 'tersedia' -->
                                                     <form action="{{ route('admin.petugas.books.copies.destroy', $copy->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus eksemplar {{ $copy->book_code }}?');" style="display: inline;">
                                                         @csrf
                                                         @method('DELETE')
@@ -235,11 +241,9 @@
 
                                                 @elseif ($copy->status == 'hilang')
                                                 
-                                                    <!-- FUNGSI BARU: Tandai Ditemukan jika 'hilang' -->
-                                                    <!-- PERHATIAN: Ini membutuhkan route & controller baru -->
                                                     <form action="{{ route('admin.petugas.books.copies.markFound', $copy->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menandai eksemplar {{ $copy->book_code }} sebagai DITEMUKAN?');" style="display: inline;">
                                                         @csrf
-                                                        @method('PUT') <!-- Menggunakan PUT/PATCH untuk update status -->
+                                                        @method('PUT')
                                                         <button type="submit" class="btn btn-success btn-sm p-0 px-1" title="Tandai Ditemukan">
                                                             <i class="bi bi-check-circle-fill"></i>
                                                         </button>
@@ -247,17 +251,12 @@
                                                 
                                                 @else
                                                 
-                                                    <!-- FUNGSI LAMA: Gembok jika 'dipinjam', 'pending', dll. -->
                                                     <span class="text-muted" title="Tidak dapat dihapus (status: {{ $copy->status }})">
                                                         <i class="bi bi-lock-fill"></i>
                                                     </span>
 
                                                 @endif
                                             </td>
-                                            <!-- ========================================================== -->
-                                            <!-- ===== MODIFIKASI LOGIKA TOMBOL AKSI SELESAI ===== -->
-                                            <!-- ========================================================== -->
-
                                         </tr>
                                     @endforeach
                                 </tbody>

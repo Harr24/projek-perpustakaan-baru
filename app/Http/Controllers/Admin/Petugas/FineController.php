@@ -11,6 +11,10 @@ use Carbon\Carbon;
 
 class FineController extends Controller
 {
+    /**
+     * Menampilkan denda yang BELUM LUNAS.
+     * Halaman ini perlu Anda modifikasi untuk menampilkan form cicilan.
+     */
     public function index()
     {
         $unpaidFines = Borrowing::where('fine_amount', '>', 0)
@@ -21,21 +25,83 @@ class FineController extends Controller
         return view('admin.petugas.fines.index', compact('unpaidFines'));
     }
 
-    public function markAsPaid(Borrowing $borrowing)
+    /**
+     * (METHOD LAMA DIHAPUS)
+     * public function markAsPaid(Borrowing $borrowing) { ... }
+     */
+
+    /**
+     * ==========================================================
+     * --- METHOD BARU: Menangani Pembayaran Cicilan Denda ---
+     * ==========================================================
+     * Menggantikan 'markAsPaid'
+     *
+     * @param Request $request
+     * @param Borrowing $borrowing
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function payInstallment(Request $request, Borrowing $borrowing)
     {
-        if ($borrowing->fine_amount > 0 && $borrowing->fine_status == 'unpaid') {
-            $borrowing->fine_status = 'paid';
-            $borrowing->save();
+        // 1. Validasi input dari form (harus ada angka)
+        $request->validate([
+            'amount' => 'required|numeric|min:1' // Minimal bayar 1
+        ]);
 
-            // Tambahkan notifikasi untuk peminjam (opsional tapi bagus)
-            // Notification::send($borrowing->user, new FinePaidNotification($borrowing));
-
-            return redirect()->back()->with('success', 'Denda untuk ' . ($borrowing->user->name ?? 'N/A') . ' berhasil ditandai lunas.');
+        $amountToPay = (int) $request->input('amount');
+        
+        // 2. Cek status denda
+        if ($borrowing->fine_status == 'paid') {
+            return redirect()->back()->with('error', 'Denda ini sudah lunas.');
         }
 
-        return redirect()->back()->with('error', 'Aksi tidak valid atau denda sudah lunas.');
+        // 3. Hitung sisa denda
+        //    (Mengasumsikan Anda sudah menjalankan migration 'add_fine_paid_to_borrowings_table')
+        $totalFine = $borrowing->fine_amount;
+        $alreadyPaid = $borrowing->fine_paid ?? 0; // Kolom baru dari migration
+        $remainingFine = $totalFine - $alreadyPaid;
+
+        // 4. Validasi jika pembayaran melebihi sisa denda
+        if ($amountToPay > $remainingFine) {
+            $message = 'Jumlah pembayaran (Rp ' . number_format($amountToPay) . ')';
+            $message .= ' melebihi sisa denda (Rp ' . number_format($remainingFine) . ').';
+            return redirect()->back()->with('error', $message);
+        }
+
+        // 5. Update database
+        try {
+            DB::transaction(function () use ($borrowing, $amountToPay) {
+                
+                // Tambahkan pembayaran ke total 'fine_paid'
+                $borrowing->fine_paid += $amountToPay; 
+                
+                // Cek apakah lunas
+                if ($borrowing->fine_paid >= $borrowing->fine_amount) {
+                    $borrowing->fine_paid = $borrowing->fine_amount; // Pastikan tidak lebih
+                    $borrowing->fine_status = 'paid'; // Ubah status jadi lunas
+                }
+                
+                $borrowing->save();
+            });
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
+        }
+
+        // 6. Beri pesan sukses
+        if ($borrowing->fine_status == 'paid') {
+            return redirect()->back()->with('success', 'Pembayaran diterima dan denda telah lunas.');
+        } else {
+            // Jika belum lunas, tampilkan sisa denda
+            $newRemaining = $remainingFine - $amountToPay;
+            $message = 'Cicilan diterima. Sisa denda: Rp ' . number_format($newRemaining);
+            return redirect()->back()->with('success', $message);
+        }
     }
 
+
+    /**
+     * Menampilkan riwayat denda yang SUDAH LUNAS.
+     * (Method ini tidak perlu diubah, sudah benar)
+     */
     public function history(Request $request)
     {
         // Ambil tahun unik untuk filter dropdown
@@ -66,8 +132,8 @@ class FineController extends Controller
                 $q->whereHas('user', function ($subQ) use ($searchTerm) {
                     $subQ->where('name', 'LIKE', '%' . $searchTerm . '%');
                 })->orWhereHas('bookCopy.book', function ($subQ) use ($searchTerm) {
-                     $subQ->where('title', 'LIKE', '%' . $searchTerm . '%');
-                 });
+                        $subQ->where('title', 'LIKE', '%' . $searchTerm . '%');
+                    });
             });
         }
 
@@ -81,10 +147,9 @@ class FineController extends Controller
         return view('admin.petugas.fines.history', compact('paidFines', 'years', 'totalFine'));
     }
 
-    // METHOD destroy() DIHAPUS DARI SINI
-
     /**
      * Export riwayat denda lunas ke Excel.
+     * (Method ini tidak perlu diubah, sudah benar)
      */
      public function export(Request $request)
      {
@@ -99,12 +164,12 @@ class FineController extends Controller
         if ($request->filled('month')) { $query->whereMonth('updated_at', $request->month); }
         if ($request->filled('search')) {
             $searchTerm = $request->search;
-             $query->where(function ($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->whereHas('user', function ($subQ) use ($searchTerm) {
                     $subQ->where('name', 'LIKE', '%' . $searchTerm . '%');
                 })->orWhereHas('bookCopy.book', function ($subQ) use ($searchTerm) {
-                     $subQ->where('title', 'LIKE', '%' . $searchTerm . '%');
-                 });
+                        $subQ->where('title', 'LIKE', '%' . $searchTerm . '%');
+                    });
             });
         }
 

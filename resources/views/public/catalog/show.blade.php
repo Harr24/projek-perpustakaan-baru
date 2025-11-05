@@ -56,9 +56,6 @@
                 <div class="row">
                     {{-- Kolom Kiri: Gambar Sampul --}}
                     <div class="col-md-4 text-center mb-4 mb-md-0">
-                        {{-- ========================================================== --}}
-                        {{-- PERUBAHAN HANYA DI BARIS INI --}}
-                        {{-- ========================================================== --}}
                         <img src="{{ $book->cover_image ? asset('storage/' . $book->cover_image) : 'https://placehold.co/300x450/E91E63/FFFFFF?text=No+Cover' }}" 
                              class="cover-image" alt="Sampul {{ $book->title }}">
                     </div>
@@ -69,9 +66,22 @@
                         <p class="text-muted">oleh {{ $book->author }}</p>
                         <div>
                             <span class="badge bg-danger mb-3">{{ $book->genre->name }}</span>
-                            @if($book->is_textbook)
-                                <span class="badge bg-info mb-3">Buku Paket</span>
-                            @endif
+                            
+                            <!-- ========================================================== -->
+                            <!-- PERBAIKAN 1: Mengganti 'is_textbook' dengan 'book_type' -->
+                            <!-- ========================================================== -->
+                            @switch($book->book_type)
+                                @case('paket_7_hari')
+                                    <span class="badge bg-info text-dark mb-3">Buku Paket</span>
+                                    @break
+                                @case('laporan')
+                                    <span class="badge bg-secondary mb-3">Buku Laporan</span>
+                                    @break
+                                @default
+                                    {{-- Tidak perlu badge untuk 'reguler' --}}
+                            @endswitch
+                            <!-- ========================================================== -->
+
                         </div>
                         
                         {{-- Menampilkan Sinopsis --}}
@@ -86,13 +96,22 @@
                 <hr class="my-4">
 
                 @auth
+                    {{-- ========================================================== --}}
+                    <!-- PERBAIKAN 2: Mengganti 'is_textbook' dengan 'book_type' -->
+                    <!-- ========================================================== -->
+                    @php
+                        // Cek apakah buku ini adalah 'paket_7_hari' ATAU 'laporan'
+                        $isBookPackage = in_array($book->book_type, ['paket_7_hari', 'laporan']);
+                    @endphp
+
                     {{-- Form Pinjam Buku Paket untuk Guru --}}
-                    @if(Auth::user()->role == 'guru' && $book->is_textbook)
+                    @if(Auth::user()->role == 'guru' && $isBookPackage)
                         <div class="card bg-light border-2 border-danger border-opacity-25 mb-4">
                             <div class="card-body">
                                 <h3 class="h5 fw-bold text-danger"><i class="bi bi-person-workspace me-2"></i> Pinjam Buku Paket (Khusus Guru)</h3>
                                 <p class="small text-muted">Anda dapat meminjam beberapa eksemplar buku ini sekaligus untuk kebutuhan kelas.</p>
-                                <form action="{{ route('borrow.store.bulk') }}" method="POST">    @csrf
+                                <form action="{{ route('borrow.store.bulk') }}" method="POST">
+                                    @csrf
                                     <input type="hidden" name="book_id" value="{{ $book->id }}">
                                     <div class="row align-items-end">
                                         <div class="col-md-6 mb-3 mb-md-0">
@@ -114,6 +133,7 @@
                             </div>
                         </div>
                     @endif
+                    <!-- ========================================================== -->
 
                     {{-- Tabel Pinjam Satuan --}}
                     <h3 class="h5 fw-bold mt-4">Daftar Salinan Buku (Pinjam Satuan)</h3>

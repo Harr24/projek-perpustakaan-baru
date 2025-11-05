@@ -12,12 +12,10 @@
             <a href="{{ route('admin.petugas.books.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Buku
             </a>
-            {{-- Tombol simpan akan ada di bawah form --}}
         </div>
     </div>
 
     {{-- Notifikasi Error Validasi --}}
-    {{-- (Kode notifikasi error tetap sama) --}}
      @if ($errors->has('general'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Gagal Menyimpan!</h6>
@@ -34,7 +32,6 @@
                          <li>{{ $error }}</li>
                      @endforeach
                  @endforeach
-                 {{-- Menampilkan error duplikasi kode_awal (jika ada) --}}
                  @foreach ($errors->keys() as $key)
                      @if (preg_match('/^books\.\d+\.initial_code$/', $key) && !in_array($key, array_keys($errors->get('books.*'))))
                          <li>{{ $errors->first($key) }}</li>
@@ -60,16 +57,15 @@
                     <table class="table table-borderless align-middle mb-0">
                         <thead class="bg-light-subtle small text-muted">
                             <tr>
-                                {{-- Penyesuaian Lebar Kolom --}}
                                 <th class="ps-3 py-2" style="width: 18%;">Judul <span class="text-danger">*</span></th>
                                 <th class="py-2" style="width: 15%;">Penulis <span class="text-danger">*</span></th>
                                 <th class="py-2" style="width: 13%;">Genre <span class="text-danger">*</span></th>
                                 <th class="py-2" style="width: 10%;">Kode Awal <span class="text-danger">*</span></th>
                                 <th class="py-2" style="width: 7%;">Stok <span class="text-danger">*</span></th>
                                 <th class="py-2" style="width: 8%;">Thn Terbit</th>
-                                <th class="py-2" style="width: 14%;">Sinopsis</th> {{-- Tambah Kolom Sinopsis --}}
-                                <th class="py-2" style="width: 10%;">Buku Paket</th> {{-- Singkat Label --}}
-                                <th class="pe-3 py-2 text-end" style="width: 5%;"></th> {{-- Kolom Kosong untuk Tombol Hapus (Header Aksi Dihapus) --}}
+                                <th class="py-2" style="width: 14%;">Sinopsis</th>
+                                <th class="py-2" style="width: 10%;">Tipe Buku <span class="text-danger">*</span></th>
+                                <th class="pe-3 py-2 text-end" style="width: 5%;"></th>
                             </tr>
                         </thead>
                         <tbody id="book-rows-container">
@@ -87,7 +83,7 @@
                                 </td>
                                 <td class="py-2">
                                     <select name="books[{{ $i }}][genre_id]" class="form-select form-select-sm @error('books.'.$i.'.genre_id') is-invalid @enderror" required>
-                                        <option value="">-- Pilih --</option> {{-- Singkat --}}
+                                        <option value="">-- Pilih --</option>
                                         @foreach ($genres as $genre)
                                             <option value="{{ $genre->id }}" {{ old('books.'.$i.'.genre_id') == $genre->id ? 'selected' : '' }}>
                                                 {{ $genre->name }}
@@ -104,18 +100,19 @@
                                 <td class="py-2">
                                     <input type="number" name="books[{{ $i }}][publication_year]" class="form-control form-control-sm @error('books.'.$i.'.publication_year') is-invalid @enderror" placeholder="Cont: {{ date('Y') }}" min="1900" max="{{ date('Y') }}" value="{{ old('books.'.$i.'.publication_year') }}">
                                 </td>
-                                {{-- ========================================================== --}}
-                                {{-- PENAMBAHAN: Kolom Input Sinopsis --}}
-                                {{-- ========================================================== --}}
                                 <td class="py-2">
-                                     <textarea name="books[{{ $i }}][synopsis]" rows="1" class="form-control form-control-sm @error('books.'.$i.'.synopsis') is-invalid @enderror" placeholder="Opsional">{{ old('books.'.$i.'.synopsis') }}</textarea>
+                                    <textarea name="books[{{ $i }}][synopsis]" rows="1" class="form-control form-control-sm @error('books.'.$i.'.synopsis') is-invalid @enderror" placeholder="Opsional">{{ old('books.'.$i.'.synopsis') }}</textarea>
                                 </td>
-                                {{-- ========================================================== --}}
                                 <td class="py-2 text-center">
-                                    <div class="form-check d-flex justify-content-center">
-                                        <input class="form-check-input" type="checkbox" name="books[{{ $i }}][is_textbook]" value="1" id="is_textbook_{{ $i }}" {{ old('books.'.$i.'.is_textbook') ? 'checked' : '' }}>
-                                        <label class="form-check-label ms-1 visually-hidden" for="is_textbook_{{ $i }}">Ya</label>
-                                    </div>
+                                    {{-- ============================================= --}}
+                                    {{-- --- PERBAIKAN: Ubah 'paket_7_hari' menjadi 'paket' --- --}}
+                                    {{-- ============================================= --}}
+                                    <select name="books[{{ $i }}][book_type]" class="form-select form-select-sm @error('books.'.$i.'.book_type') is-invalid @enderror" required>
+                                        <option value="reguler" {{ old('books.'.$i.'.book_type') == 'reguler' ? 'selected' : '' }}>Reguler</option>
+                                        <option value="paket" {{ old('books.'.$i.'.book_type') == 'paket' ? 'selected' : '' }}>Buku Paket</option>
+                                        <option value="laporan" {{ old('books.'.$i.'.book_type') == 'laporan' ? 'selected' : '' }}>Laporan</option>
+                                    </select>
+                                    {{-- ============================================= --}}
                                 </td>
                                 <td class="pe-3 py-2 text-end">
                                     @if($i > 0 || $rowCount > 1)
@@ -158,7 +155,6 @@
             const rows = container.querySelectorAll('.book-row');
             rows.forEach((row, index) => {
                 let removeButton = row.querySelector('.remove-book-row');
-                 // Selalu kolom terakhir sekarang
                 const actionCell = row.cells[row.cells.length - 1];
 
                 if (rows.length <= 1) {
@@ -180,13 +176,12 @@
 
 
         addButton.addEventListener('click', function () {
-            const lastRow = container.querySelector('.book-row:last-child'); // Ambil baris terakhir
+            const lastRow = container.querySelector('.book-row:last-child');
             if (!lastRow) return;
 
-            const newRow = lastRow.cloneNode(true); // Duplikasi
+            const newRow = lastRow.cloneNode(true); 
 
-            // Reset nilai input/textarea di baris baru dan update index name/id
-            newRow.querySelectorAll('input, select, textarea').forEach(input => { // Tambahkan textarea
+            newRow.querySelectorAll('input, select, textarea').forEach(input => {
                 const name = input.getAttribute('name');
                 if (name) {
                     input.setAttribute('name', name.replace(/\[\d+\]/, `[${rowIndex}]`));
@@ -201,21 +196,23 @@
                     }
                 }
 
-                // Reset value
                 if (input.type === 'checkbox') {
                     input.checked = false;
                 } else if (input.tagName === 'SELECT') {
-                     input.selectedIndex = 0;
+                     if (input.name && input.name.includes('[book_type]')) {
+                         input.value = 'reguler'; 
+                     } else {
+                         input.selectedIndex = 0; // Untuk Genre
+                     }
                 } else if (input.name && input.name.includes('[stock]')) {
                      input.value = '1';
                 }
-                 else { // Termasuk textarea sinopsis
+                 else { 
                     input.value = '';
                 }
                 input.classList.remove('is-invalid');
             });
 
-            // Pastikan tombol hapus ada
             const actionCell = newRow.cells[newRow.cells.length - 1];
             actionCell.innerHTML = `<button type="button" class="btn btn-outline-danger btn-sm remove-book-row" title="Hapus Baris Ini"><i class="bi bi-trash-fill"></i></button>`;
 
@@ -230,7 +227,6 @@
                 const rowToRemove = removeButton.closest('.book-row');
                 if (container.querySelectorAll('.book-row').length > 1) {
                     rowToRemove.remove();
-                    // Tidak perlu update rowIndex saat menghapus
                     updateRemoveButtons();
                  }
             }
@@ -240,4 +236,3 @@
     });
 </script>
 @endpush
-

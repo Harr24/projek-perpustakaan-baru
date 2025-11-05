@@ -36,6 +36,16 @@
         @csrf
         {{-- Input tersembunyi akan diisi oleh JavaScript --}}
     </form>
+    
+    <!-- ========================================================== -->
+    <!-- ===== PENAMBAHAN: Form untuk Tolak Massal ===== -->
+    <!-- ========================================================== -->
+    <form action="{{ route('admin.petugas.approvals.rejectMultiple') }}" method="POST" id="bulk-reject-form" onsubmit="return confirm('Anda yakin ingin MENOLAK semua pengajuan yang dipilih?');">
+        @csrf
+        {{-- Input tersembunyi akan diisi oleh JavaScript --}}
+    </form>
+    <!-- ========================================================== -->
+
 
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom py-3">
@@ -57,9 +67,19 @@
                     </div>
                 </form>
 
-                <button type="submit" form="bulk-approve-form" class="btn btn-primary btn-sm" id="btn-approve-multiple" disabled>
-                    <i class="bi bi-check2-all me-1"></i> Konfirmasi yang Dipilih
-                </button>
+                <!-- ========================================================== -->
+                <!-- ===== MODIFIKASI: Menjadikan Grup Tombol ===== -->
+                <!-- ========================================================== -->
+                <div class="btn-group btn-group-sm" role="group" aria-label="Aksi Massal">
+                    <button type="submit" form="bulk-approve-form" class="btn btn-primary" id="btn-approve-multiple" disabled>
+                        <i class="bi bi-check2-all me-1"></i> Konfirmasi
+                    </button>
+                    <button type="submit" form="bulk-reject-form" class="btn btn-danger" id="btn-reject-multiple" disabled>
+                        <i class="bi bi-x-circle me-1"></i> Tolak
+                    </button>
+                </div>
+                <!-- ========================================================== -->
+
             </div>
         </div>
         
@@ -152,88 +172,110 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const selectAllHeader = document.getElementById('selectAll');
-        const bulkApproveForm = document.getElementById('bulk-approve-form');
-        const btnApproveMultiple = document.getElementById('btn-approve-multiple');
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllHeader = document.getElementById('selectAll');
+    const bulkApproveForm = document.getElementById('bulk-approve-form');
+    const btnApproveMultiple = document.getElementById('btn-approve-multiple');
+    
+    // ==========================================================
+    // ===== PENAMBAHAN: Variabel untuk Tolak Massal =====
+    // ==========================================================
+    const bulkRejectForm = document.getElementById('bulk-reject-form');
+    const btnRejectMultiple = document.getElementById('btn-reject-multiple');
+    // ==========================================================
 
-        // Fungsi Helper untuk mengelola data yang dikirim dan status tombol
-        function updateFormPayloadAndButton() {
-            // Hapus semua input tersembunyi yang ada
-            bulkApproveForm.innerHTML = '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+    // Fungsi Helper untuk mengelola data yang dikirim dan status tombol
+    function updateFormPayloadAndButton() {
+        // Hapus semua input tersembunyi yang ada
+        const csrfToken = '{{ csrf_token() }}';
+        bulkApproveForm.innerHTML = `<input type="hidden" name="_token" value="${csrfToken}">`;
+        
+        // ==========================================================
+        // ===== PENAMBAHAN: Kosongkan juga form tolak =====
+        // ==========================================================
+        bulkRejectForm.innerHTML = `<input type="hidden" name="_token" value="${csrfToken}">`;
+        // ==========================================================
+        
+        let checkedCount = 0;
+        document.querySelectorAll('.borrowing-checkbox:checked').forEach(checkbox => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'borrowing_ids[]';
+            hiddenInput.value = checkbox.value;
             
-            let checkedCount = 0;
-            document.querySelectorAll('.borrowing-checkbox:checked').forEach(checkbox => {
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = 'borrowing_ids[]';
-                hiddenInput.value = checkbox.value;
-                bulkApproveForm.appendChild(hiddenInput);
-                checkedCount++;
-            });
+            // Masukkan ke kedua form
+            bulkApproveForm.appendChild(hiddenInput);
+            bulkRejectForm.appendChild(hiddenInput.cloneNode(true)); // Kloning untuk form reject
             
-            // Aktifkan/Nonaktifkan tombol Konfirmasi Massal
-            btnApproveMultiple.disabled = checkedCount === 0;
-        }
+            checkedCount++;
+        });
+        
+        // ==========================================================
+        // ===== MODIFIKASI: Aktifkan/Nonaktifkan kedua tombol =====
+        // ==========================================================
+        btnApproveMultiple.disabled = checkedCount === 0;
+        btnRejectMultiple.disabled = checkedCount === 0;
+        // ==========================================================
+    }
 
-        // Fungsi untuk sinkronisasi semua checkbox kontrol
-        function syncControlCheckboxes() {
-            // Sinkronisasi header utama
-            const total = document.querySelectorAll('.borrowing-checkbox').length;
-            const checked = document.querySelectorAll('.borrowing-checkbox:checked').length;
-            if (selectAllHeader) {
-                selectAllHeader.checked = total > 0 && total === checked;
-                selectAllHeader.indeterminate = checked > 0 && checked < total;
-            }
-
-            // Sinkronisasi kontrol per grup
-            document.querySelectorAll('.check-all-user').forEach(userCheck => {
-                const userId = userCheck.dataset.userId;
-                const relatedCheckboxes = document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]`);
-                const totalUser = relatedCheckboxes.length;
-                const checkedUser = document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]:checked`).length;
-
-                userCheck.checked = totalUser > 0 && totalUser === checkedUser;
-                userCheck.indeterminate = checkedUser > 0 && checkedUser < totalUser;
-            });
-        }
-
-        // 1. Event Listener untuk 'Pilih Semua' di Header
+    // Fungsi untuk sinkronisasi semua checkbox kontrol (TIDAK BERUBAH)
+    function syncControlCheckboxes() {
+        // Sinkronisasi header utama
+        const total = document.querySelectorAll('.borrowing-checkbox').length;
+        const checked = document.querySelectorAll('.borrowing-checkbox:checked').length;
         if (selectAllHeader) {
-            selectAllHeader.addEventListener('change', function() {
-                const isChecked = this.checked;
-                document.querySelectorAll('.borrowing-checkbox').forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                });
-                syncControlCheckboxes();
-                updateFormPayloadAndButton();
-            });
+            selectAllHeader.checked = total > 0 && total === checked;
+            selectAllHeader.indeterminate = checked > 0 && checked < total;
         }
-        
-        // 2. Event Listener untuk 'Pilih Semua per Peminjam'
-        document.querySelectorAll('.check-all-user').forEach(userCheck => {
-            userCheck.addEventListener('change', function() {
-                const userId = this.dataset.userId;
-                const isChecked = this.checked;
-                document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]`).forEach(checkbox => {
-                    checkbox.checked = isChecked;
-                });
-                syncControlCheckboxes();
-                updateFormPayloadAndButton();
-            });
-        });
 
-        // 3. Event Listener untuk setiap checkbox individual
-        document.querySelectorAll('.borrowing-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                syncControlCheckboxes();
-                updateFormPayloadAndButton();
-            });
+        // Sinkronisasi kontrol per grup
+        document.querySelectorAll('.check-all-user').forEach(userCheck => {
+            const userId = userCheck.dataset.userId;
+            const relatedCheckboxes = document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]`);
+            const totalUser = relatedCheckboxes.length;
+            const checkedUser = document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]:checked`).length;
+
+            userCheck.checked = totalUser > 0 && totalUser === checkedUser;
+            userCheck.indeterminate = checkedUser > 0 && checkedUser < totalUser;
         });
-        
-        // Inisialisasi saat halaman dimuat
-        updateFormPayloadAndButton();
-        syncControlCheckboxes();
+    }
+
+    // 1. Event Listener untuk 'Pilih Semua' di Header (TIDAK BERUBAH)
+    if (selectAllHeader) {
+        selectAllHeader.addEventListener('change', function() {
+            const isChecked = this.checked;
+            document.querySelectorAll('.borrowing-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            syncControlCheckboxes();
+            updateFormPayloadAndButton();
+        });
+    }
+    
+    // 2. Event Listener untuk 'Pilih Semua per Peminjam' (TIDAK BERUBAH)
+    document.querySelectorAll('.check-all-user').forEach(userCheck => {
+        userCheck.addEventListener('change', function() {
+            const userId = this.dataset.userId;
+            const isChecked = this.checked;
+            document.querySelectorAll(`.borrowing-checkbox[data-user-id="${userId}"]`).forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            syncControlCheckboxes();
+            updateFormPayloadAndButton();
+        });
     });
+
+    // 3. Event Listener untuk setiap checkbox individual (TIDAK BERUBAH)
+    document.querySelectorAll('.borrowing-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            syncControlCheckboxes();
+            updateFormPayloadAndButton();
+        });
+    });
+    
+    // Inisialisasi saat halaman dimuat (TIDAK BERUBAH)
+    updateFormPayloadAndButton();
+    syncControlCheckboxes();
+});
 </script>
 @endpush
