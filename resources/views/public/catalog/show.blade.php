@@ -31,7 +31,7 @@
             </a>
             <div>
                  <a href="{{ route('catalog.index') }}" class="btn btn-sm btn-outline-secondary me-2">
-                    <i class="bi bi-house-door-fill"></i> Kembali ke Beranda
+                     <i class="bi bi-house-door-fill"></i> Kembali ke Beranda
                 </a>
                 @auth
                     <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-secondary">Dashboard</a>
@@ -68,17 +68,20 @@
                             <span class="badge bg-danger mb-3">{{ $book->genre->name }}</span>
                             
                             <!-- ========================================================== -->
-                            <!-- PERBAIKAN 1: Mengganti 'is_textbook' dengan 'book_type' -->
+                            <!-- PERBAIKAN 1: Mengganti 'paket_7_hari' dengan 'paket' -->
                             <!-- ========================================================== -->
                             @switch($book->book_type)
-                                @case('paket_7_hari')
+                                @case('paket')
                                     <span class="badge bg-info text-dark mb-3">Buku Paket</span>
                                     @break
                                 @case('laporan')
                                     <span class="badge bg-secondary mb-3">Buku Laporan</span>
                                     @break
+                                @case('reguler')
+                                    <span class="badge bg-primary mb-3">Buku Reguler</span>
+                                    @break
                                 @default
-                                    {{-- Tidak perlu badge untuk 'reguler' --}}
+                                    {{-- Tidak perlu badge untuk 'reguler' jika tidak mau --}}
                             @endswitch
                             <!-- ========================================================== -->
 
@@ -97,11 +100,11 @@
 
                 @auth
                     {{-- ========================================================== --}}
-                    <!-- PERBAIKAN 2: Mengganti 'is_textbook' dengan 'book_type' -->
+                    <!-- PERBAIKAN 2: Logika 'isBookPackage' diubah -->
                     <!-- ========================================================== -->
                     @php
-                        // Cek apakah buku ini adalah 'paket_7_hari' ATAU 'laporan'
-                        $isBookPackage = in_array($book->book_type, ['paket_7_hari', 'laporan']);
+                        // Cek HANYA apakah buku ini adalah 'paket'
+                        $isBookPackage = ($book->book_type == 'paket');
                     @endphp
 
                     {{-- Form Pinjam Buku Paket untuk Guru --}}
@@ -191,4 +194,4 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+</html> 
