@@ -9,6 +9,12 @@ use App\Models\HeroSlider;
 use App\Models\Borrowing;
 use App\Models\LearningMaterial;
 use App\Models\User;
+// ==========================================================
+// --- TAMBAHAN: Import Model LibrarySchedule ---
+// ==========================================================
+use App\Models\LibrarySchedule;
+// ==========================================================
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -42,7 +48,7 @@ class BookCatalogController extends Controller
                 // 3. Dihitung untuk sorting popularitas
                 'borrowings' => function ($query) {
                     $query->where('borrowings.status', '!=', 'pending')
-                          ->where('borrowings.status', '!=', 'ditolak');
+                            ->where('borrowings.status', '!=', 'ditolak');
                 }
             ])
             ->orderByDesc('borrowings_count') // Diurutkan berdasarkan popularitas
@@ -112,6 +118,33 @@ class BookCatalogController extends Controller
             ->limit(4)
             ->get();
 
+        // ==========================================================
+        // --- TAMBAHAN: Logika Ambil Jadwal untuk Homepage ---
+        // ==========================================================
+        
+        // Ambil semua jadwal, di-grup berdasarkan hari
+        $schedulesByDay = LibrarySchedule::with('user')
+            ->whereIn('day_of_week', [1, 2, 3, 4, 5]) // Hanya Senin-Jumat
+            ->orderBy('day_of_week')
+            ->get()
+            ->groupBy('day_of_week');
+        
+        // Dapatkan hari ini (1 = Senin, 7 = Minggu)
+        $todayDayOfWeek = now()->dayOfWeekIso; 
+        
+        // Buat mapping angka ke nama hari
+        $days = [
+            1 => 'Senin',
+            2 => 'Selasa',
+            3 => 'Rabu',
+            4 => 'Kamis',
+            5 => 'Jumat',
+        ];
+        // ==========================================================
+        // --- AKHIR TAMBAHAN ---
+        // ==========================================================
+
+
         return view('public.catalog.index', compact(
             'heroSliders', 
             'genres', 
@@ -119,7 +152,13 @@ class BookCatalogController extends Controller
             'latestBooks', 
             'topBorrowers', 
             'learningMaterials',
-            'semesterTitle' // <-- Kirim title baru ke view
+            'semesterTitle', // <-- Title dari logika semester
+            
+            // --- TAMBAHAN: Variabel Jadwal ---
+            'schedulesByDay',
+            'todayDayOfWeek',
+            'days'
+            // --- AKHIR TAMBAHAN ---
         ));
     }
 
@@ -135,14 +174,14 @@ class BookCatalogController extends Controller
             'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia'),
             'borrowings' => function ($query) {
                 $query->where('borrowings.status', '!=', 'pending')
-                      ->where('borrowings.status', '!=', 'ditolak');
+                        ->where('borrowings.status', '!=', 'ditolak');
             }
         ]);
 
         $booksQuery->when($search, function ($query, $search) {
             return $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', '%' . $search . '%')
-                  ->orWhere('author', 'LIKE', '%' . $search . '%');
+                    ->orWhere('author', 'LIKE', '%' . $search . '%');
             });
         });
         $booksQuery->when($selectedGenreName, function ($query, $genreName) {

@@ -1,4 +1,3 @@
-
 {{-- ========================================================== --}}
 {{-- BAGIAN 2: MANAJEMEN PENGGUNA --}}
 {{-- ========================================================== --}}
@@ -27,6 +26,17 @@
 <span class="meta">Atur denda & hari libur</span>
 </a>
 {{-- ========================================================== --}}
+
+
+{{-- ========================================================== --}}
+{{-- --- TAMBAHAN BARU: Link ke Jadwal Piket --- --}}
+{{-- ========================================================== --}}
+<a class="nav-item" href="{{ route('admin.superadmin.schedules.index') }}">
+<div class="nav-item-main"><span>Kelola Jadwal Piket</span></div>
+<span class="meta">Tampilan Depan</span>
+</a>
+{{-- ========================================================== --}}
+
 
 <a class="nav-item" href="{{ route('admin.superadmin.fines.history') }}">
 <div class="nav-item-main"><span>Kelola Riwayat Denda</span></div>

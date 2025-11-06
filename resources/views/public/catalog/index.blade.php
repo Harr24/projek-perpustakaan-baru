@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
+    <meta charset="utf-tF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Katalog Buku - Perpustakaan Multicomp</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -505,6 +505,26 @@
         /* ========================================================== */
         /* AKHIR CSS BARU */
         /* ========================================================== */
+
+        
+        /* ========================================================== */
+        /* --- CSS TAMBAHAN UNTUK JADWAL PIKET --- */
+        /* ========================================================== */
+        .border-primary-red {
+            /* Menggunakan variabel --brand-red yang sudah ada */
+            border-color: var(--brand-red) !important;
+        }
+        
+        .bg-primary-red {
+            /* Menggunakan variabel --brand-red yang sudah ada */
+            background-color: var(--brand-red) !important;
+            /* Kita tambahkan 'color' agar teksnya pasti putih */
+            color: #fff !important; 
+        }
+        /* ========================================================== */
+        /* --- AKHIR CSS TAMBAHAN --- */
+        /* ========================================================== */
+
     </style>
 </head>
 <body>
@@ -601,6 +621,60 @@
                 </div>
             </div>
         </div>
+
+        <section class="container my-5">
+            
+            <div class="row">
+                <div class="col-12 text-center mb-4" data-aos="fade-up">
+                    <h2 class="fw-bold display-6">Jadwal Piket Perpustakaan</h2>
+                    <p class="lead text-muted">Temui petugas yang siap membantu Anda setiap harinya.</p>
+                </div>
+            </div>
+        
+            <div class="row" data-aos="fade-up" data-aos-delay="100">
+                {{-- Loop 5 hari (Senin-Jumat) dari controller --}}
+                @foreach($days as $dayNumber => $dayName)
+                    @php
+                        // Cek apakah hari ini adalah hari yang sedang di-loop
+                        $isToday = ($dayNumber == $todayDayOfWeek);
+                        
+                        // Ambil data jadwal untuk hari ini dari koleksi
+                        $schedules = $schedulesByDay->get($dayNumber);
+                    @endphp
+        
+                    <div class="col-12 col-sm-6 col-md-6 col-lg mb-4">
+                        
+                        <div class="card h-100 shadow-sm {{ $isToday ? 'border-primary-red' : '' }}" 
+                             style="{{ $isToday ? 'border-width: 2px;' : '' }}">
+                            
+                            <div class="card-header {{ $isToday ? 'bg-primary-red' : '' }}">
+                                <h6 class="m-0 font-weight-bold text-center">{{ $dayName }}</h6>
+                            </div>
+                            
+                            <div class="card-body" style="min-height: 150px; font-size: 0.9rem;">
+                                @if($schedules && $schedules->isNotEmpty())
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach($schedules as $schedule)
+                                            <li class="mb-2">
+                                                <strong>{{ $schedule->user->name }}</strong><br>
+                                                <small class="text-muted">
+                                                    Petugas
+                                                </small>
+                                            </li>
+                                            @endforeach
+                                    </ul>
+                                @else
+                                    <div class="text-center text-muted d-flex flex-column justify-content-center h-100">
+                                        <i class="fas fa-coffee" style="font-size: 1.5rem;"></i>
+                                        <small class="mt-2">Jadwal Kosong</small>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </section>
         {{-- Section 1: Kategori/Genre --}}
         <div class="container py-5" id="search-section"> <div class="text-center mb-5" data-aos="fade-up">
                 <h2 class="fw-bold display-6">Jelajahi Berdasarkan Kategori</h2>

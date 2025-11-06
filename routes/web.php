@@ -25,6 +25,12 @@ use App\Http\Controllers\Admin\Superadmin\SuperadminFineController;
 // ==========================================================
 use App\Http\Controllers\Admin\Superadmin\HolidayController;
 
+// ==========================================================
+// --- TAMBAHAN: Import ScheduleController ---
+// ==========================================================
+use App\Http\Controllers\Admin\Superadmin\ScheduleController;
+
+
 // RUTE PUBLIK & TAMU
 Route::get('/', [BookCatalogController::class, 'index'])->name('catalog.index');
 Route::get('/catalog/all', [BookCatalogController::class, 'allBooks'])->name('catalog.all');
@@ -142,6 +148,16 @@ Route::middleware('auth')->group(function () {
         // --- AKHIR TAMBAHAN EDIT/UPDATE ---
         
         Route::delete('/holidays/{holiday}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
+        // ==========================================================
+
+        
+        // ==========================================================
+        // --- TAMBAHAN: Rute Manajemen Jadwal Petugas ---
+        // ==========================================================
+        Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
+        Route::get('schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
+        Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
+        Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
         // ==========================================================
 
     });
