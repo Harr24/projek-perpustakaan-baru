@@ -34,8 +34,7 @@ class BookCatalogController extends Controller
         // ==========================================================
 
         // ==========================================================
-        // PERBAIKAN LOGIKA BUKU FAVORIT (Chat-038)
-        // ...
+        // PERBAIKAN LOGIKA BUKU FAVORIT (Menggunakan whereNotIn)
         // ==========================================================
         $favoriteBooks = (clone $nonTextbookQuery)
             ->withCount([
@@ -45,10 +44,9 @@ class BookCatalogController extends Controller
                 },
                 // 2. Dihitung untuk teks "X / Y Tersedia"
                 'copies as copies_count',
-                // 3. Dihitung untuk sorting popularitas
+                // 3. Dihitung untuk sorting popularitas (HANYA YANG SAH)
                 'borrowings' => function ($query) {
-                    $query->where('borrowings.status', '!=', 'pending')
-                            ->where('borrowings.status', '!=', 'ditolak');
+                    $query->whereNotIn('borrowings.status', ['pending', 'ditolak']);
                 }
             ])
             ->orderByDesc('borrowings_count') // Diurutkan berdasarkan popularitas
@@ -59,8 +57,7 @@ class BookCatalogController extends Controller
         // ==========================================================
 
         // ==========================================================
-        // PERBAIKAN LOGIKA BUKU TERBARU (Chat-038)
-        // ...
+        // PERBAIKAN LOGIKA BUKU TERBARU (Sudah Benar)
         // ==========================================================
         $latestBooks = (clone $nonTextbookQuery)
             ->withCount([
@@ -96,10 +93,18 @@ class BookCatalogController extends Controller
             $semesterTitle = "Semester Ini (Jul - Des)";
         }
 
+        // --- Tes Diagnostik (dd()) SUDAH DIHAPUS ---
+
         $topBorrowers = Borrowing::select('user_id', DB::raw('count(*) as loans_count'))
             // Ganti 'whereMonth' dan 'whereYear' dengan 'whereBetween'
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', '!=', 'rejected')
+            
+            // ==========================================================
+            // --- KOREKSI FINAL: Menggunakan whereNotIn ---
+            // Hanya hitung status yang BUKAN pending DAN BUKAN ditolak
+            // ==========================================================
+            ->whereNotIn('status', ['pending', 'ditolak'])
+            
             ->whereHas('user', function ($query) {
                 $query->where('role', 'siswa');
             })
@@ -172,9 +177,12 @@ class BookCatalogController extends Controller
         $booksQuery = Book::query()->withCount([
             'copies as copies_count', // <-- Diperbaiki
             'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia'),
+            
+            // ==========================================================
+            // --- KOREKSI FINAL: Menggunakan whereNotIn untuk popularitas ---
+            // ==========================================================
             'borrowings' => function ($query) {
-                $query->where('borrowings.status', '!=', 'pending')
-                        ->where('borrowings.status', '!=', 'ditolak');
+                $query->whereNotIn('borrowings.status', ['pending', 'ditolak']);
             }
         ]);
 
@@ -184,6 +192,7 @@ class BookCatalogController extends Controller
                     ->orWhere('author', 'LIKE', '%' . $search . '%');
             });
         });
+
         $booksQuery->when($selectedGenreName, function ($query, $genreName) {
             return $query->whereHas('genre', function ($q) use ($genreName) {
                 $q->where('name', $genreName);
@@ -216,6 +225,7 @@ class BookCatalogController extends Controller
     public function showCover(Book $book)
     {
         $path = $book->cover_image;
+
         if (!$path || !Storage::disk('public')->exists($path)) {
             // Jika gambar tidak ada, kita bisa return placeholder Tome.png
             // Tapi untuk sekarang, kita kembalikan 404 saja agar tidak error di 'file()'
@@ -224,8 +234,10 @@ class BookCatalogController extends Controller
             // Alternatif: Redirect ke gambar default
             // return redirect(asset('images/Tome.png'));
         }
+
         $file = Storage::disk('public')->get($path);
         $type = Storage::disk('public')->mimeType($path);
+
         return response($file)->header('Content-Type', $type);
     }
 
@@ -234,6 +246,7 @@ class BookCatalogController extends Controller
         $staff = User::whereIn('role', ['petugas', 'guru'])
             ->orderBy('name', 'asc')
             ->get();
+
         return view('public.librarians', compact('staff'));
     }
 
@@ -242,17 +255,22 @@ class BookCatalogController extends Controller
         $query = LearningMaterial::where('is_active', true)
             ->with('user')
             ->latest();
+
         if ($request->filled('search')) {
             $query->where('title', 'like', '%' . $request->search . '%');
         }
+
         if ($request->filled('teacher')) {
             $query->where('user_id', $request->teacher);
         }
+
         $materials = $query->paginate(10)->withQueryString();
+
         $teachers = User::where('role', 'guru')
             ->whereHas('learningMaterials')
             ->orderBy('name')
             ->get();
+
         return view('public.catalog.all_materials', compact('materials', 'teachers'));
     }
 }
