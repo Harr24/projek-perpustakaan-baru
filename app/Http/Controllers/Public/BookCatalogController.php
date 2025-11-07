@@ -1,7 +1,7 @@
 <?php
-
+ 
 namespace App\Http\Controllers\Public;
-
+ 
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\Genre;
@@ -14,12 +14,12 @@ use App\Models\User;
 // ==========================================================
 use App\Models\LibrarySchedule;
 // ==========================================================
-
+ 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon; // <-- PASTIKAN CARBON DI-IMPORT
-
+ 
 class BookCatalogController extends Controller
 {
     public function index(Request $request)
@@ -32,9 +32,10 @@ class BookCatalogController extends Controller
         // ==========================================================
         $nonTextbookQuery = Book::where('book_type', 'reguler');
         // ==========================================================
-
+ 
         // ==========================================================
-        // PERBAIKAN LOGIKA BUKU FAVORIT (Menggunakan whereNotIn)
+        // PERBAIKAN LOGIKA BUKU FAVORIT (Chat-038)
+        // ...
         // ==========================================================
         $favoriteBooks = (clone $nonTextbookQuery)
             ->withCount([
@@ -44,9 +45,10 @@ class BookCatalogController extends Controller
                 },
                 // 2. Dihitung untuk teks "X / Y Tersedia"
                 'copies as copies_count',
-                // 3. Dihitung untuk sorting popularitas (HANYA YANG SAH)
+                // 3. Dihitung untuk sorting popularitas
                 'borrowings' => function ($query) {
-                    $query->whereNotIn('borrowings.status', ['pending', 'ditolak']);
+                    $query->where('borrowings.status', '!=', 'pending')
+                            ->where('borrowings.status', '!=', 'ditolak');
                 }
             ])
             ->orderByDesc('borrowings_count') // Diurutkan berdasarkan popularitas
@@ -55,9 +57,10 @@ class BookCatalogController extends Controller
         // ==========================================================
         // AKHIR PERBAIKAN
         // ==========================================================
-
+ 
         // ==========================================================
-        // PERBAIKAN LOGIKA BUKU TERBARU (Sudah Benar)
+        // PERBAIKAN LOGIKA BUKU TERBARU (Chat-038)
+        // ...
         // ==========================================================
         $latestBooks = (clone $nonTextbookQuery)
             ->withCount([
@@ -72,8 +75,8 @@ class BookCatalogController extends Controller
         // ==========================================================
         // AKHIR PERBAIKAN
         // ==========================================================
-
-
+ 
+ 
         // ==========================================================
         // --- PERBAIKAN: Logika Peminjam Teratas (Semester) ---
         // ==========================================================
@@ -92,18 +95,16 @@ class BookCatalogController extends Controller
             $endDate = Carbon::create($currentYear, 12, 31)->endOfDay();
             $semesterTitle = "Semester Ini (Jul - Des)";
         }
-
-        // --- Tes Diagnostik (dd()) SUDAH DIHAPUS ---
-
+ 
         $topBorrowers = Borrowing::select('user_id', DB::raw('count(*) as loans_count'))
             // Ganti 'whereMonth' dan 'whereYear' dengan 'whereBetween'
             ->whereBetween('created_at', [$startDate, $endDate])
-            
+ 
             // ==========================================================
-            // --- KOREKSI FINAL: Menggunakan whereNotIn ---
-            // Hanya hitung status yang BUKAN pending DAN BUKAN ditolak
+            // --- PERBAIKAN BUG: Hanya hitung status 'dipinjam' atau 'returned' ---
             // ==========================================================
-            ->whereNotIn('status', ['pending', 'ditolak'])
+            ->whereIn('status', ['dipinjam', 'returned'])
+            // ==========================================================
             
             ->whereHas('user', function ($query) {
                 $query->where('role', 'siswa');
@@ -116,13 +117,13 @@ class BookCatalogController extends Controller
         // ==========================================================
         // --- AKHIR PERBAIKAN ---
         // ==========================================================
-
+ 
         $learningMaterials = LearningMaterial::where('is_active', true)
             ->with('user')
             ->latest()
             ->limit(4)
             ->get();
-
+ 
         // ==========================================================
         // --- TAMBAHAN: Logika Ambil Jadwal untuk Homepage ---
         // ==========================================================
@@ -148,8 +149,8 @@ class BookCatalogController extends Controller
         // ==========================================================
         // --- AKHIR TAMBAHAN ---
         // ==========================================================
-
-
+ 
+ 
         return view('public.catalog.index', compact(
             'heroSliders', 
             'genres', 
@@ -166,49 +167,45 @@ class BookCatalogController extends Controller
             // --- AKHIR TAMBAHAN ---
         ));
     }
-
+ 
     public function allBooks(Request $request)
     {
         $genres = Genre::orderBy('name')->get();
         $search = $request->input('search');
         $selectedGenreName = $request->input('genre');
         $sort = $request->input('sort', 'latest');
-
+ 
         $booksQuery = Book::query()->withCount([
             'copies as copies_count', // <-- Diperbaiki
             'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia'),
-            
-            // ==========================================================
-            // --- KOREKSI FINAL: Menggunakan whereNotIn untuk popularitas ---
-            // ==========================================================
             'borrowings' => function ($query) {
-                $query->whereNotIn('borrowings.status', ['pending', 'ditolak']);
+                $query->where('borrowings.status', '!=', 'pending')
+                        ->where('borrowings.status', '!=', 'ditolak');
             }
         ]);
-
+ 
         $booksQuery->when($search, function ($query, $search) {
             return $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', '%' . $search . '%')
                     ->orWhere('author', 'LIKE', '%' . $search . '%');
             });
         });
-
         $booksQuery->when($selectedGenreName, function ($query, $genreName) {
             return $query->whereHas('genre', function ($q) use ($genreName) {
                 $q->where('name', $genreName);
             });
         });
-
+ 
         if ($sort === 'popular') {
             $booksQuery->orderByDesc('borrowings_count'); 
         } else {
             $booksQuery->latest();
         }
-
+ 
         $books = $booksQuery->paginate(12)->withQueryString();
         return view('public.catalog.all_books', compact('books', 'genres'));
     }
-
+ 
     public function show(Book $book)
     {
         $book->load('genre', 'copies');
@@ -221,56 +218,47 @@ class BookCatalogController extends Controller
         ]);
         return view('public.catalog.show', compact('book'));
     }
-
+ 
     public function showCover(Book $book)
     {
         $path = $book->cover_image;
-
         if (!$path || !Storage::disk('public')->exists($path)) {
             // Jika gambar tidak ada, kita bisa return placeholder Tome.png
             // Tapi untuk sekarang, kita kembalikan 404 saja agar tidak error di 'file()'
              abort(404, 'Gambar tidak ditemukan.');
-
+ 
             // Alternatif: Redirect ke gambar default
             // return redirect(asset('images/Tome.png'));
         }
-
         $file = Storage::disk('public')->get($path);
         $type = Storage::disk('public')->mimeType($path);
-
         return response($file)->header('Content-Type', $type);
     }
-
+ 
     public function showLibrarians()
     {
         $staff = User::whereIn('role', ['petugas', 'guru'])
             ->orderBy('name', 'asc')
             ->get();
-
         return view('public.librarians', compact('staff'));
     }
-
+ 
     public function allMaterials(Request $request)
     {
         $query = LearningMaterial::where('is_active', true)
             ->with('user')
             ->latest();
-
         if ($request->filled('search')) {
             $query->where('title', 'like', '%' . $request->search . '%');
         }
-
         if ($request->filled('teacher')) {
             $query->where('user_id', $request->teacher);
         }
-
         $materials = $query->paginate(10)->withQueryString();
-
         $teachers = User::where('role', 'guru')
             ->whereHas('learningMaterials')
             ->orderBy('name')
             ->get();
-
         return view('public.catalog.all_materials', compact('materials', 'teachers'));
     }
 }
