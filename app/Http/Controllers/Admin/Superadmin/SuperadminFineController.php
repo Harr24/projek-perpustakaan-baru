@@ -20,17 +20,26 @@ class SuperadminFineController extends Controller
         $month = $request->input('month');
 
         // Query dasar untuk denda yang sudah lunas (paid) dan memiliki jumlah > 0
+        // ==========================================================
+        // --- REVISI: Eager load data petugas yang memproses ---
+        // ==========================================================
         $query = Borrowing::where('fine_status', 'paid')
-                        ->where('fine_amount', '>', 0)
-                        ->with(['user', 'bookCopy.book']); // Eager load relasi
+                            ->where('fine_amount', '>', 0)
+                            ->with([
+                                'user', // Siswa yang meminjam
+                                'bookCopy.book', 
+                                'finePayments.processedBy' // <-- TAMBAHAN BARU
+                            ]);
+        // ==========================================================
+
 
         // Filter pencarian nama pengguna atau judul buku
         $query->when($search, function ($q) use ($search) {
             $q->where(function ($subQ) use ($search) { // Grouping WHERE clauses
                  $subQ->whereHas('user', function ($userQ) use ($search) {
-                    $userQ->where('name', 'LIKE', "%{$search}%");
+                     $userQ->where('name', 'LIKE', "%{$search}%");
                  })->orWhereHas('bookCopy.book', function ($bookQ) use ($search) {
-                    $bookQ->where('title', 'LIKE', "%{$search}%");
+                     $bookQ->where('title', 'LIKE', "%{$search}%");
                  });
             });
         });
@@ -55,13 +64,16 @@ class SuperadminFineController extends Controller
 
         // Ambil daftar tahun unik untuk dropdown filter
         $years = Borrowing::select(DB::raw('YEAR(updated_at) as year'))
-                        ->where('fine_status', 'paid')
-                        ->where('fine_amount', '>', 0)
-                        ->distinct()
-                        ->orderBy('year', 'desc')
-                        ->get();
+                            ->where('fine_status', 'paid')
+                            ->where('fine_amount', '>', 0)
+                            ->distinct()
+                            ->orderBy('year', 'desc')
+                            ->get();
 
         // Kirim data ke view Superadmin
+        // ==========================================================
+        // --- PERBAIKAN: Nama view Anda kemungkinan 'admin.Superadmin.fines.history' ---
+        // ==========================================================
         return view('admin.superadmin.fines.history', compact('paidFines', 'totalFine', 'years'));
     }
 
@@ -105,4 +117,3 @@ class SuperadminFineController extends Controller
      // Method Export bisa ditambahkan di sini jika Superadmin juga butuh export
      // public function export(Request $request) { ... salin dari FineController Petugas ... }
 }
-

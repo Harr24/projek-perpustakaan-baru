@@ -65,4 +65,17 @@ class Borrowing extends Model
         // Jika kamu punya kolom 'returned_by'
         return $this->belongsTo(User::class, 'returned_by');
     }
+
+    // ==========================================================
+    // --- TAMBAHAN BARU: Relasi ke Riwayat Pembayaran Denda ---
+    // ==========================================================
+    /**
+     * Dapatkan semua riwayat pembayaran untuk denda ini.
+     */
+    public function finePayments()
+    {
+        return $this->hasMany(FinePayment::class);
+    }
+    // ==========================================================
+
 }

@@ -12,25 +12,25 @@
         </div>
          <div class="d-flex gap-2">
              <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
-            </a>
-            {{-- Tambahkan link ke Denda Aktif jika Superadmin perlu melihatnya --}}
-            {{-- <a href="{{ route('admin.superadmin.fines.index') }}" class="btn btn-outline-danger btn-sm">
-                <i class="bi bi-clock-history me-1"></i> Lihat Denda Aktif
-            </a> --}}
+                 <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
+             </a>
+             {{-- Tambahkan link ke Denda Aktif jika Superadmin perlu melihatnya --}}
+             {{-- <a href="{{ route('admin.superadmin.fines.index') }}" class="btn btn-outline-danger btn-sm">
+                 <i class="bi bi-clock-history me-1"></i> Lihat Denda Aktif
+             </a> --}}
          </div>
     </div>
 
      {{-- Notifikasi Sukses/Error --}}
      @if(session('success'))
      <div class="alert alert-success alert-dismissible fade show" role="alert">
-         <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+          <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
      </div>
      @endif
      @if(session('error'))
      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-         <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+          <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
      </div>
      @endif
@@ -102,6 +102,7 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover table-striped align-middle mb-0 small">
+                    
                     <thead class="table-light text-muted">
                         <tr>
                             <th class="py-2 px-3">Nama Peminjam</th>
@@ -109,15 +110,16 @@
                             <th class="py-2 px-3">Judul Buku</th>
                             <th class="py-2 px-3 text-end">Jml Denda</th>
                             <th class="py-2 px-3">Tgl Lunas</th>
-                            {{-- ========================================================== --}}
-                            {{-- PENAMBAHAN: Kolom Aksi untuk Superadmin --}}
-                            {{-- ========================================================== --}}
+                            <th class="py-2 px-3">Diproses Oleh</th> {{-- <-- KOLOM BARU --}}
                             <th class="py-2 px-3 text-center">Aksi</th>
-                            {{-- ========================================================== --}}
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($paidFines as $fine)
+                            @php
+                                // Ambil data pembayaran terakhir (yang paling baru)
+                                $lastPayment = $fine->finePayments->last();
+                            @endphp
                             <tr>
                                 <td class="px-3">{{ $fine->user->name ?? 'Pengguna Dihapus' }}</td>
                                 <td class="px-3">{{ $fine->user->class_name ?? 'N/A' }}</td>
@@ -126,25 +128,31 @@
                                     <span class="d-block text-muted" style="font-size: 0.8em;">{{ $fine->bookCopy->book_code ?? 'Kode Dihapus' }}</span>
                                 </td>
                                 <td class="px-3 text-end">Rp{{ number_format($fine->fine_amount, 0, ',', '.') }}</td>
-                                <td class="px-3">{{ $fine->updated_at ? $fine->updated_at->format('d/m/Y H:i') : 'N/A' }}</td>
-                                {{-- ========================================================== --}}
-                                {{-- PENAMBAHAN: Tombol Aksi Hapus untuk Superadmin --}}
-                                {{-- ========================================================== --}}
+                                
+                                {{-- UPDATE: Tgl Lunas diambil dari log pembayaran, bukan updated_at --}}
+                                <td class="px-3">
+                                    {{ $lastPayment ? $lastPayment->created_at->format('d/m/Y H:i') : 'N/A' }}
+                                </td>
+                                
+                                {{-- BARU: Tampilkan nama petugas yang memproses --}}
+                                <td class="px-3">
+                                    {{ $lastPayment && $lastPayment->processedBy ? $lastPayment->processedBy->name : 'N/A' }}
+                                </td>
+                                
                                 <td class="px-3 text-center">
-                                    {{-- Form action mengarah ke rute destroy Superadmin --}}
                                     <form action="{{ route('admin.superadmin.fines.destroy', $fine->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus riwayat denda ini secara permanen? Ini tidak bisa dibatalkan.');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Riwayat Permanen">
-                                            <i class="bi bi-trash3-fill"></i> {{-- Icon berbeda --}}
+                                            <i class="bi bi-trash3-fill"></i>
                                         </button>
                                     </form>
                                 </td>
-                                {{-- ========================================================== --}}
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4"> {{-- Update colspan jadi 6 --}}
+                                {{-- UPDATE: Colspan jadi 7 --}}
+                                <td colspan="7" class="text-center text-muted py-4">
                                     <i class="bi bi-search d-block fs-1 mb-2 opacity-50"></i>
                                     Tidak ada data riwayat denda yang cocok.
                                 </td>
@@ -154,11 +162,11 @@
                     @if($paidFines->isNotEmpty())
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="3" class="px-3 py-2 text-end">Total Pemasukan (sesuai filter):</td> {{-- Update colspan --}}
-                            <td class="px-3 py-2 text-end"> {{-- Pindahkan total ke kolom denda --}}
+                            <td colspan="3" class="px-3 py-2 text-end">Total Pemasukan (sesuai filter):</td>
+                            <td class="px-3 py-2 text-end">
                                 Rp {{ number_format($totalFine, 0, ',', '.') }}
                             </td>
-                           <td class="px-3 py-2" colspan="2"></td> {{-- Tambah cell kosong untuk kolom Tgl Lunas & Aksi --}}
+                            <td class="px-3 py-2" colspan="3"></td> {{-- UPDATE: Colspan jadi 3 --}}
                         </tr>
                     </tfoot>
                     @endif
@@ -166,15 +174,13 @@
             </div>
              {{-- Pagination --}}
              @if ($paidFines->hasPages())
-                <div class="card-footer bg-white border-top-0 py-2">
-                    {{ $paidFines->links() }}
-                </div>
+                 <div class="card-footer bg-white border-top-0 py-2">
+                     {{ $paidFines->links() }}
+                 </div>
             @endif
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-@endsection {{-- Tambahkan jika menggunakan @extends --}}
-{{-- @push('scripts') --}} {{-- Hapus jika tidak pakai @push --}}
-{{-- @endpush --}}
+@endsection
