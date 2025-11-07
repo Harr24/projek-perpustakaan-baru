@@ -99,7 +99,13 @@ class BookCatalogController extends Controller
         $topBorrowers = Borrowing::select('user_id', DB::raw('count(*) as loans_count'))
             // Ganti 'whereMonth' dan 'whereYear' dengan 'whereBetween'
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->where('status', '!=', 'rejected')
+
+            // ==========================================================
+            // --- PERBAIKAN BUG: Hanya hitung status 'dipinjam' atau 'returned' ---
+            // ==========================================================
+            ->whereIn('status', ['dipinjam', 'returned'])
+            // ==========================================================
+            
             ->whereHas('user', function ($query) {
                 $query->where('role', 'siswa');
             })
