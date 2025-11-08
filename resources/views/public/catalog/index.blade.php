@@ -426,6 +426,18 @@
         .material-card:hover i {
             transform: rotate(-10deg) scale(1.1);
         }
+
+        /* ========================================================== */
+        /* --- TAMBAHAN BARU: CSS untuk Thumbnail Materi --- */
+        /* ========================================================== */
+         .material-card-img {
+            height: 180px; /* Cukup 180px untuk 4 kolom */
+            object-fit: cover; /* Membuat gambar mengisi area tanpa distorsi */
+         }
+        /* ========================================================== */
+        /* --- AKHIR TAMBAHAN --- */
+        /* ========================================================== */
+
         
         /* ========================================================== */
         /* RESPONSIVE */
@@ -661,7 +673,7 @@
                                                     Petugas
                                                 </small>
                                             </li>
-                                            @endforeach
+                                        @endforeach
                                     </ul>
                                 @else
                                     <div class="text-center text-muted d-flex flex-column justify-content-center h-100">
@@ -758,6 +770,7 @@
             </div>
         </div>
 
+        
         {{-- Materi Belajar (Sekarang Publik) --}}
         @if(isset($learningMaterials) && $learningMaterials->isNotEmpty())
         <div class="container py-5 mt-5" data-aos="fade-up">
@@ -765,32 +778,57 @@
                 <h2 class="fw-bold display-6">Materi Belajar Terbaru</h2>
                 <p class="lead text-muted">Akses materi tambahan yang dibagikan oleh para guru.</p>
             </div>
-            <div class="row row-cols-1 row-cols-md-2 g-4">
+            
+            {{-- Menggunakan row-cols-lg-4 agar 4 item pas di desktop --}}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
                 @foreach($learningMaterials as $material)
-                <div class="col">
-                    <a href="{{ $material->link_url }}" target="_blank" rel="noopener noreferrer" class="card h-100 material-card text-decoration-none text-dark">
-                        <div class="card-body d-flex align-items-center">
-                            <div class="pe-3">
-                                <div class="d-flex align-items-center justify-content-center bg-danger text-white rounded-circle" style="width: 50px; height: 50px;">
-                                    <i class="bi bi-link-45deg fs-4"></i>
+                    <div class="col">
+                        <a href="{{ $material->link_url }}" target="_blank" rel="noopener noreferrer" class="material-card h-100 d-flex flex-column text-decoration-none">
+                            
+                            {{-- GAMBAR THUMBNAIL BARU --}}
+                            <img src="{{ $material->thumbnail_url }}" class="card-img-top material-card-img" alt="Thumbnail {{ $material->title }}">
+                            
+                            <div class="card-body d-flex flex-column p-3">
+                                <h5 class="card-title fw-bold mb-2 text-dark" style="font-size: 1rem;">
+                                    {{ Str::limit($material->title, 45) }}
+                                </h5>
+                                
+                                @if($material->description)
+                                    <p class="card-text text-muted small mb-3" style="font-size: 0.85rem;">
+                                        {{ Str::limit($material->description, 70) }}
+                                    </p>
+                                @endif
+                                
+                                {{-- Footer Kartu (Info Guru & Tipe) --}}
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted" style="font-size: 0.8rem;">
+                                            Oleh: {{ $material->user->name }}
+                                        </small>
+                                        
+                                        {{-- Badge Tipe Konten --}}
+                                        @if(str_contains($material->link_url, 'youtu'))
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-play-circle-fill me-1"></i> Video
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-link-45deg me-1"></i> Link
+                                            </span>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex-grow-1">
-                                <h5 class="card-title fw-bold mb-1">{{ $material->title }}</h5>
-                                <p class="card-text text-muted small mb-2">{{ Str::limit($material->description, 100) }}</p>
-                                <p class="card-text mb-0"><small class="text-muted">Oleh: {{ $material->user->name }}</small></p>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
                 @endforeach
             </div>
+            
             <div class="text-center mt-5">
                 <a href="{{ route('catalog.materials.all') }}" class="btn btn-outline-danger"><i class="bi bi-collection-fill me-2"></i> Lihat Semua Materi Belajar</a>
             </div>
         </div>
         @endif
-
         {{-- Peminjam Teratas --}}
         <div class="top-borrowers-section mt-5 py-5" data-aos="fade-up">
             <div class="container">
