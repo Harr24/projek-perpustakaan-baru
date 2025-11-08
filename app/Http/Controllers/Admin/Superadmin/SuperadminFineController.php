@@ -8,6 +8,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; // Untuk mengambil tahun unik
 use Illuminate\Support\Facades\Log; // Untuk logging error
 
+// ==========================================================
+// --- TAMBAHAN BARU: Import package Excel dan Carbon ---
+// ==========================================================
+use Spatie\SimpleExcel\SimpleExcelWriter;
+use Carbon\Carbon;
+// ==========================================================
+
+
 class SuperadminFineController extends Controller
 {
     /**
@@ -74,7 +82,7 @@ class SuperadminFineController extends Controller
         // ==========================================================
         // --- PERBAIKAN: Nama view Anda kemungkinan 'admin.Superadmin.fines.history' ---
         // ==========================================================
-        return view('admin.superadmin.fines.history', compact('paidFines', 'totalFine', 'years'));
+        return view('admin.Superadmin.fines.history', compact('paidFines', 'totalFine', 'years'));
     }
 
     /**
@@ -114,6 +122,82 @@ class SuperadminFineController extends Controller
         }
     }
 
-     // Method Export bisa ditambahkan di sini jika Superadmin juga butuh export
-     // public function export(Request $request) { ... salin dari FineController Petugas ... }
+     // ==========================================================
+    // --- TAMBAHAN BARU: Fungsi Export Excel ---
+    // ==========================================================
+    /**
+     * Export riwayat denda lunas ke Excel.
+     */
+    public function export(Request $request)
+    {
+        $search = $request->input('search');
+        $year = $request->input('year');
+        $month = $request->input('month');
+
+        // 1. Query DASAR (Sama seperti 'history' + Eager Load)
+        $query = Borrowing::where('fine_status', 'paid')
+                            ->where('fine_amount', '>', 0)
+                            ->with([
+                                'user', 
+                                'bookCopy.book', 
+                                'finePayments.processedBy' // Eager load petugas
+                            ])
+                            ->orderBy('updated_at', 'desc');
+
+        // 2. Terapkan FILTER (Sama seperti 'history')
+        $query->when($search, function ($q) use ($search) {
+            $q->where(function ($subQ) use ($search) { 
+                 $subQ->whereHas('user', function ($userQ) use ($search) {
+                     $userQ->where('name', 'LIKE', "%{$search}%");
+                 })->orWhereHas('bookCopy.book', function ($bookQ) use ($search) {
+                     $bookQ->where('title', 'LIKE', "%{$search}%");
+                 });
+            });
+        });
+        $query->when($year, fn($q) => $q->whereYear('updated_at', $year));
+        $query->when($month, fn($q) => $q->whereMonth('updated_at', $month));
+
+        // 3. Ambil SEMUA data (tanpa pagination)
+        $fines = $query->get();
+
+        if ($fines->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada data untuk diekspor berdasarkan filter Anda.');
+        }
+
+        // 4. Buat File Excel
+        $fileName = 'riwayat-denda-lunas-superadmin-' . Carbon::now()->format('Ymd-His') . '.xlsx';
+        $filePath = storage_path('app/' . $fileName);
+
+        $writer = SimpleExcelWriter::create($filePath);
+        
+        // 5. Buat Header (Harus rapi)
+        $writer->addRow([
+            'Nama Peminjam', 
+            'Kelas', 
+            'Judul Buku', 
+            'Kode Eksemplar', 
+            'Jumlah Denda', 
+            'Tanggal Lunas', 
+            'Diproses Oleh (Petugas)'
+        ]);
+
+        // 6. Isi Data
+        foreach ($fines as $fine) {
+            // Ambil data pembayaran terakhir untuk info
+            $lastPayment = $fine->finePayments->last(); 
+
+            $writer->addRow([
+                'Nama Peminjam' => $fine->user?->name ?? 'N/A',
+                'Kelas'         => $fine->user?->class_name ?? 'N/A',
+                'Judul Buku'    => $fine->bookCopy?->book?->title ?? 'N/A',
+                'Kode Eksemplar' => $fine->bookCopy?->book_code ?? 'N/A',
+                'Jumlah Denda'  => $fine->fine_amount,
+                'Tanggal Lunas' => $lastPayment ? $lastPayment->created_at->format('d-m-Y H:i') : 'N/A',
+                'Diproses Oleh' => $lastPayment?->processedBy?->name ?? 'N/A',
+            ]);
+        }
+        
+        // 7. Download file
+        return response()->download($filePath)->deleteFileAfterSend(true);
+    }
 }

@@ -78,11 +78,12 @@
                 <div class="col-md-3 col-sm-6">
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-danger btn-sm flex-grow-1"><i class="bi bi-funnel-fill"></i> Filter</button>
-                        {{-- Tambahkan tombol Export jika diperlukan --}}
-                        {{-- <a href="{{ route('admin.superadmin.fines.export', request()->query()) }}" class="btn btn-success btn-sm" title="Export ke Excel">
+                        
+                        {{-- Hapus komentar untuk memunculkan tombol --}}
+                        <a href="{{ route('admin.superadmin.fines.export', request()->query()) }}" class="btn btn-success btn-sm" title="Export ke Excel">
                             <i class="bi bi-file-earmark-excel-fill"></i> <span class="d-none d-lg-inline">Export</span>
-                        </a> --}}
-                         @if(request()->has('search') || request()->has('year') || request()->has('month'))
+                        </a>
+                        @if(request()->has('search') || request()->has('year') || request()->has('month'))
                             {{-- Link reset mengarah ke rute history Superadmin --}}
                             <a href="{{ route('admin.superadmin.fines.history') }}" class="btn btn-outline-secondary btn-sm" title="Reset Filter">
                                 <i class="bi bi-x-lg"></i>
@@ -140,11 +141,12 @@
                                 </td>
                                 
                                 <td class="px-3 text-center">
+                                    {{-- Form action mengarah ke rute destroy Superadmin --}}
                                     <form action="{{ route('admin.superadmin.fines.destroy', $fine->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus riwayat denda ini secara permanen? Ini tidak bisa dibatalkan.');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Riwayat Permanen">
-                                            <i class="bi bi-trash3-fill"></i>
+                                            <i class="bi bi-trash3-fill"></i> {{-- Icon berbeda --}}
                                         </button>
                                     </form>
                                 </td>
