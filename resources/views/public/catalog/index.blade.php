@@ -883,7 +883,7 @@
                             </div>
                             <div class="info-text">
                                 <h4 class="info-title">Email</h4>
-                                <p>-</p>
+                                <p>smk_multikomp@yahoo.co.id</p>
                             </div>
                         </div>
 
@@ -893,7 +893,7 @@
                             </div>
                             <div class="info-text">
                                 <h4 class="info-title">Telepon</h4>
-                                <p>-</p>
+                                <p>Tlp. (021) 77823607</p>
                             </div>
                         </div>
                         
