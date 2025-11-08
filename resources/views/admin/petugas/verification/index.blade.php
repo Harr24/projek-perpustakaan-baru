@@ -4,6 +4,9 @@
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1">
  <title>Verifikasi Pendaftar</title>
+ 
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ 
  <style>
   /* [ SELURUH KODE CSS KAMU YANG SUDAH ADA DI SINI, TIDAK ADA YANG DIUBAH ] */
   body {
@@ -27,20 +30,20 @@
    color: #c62828;
   }
   .btn-back {
-    padding: 8px 14px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 0.9rem;
-    text-decoration: none;
-    background-color: #fff;
-    color: #555;
-    transition: background-color 0.2s, border-color 0.2s;
+   padding: 8px 14px;
+   border: 1px solid #ddd;
+   border-radius: 6px;
+   font-weight: 600;
+   cursor: pointer;
+   font-size: 0.9rem;
+   text-decoration: none;
+   background-color: #fff;
+   color: #555;
+   transition: background-color 0.2s, border-color 0.2s;
   }
   .btn-back:hover {
-    background-color: #f3f4f6;
-    border-color: #ccc;
+   background-color: #f3f4f6;
+   border-color: #ccc;
   }
   .alert-success, .alert-error {
    padding: 12px 16px;
@@ -147,8 +150,8 @@
 <body>
 
  <div class="header-container">
-    <h1>Daftar Siswa Menunggu Verifikasi</h1>
-    <a href="{{ route('dashboard') }}" class="btn-back">Kembali ke Dashboard</a>
+  <h1>Daftar Siswa Menunggu Verifikasi</h1>
+  <a href="{{ route('dashboard') }}" class="btn-back">Kembali ke Dashboard</a>
  </div>
 
  @if(session('success'))
@@ -163,7 +166,7 @@
   <thead>
    <tr>
     <th>Nama</th>
-    <th>NISN</th> {{-- <-- PERUBAHAN 1: Menambahkan judul kolom NISN --}}
+    <th>NISN</th> 
     <th>Email</th>
     <th>Kelas</th>
     <th>Kartu Pelajar</th>
@@ -174,7 +177,7 @@
    @forelse ($pendingUsers as $student)
     <tr>
      <td data-label="Nama">{{ $student->name }}</td>
-     <td data-label="NISN">{{ $student->nis ?? 'N/A' }}</td> {{-- <-- PERUBAHAN 2: Menampilkan data NISN --}}
+     <td data-label="NISN">{{ $student->nis ?? 'N/A' }}</td>
      <td data-label="Email">{{ $student->email }}</td>
      <td data-label="Kelas">{{ $student->class_name ?? 'N/A' }}</td>
      <td data-label="Kartu Pelajar">
@@ -186,11 +189,14 @@
      </td>
      <td data-label="Aksi">
       <div class="actions">
-       <form action="{{ route('admin.petugas.verification.approve', $student) }}" method="POST">
+
+       <form action="{{ route('admin.petugas.verification.approve', $student) }}" method="POST" class="form-confirm-acc">
         @csrf
         <button type="submit" class="btn-approve">ACC</button>
        </form>
-       <form action="{{ route('admin.petugas.verification.reject', $student) }}" method="POST">
+       
+       {{-- Saya tambahkan konfirmasi untuk Tolak juga --}}
+       <form action="{{ route('admin.petugas.verification.reject', $student) }}" method="POST" class="form-confirm-reject">
         @csrf
         <button type="submit" class="btn-reject">Tolak</button>
        </form>
@@ -199,10 +205,63 @@
     </tr>
    @empty
     <tr>
-     <td colspan="6">Tidak ada pendaftar baru.</td> {{-- <-- PERUBAHAN 3: Mengubah colspan menjadi 6 --}}
+     <td colspan="6">Tidak ada pendaftar baru.</td>
     </tr>
    @endforelse
   </tbody>
  </table>
+
+ 
+ <script>
+    // Logika untuk tombol SETUJU (ACC)
+    // 1. Ambil semua form dengan class 'form-confirm-acc'
+    const accForms = document.querySelectorAll('.form-confirm-acc');
+    
+    // 2. Beri event listener ke setiap form
+    accForms.forEach(form => {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // Hentikan form agar tidak langsung submit
+            
+            Swal.fire({
+                title: 'Setujui Siswa Ini?',
+                text: "Apakah Anda yakin data siswa ini sudah benar?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2e7d32', // Warna dari .btn-approve
+                cancelButtonColor: '#555',
+                confirmButtonText: 'Ya, Setujui!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // Jika dikonfirmasi, lanjutkan submit form
+                }
+            });
+        });
+    });
+
+    // Logika untuk tombol TOLAK
+    const rejectForms = document.querySelectorAll('.form-confirm-reject');
+    rejectForms.forEach(form => {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // Hentikan submit
+            
+            Swal.fire({
+                title: 'Tolak Siswa Ini?',
+                text: "Tindakan ini tidak dapat dibatalkan.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#c62828', // Warna dari .btn-reject
+                cancelButtonColor: '#555',
+                confirmButtonText: 'Ya, Tolak!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit(); // Lanjutkan submit jika dikonfirmasi
+                }
+            });
+        });
+    });
+ </script>
+
 </body>
 </html>

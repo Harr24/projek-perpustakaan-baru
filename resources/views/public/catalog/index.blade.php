@@ -893,14 +893,13 @@
                     <div class="col-lg-6 mb-4 mb-lg-0">
                         
                         <iframe 
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.691893162832!2d106.81866667499214!3d-6.433608393557545!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69ea2635732523%3A0x20126f5d1f77c9b0!2sSMK%20Multicomp%20Depok!5e0!3m2!1sid!2sid!4v1762216376908!5m2!1sid!2sid" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" 
-                            style="border:0; width: 100%; height: 100%; min-height: 450px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.691893162832!2d106.81866667499214!3d-6.433608393557545!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69ea2635732523%3A0x20126f5d1f77c9b0!2sSMK%20Multicomp%20Depok!5e0!3m2!1sid!2sid!4v1762216376908!5m2!1sid!2sid" 
+                            style="border:0; width: 100%; min-height: 450px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" 
                             allowfullscreen="" 
                             loading="lazy" 
                             referrerpolicy="no-referrer-when-downgrade">
                         </iframe>
-                        
-                    </div>
+                        </div>
 
                     <div class="col-lg-6">
                         
