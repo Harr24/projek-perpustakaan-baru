@@ -262,3 +262,13 @@ class BookCatalogController extends Controller
         return view('public.catalog.all_materials', compact('materials', 'teachers'));
     }
 }
+
+
+
+
+
+
+
+
+
+//
