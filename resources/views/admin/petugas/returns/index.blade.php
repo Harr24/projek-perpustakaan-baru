@@ -66,7 +66,7 @@
                             <th class="py-3 px-3">Kontak (WA)</th>
                             <th class="py-3 px-3">Jatuh Tempo</th>
                             <th class="py-3 px-3">Status</th>
-                            <th class="py-3 px-3 text-end" style="min-width: 190px;">Aksi Individual</th> {{-- Sedikit dilebarkan lagi --}}
+                            <th class="py-3 px-3 text-end" style="min-width: 190px;">Aksi Individual</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,32 +75,35 @@
                             {{-- --- PERBAIKAN LOGIKA JATUH TEMPO --- --}}
                             {{-- ========================================================== --}}
                             @php
-                                // Ambil 'due_date' (tanggal resmi dari admin), BUKAN 'due_at'
                                 $officialDueDate = $borrow->due_date; 
                                 $bookType = $borrow->bookCopy->book->book_type;
                                 
                                 $displayDate = 'N/A';
                                 $isOverdue = false; // Default tidak terlambat
+                                $userRole = $borrow->user->role ?? 'siswa'; // Ambil role
 
                                 if ($officialDueDate) {
-                                    // Jika ADA due date (misal: buku 'IPS')
                                     $dueDateCarbon = \Carbon\Carbon::parse($officialDueDate);
                                     $displayDate = $dueDateCarbon->format('d M Y');
                                     
-                                    // Cek keterlambatan HANYA JIKA ADA due date
-                                    // startOfDay() untuk memastikan perbandingan tanggal berjalan adil
-                                    // (Jatuh tempo tgl 5, dikembalikan tgl 5 jam 10 malam tidak dihitung telat)
                                     $isOverdue = now()->startOfDay()->isAfter($dueDateCarbon);
 
                                 } else if ($bookType == 'laporan' || $bookType == 'paket_semester') {
-                                    // Jika TIDAK ADA due date (NULL) karena ini buku laporan/semester
                                     $displayDate = 'Tanpa Batas Waktu';
                                     $isOverdue = false; // Buku ini tidak bisa terlambat
                                 }
+
+                                // ==========================================================
+                                // --- PERBAIKAN: Jangan tandai GURU sebagai 'terlambat' ---
+                                // ==========================================================
+                                if ($userRole === 'guru') {
+                                    $isOverdue = false; // Setel ulang jadi false jika peminjamnya guru
+                                }
+                                // ==========================================================
                             @endphp
                             {{-- ========================================================== --}}
 
-                            <tr class="{{ $isOverdue ? 'table-danger' : '' }}">
+                            <tr class="{{ $isOverdue ? 'table-danger' : '' }}"> {{-- <- Baris ini sekarang aman untuk Guru --}}
                                 <td class="px-3">
                                     <input class="form-check-input borrowing-checkbox" type="checkbox" value="{{ $borrow->id }}">
                                 </td>
@@ -124,11 +127,7 @@
                                     @endif
                                 </td>
                                 
-                                {{-- ========================================================== --}}
-                                {{-- --- PERBAIKAN TAMPILAN TANGGAL --- --}}
-                                {{-- ========================================================== --}}
                                 <td class="px-3 fw-bold">{{ $displayDate }}</td>
-                                {{-- ========================================================== --}}
                                 
                                 <td class="px-3">
                                     @if($isOverdue)
@@ -147,7 +146,6 @@
                                         </form>
                                         
                                         {{-- Tombol Tandai Hilang --}}
-                                        {{-- Kita tambahkan cek, jangan tandai hilang buku laporan/semester karena denda beda --}}
                                         @if($bookType != 'laporan' && $bookType != 'paket_semester')
                                         <form action="{{ route('admin.petugas.returns.markAsLost', $borrow) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menandai buku ini HILANG?');" style="display: inline;">
                                             @csrf

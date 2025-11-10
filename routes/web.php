@@ -118,7 +118,10 @@ Route::middleware('auth')->group(function () {
 
     // RUTE KHUSUS UNTUK ROLE GURU
     Route::middleware('role:guru')->prefix('guru')->name('guru.')->group(function () {
-        Route::resource('materials', LearningMaterialController::class);
+        // ==========================================================
+        // --- ðŸ”¥ INI DIA PERBAIKANNYA ðŸ”¥ ---
+        // ==========================================================
+        Route::resource('materials', LearningMaterialController::class)->except(['show']);
     });
 
     // RUTE KHUSUS UNTUK ROLE SUPERADMIN
