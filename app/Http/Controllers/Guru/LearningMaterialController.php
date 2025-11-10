@@ -36,18 +36,35 @@ class LearningMaterialController extends Controller
         return redirect()->route('guru.materials.index')->with('success', 'Materi berhasil ditambahkan.');
     }
 
+    // Fungsi 'show' yang hilang (untuk perbaikan error 500)
+    public function show(LearningMaterial $material)
+    {
+        // ==========================================================
+        // 🔥 PERBAIKAN 403: Diubah dari !== menjadi !=
+        // ==========================================================
+        abort_if($material->user_id != Auth::id(), 403);
+        
+        // Langsung arahkan ke halaman edit materi tersebut
+        return redirect()->route('guru.materials.edit', $material);
+    }
+
     // Menampilkan form untuk mengedit materi
     public function edit(LearningMaterial $material)
     {
-        // Pastikan guru hanya bisa mengedit materinya sendiri
-        abort_if($material->user_id !== Auth::id(), 403);
+        // ==========================================================
+        // 🔥 PERBAIKAN 403: Diubah dari !== menjadi !=
+        // ==========================================================
+        abort_if($material->user_id != Auth::id(), 403);
         return view('guru.materials.edit', compact('material'));
     }
 
     // Mengupdate materi di database
     public function update(Request $request, LearningMaterial $material)
     {
-        abort_if($material->user_id !== Auth::id(), 403);
+        // ==========================================================
+        // 🔥 PERBAIKAN 403: Diubah dari !== menjadi !=
+        // ==========================================================
+        abort_if($material->user_id != Auth::id(), 403);
         
         $request->validate([
             'title' => 'required|string|max:255',
@@ -68,7 +85,10 @@ class LearningMaterialController extends Controller
     // Menghapus materi
     public function destroy(LearningMaterial $material)
     {
-        abort_if($material->user_id !== Auth::id(), 403);
+        // ==========================================================
+        // 🔥 PERBAIKAN 403: Diubah dari !== menjadi !=
+        // ==========================================================
+        abort_if($material->user_id != Auth::id(), 403);
         $material->delete();
         return redirect()->route('guru.materials.index')->with('success', 'Materi berhasil dihapus.');
     }
