@@ -426,6 +426,18 @@
         .material-card:hover i {
             transform: rotate(-10deg) scale(1.1);
         }
+
+        /* ========================================================== */
+        /* --- TAMBAHAN BARU: CSS untuk Thumbnail Materi --- */
+        /* ========================================================== */
+         .material-card-img {
+            height: 180px; /* Cukup 180px untuk 4 kolom */
+            object-fit: cover; /* Membuat gambar mengisi area tanpa distorsi */
+         }
+        /* ========================================================== */
+        /* --- AKHIR TAMBAHAN --- */
+        /* ========================================================== */
+
         
         /* ========================================================== */
         /* RESPONSIVE */
@@ -661,7 +673,7 @@
                                                     Petugas
                                                 </small>
                                             </li>
-                                            @endforeach
+                                        @endforeach
                                     </ul>
                                 @else
                                     <div class="text-center text-muted d-flex flex-column justify-content-center h-100">
@@ -758,6 +770,7 @@
             </div>
         </div>
 
+        
         {{-- Materi Belajar (Sekarang Publik) --}}
         @if(isset($learningMaterials) && $learningMaterials->isNotEmpty())
         <div class="container py-5 mt-5" data-aos="fade-up">
@@ -765,32 +778,57 @@
                 <h2 class="fw-bold display-6">Materi Belajar Terbaru</h2>
                 <p class="lead text-muted">Akses materi tambahan yang dibagikan oleh para guru.</p>
             </div>
-            <div class="row row-cols-1 row-cols-md-2 g-4">
+            
+            {{-- Menggunakan row-cols-lg-4 agar 4 item pas di desktop --}}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
                 @foreach($learningMaterials as $material)
-                <div class="col">
-                    <a href="{{ $material->link_url }}" target="_blank" rel="noopener noreferrer" class="card h-100 material-card text-decoration-none text-dark">
-                        <div class="card-body d-flex align-items-center">
-                            <div class="pe-3">
-                                <div class="d-flex align-items-center justify-content-center bg-danger text-white rounded-circle" style="width: 50px; height: 50px;">
-                                    <i class="bi bi-link-45deg fs-4"></i>
+                    <div class="col">
+                        <a href="{{ $material->link_url }}" target="_blank" rel="noopener noreferrer" class="material-card h-100 d-flex flex-column text-decoration-none">
+                            
+                            {{-- GAMBAR THUMBNAIL BARU --}}
+                            <img src="{{ $material->thumbnail_url }}" class="card-img-top material-card-img" alt="Thumbnail {{ $material->title }}">
+                            
+                            <div class="card-body d-flex flex-column p-3">
+                                <h5 class="card-title fw-bold mb-2 text-dark" style="font-size: 1rem;">
+                                    {{ Str::limit($material->title, 45) }}
+                                </h5>
+                                
+                                @if($material->description)
+                                    <p class="card-text text-muted small mb-3" style="font-size: 0.85rem;">
+                                        {{ Str::limit($material->description, 70) }}
+                                    </p>
+                                @endif
+                                
+                                {{-- Footer Kartu (Info Guru & Tipe) --}}
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted" style="font-size: 0.8rem;">
+                                            Oleh: {{ $material->user->name }}
+                                        </small>
+                                        
+                                        {{-- Badge Tipe Konten --}}
+                                        @if(str_contains($material->link_url, 'youtu'))
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-play-circle-fill me-1"></i> Video
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-link-45deg me-1"></i> Link
+                                            </span>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex-grow-1">
-                                <h5 class="card-title fw-bold mb-1">{{ $material->title }}</h5>
-                                <p class="card-text text-muted small mb-2">{{ Str::limit($material->description, 100) }}</p>
-                                <p class="card-text mb-0"><small class="text-muted">Oleh: {{ $material->user->name }}</small></p>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+                        </a>
+                    </div>
                 @endforeach
             </div>
+            
             <div class="text-center mt-5">
                 <a href="{{ route('catalog.materials.all') }}" class="btn btn-outline-danger"><i class="bi bi-collection-fill me-2"></i> Lihat Semua Materi Belajar</a>
             </div>
         </div>
         @endif
-
         {{-- Peminjam Teratas --}}
         <div class="top-borrowers-section mt-5 py-5" data-aos="fade-up">
             <div class="container">
@@ -855,14 +893,13 @@
                     <div class="col-lg-6 mb-4 mb-lg-0">
                         
                         <iframe 
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.691893162832!2d106.81866667499214!3d-6.433608393557545!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69ea2635732523%3A0x20126f5d1f77c9b0!2sSMK%20Multicomp%20Depok!5e0!3m2!1sid!2sid!4v1762216376908!5m2!1sid!2sid" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" 
-                            style="border:0; width: 100%; height: 100%; min-height: 450px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.691893162832!2d106.81866667499214!3d-6.433608393557545!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69ea2635732523%3A0x20126f5d1f77c9b0!2sSMK%20Multicomp%20Depok!5e0!3m2!1sid!2sid!4v1762216376908!5m2!1sid!2sid" 
+                            style="border:0; width: 100%; min-height: 450px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" 
                             allowfullscreen="" 
                             loading="lazy" 
                             referrerpolicy="no-referrer-when-downgrade">
                         </iframe>
-                        
-                    </div>
+                        </div>
 
                     <div class="col-lg-6">
                         
@@ -883,7 +920,7 @@
                             </div>
                             <div class="info-text">
                                 <h4 class="info-title">Email</h4>
-                                <p>-</p>
+                                <p>smk_multikomp@yahoo.co.id</p>
                             </div>
                         </div>
 
@@ -893,7 +930,7 @@
                             </div>
                             <div class="info-text">
                                 <h4 class="info-title">Telepon</h4>
-                                <p>-</p>
+                                <p>Tlp. (021) 77823607</p>
                             </div>
                         </div>
                         

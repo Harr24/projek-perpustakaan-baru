@@ -132,7 +132,9 @@ Route::middleware('auth')->group(function () {
         // ==========================================================
         Route::get('/fines/history', [SuperadminFineController::class, 'history'])->name('fines.history');
         Route::delete('/fines/history/{fine}', [SuperadminFineController::class, 'destroy'])->name('fines.destroy');
-        // Route::get('/fines/history/export', [SuperadminFineController::class, 'export'])->name('fines.export'); // Tambahkan jika perlu export
+        
+        // --- TAMBAHAN BARU: Rute untuk Export Excel Superadmin ---
+        Route::get('/fines/history/export', [SuperadminFineController::class, 'export'])->name('fines.export');
         // ==========================================================
         
 

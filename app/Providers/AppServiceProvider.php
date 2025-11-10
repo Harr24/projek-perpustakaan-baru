@@ -3,7 +3,13 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Pagination\Paginator; // <-- Import Paginator
+use Illuminate\Pagination\Paginator; // <-- Import Paginator Anda
+
+// ===========================================
+// --- TAMBAHAN BARU: Import Model & Observer ---
+// ===========================================
+use App\Models\Borrowing;
+use App\Observers\BorrowingObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,5 +32,11 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
         // Anda juga bisa menggunakan useBootstrapFour() jika menggunakan BS4
         // ==========================================================
+
+        
+        // ==========================================================
+        // --- TAMBAHAN BARU: Mendaftarkan Observer ---
+        // ==========================================================
+        Borrowing::observe(BorrowingObserver::class);
     }
 }

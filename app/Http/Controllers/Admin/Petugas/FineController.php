@@ -9,11 +9,18 @@ use Illuminate\Support\Facades\DB;
 use Spatie\SimpleExcel\SimpleExcelWriter; // Pastikan use statement ini ada
 use Carbon\Carbon;
 
+// ==========================================================
+// --- TAMBAHAN BARU: Import Model FinePayment dan Auth ---
+// ==========================================================
+use App\Models\FinePayment;
+use Illuminate\Support\Facades\Auth;
+// ==========================================================
+
+
 class FineController extends Controller
 {
     /**
      * Menampilkan denda yang BELUM LUNAS.
-     * Halaman ini perlu Anda modifikasi untuk menampilkan form cicilan.
      */
     public function index()
     {
@@ -26,19 +33,9 @@ class FineController extends Controller
     }
 
     /**
-     * (METHOD LAMA DIHAPUS)
-     * public function markAsPaid(Borrowing $borrowing) { ... }
-     */
-
-    /**
      * ==========================================================
      * --- METHOD BARU: Menangani Pembayaran Cicilan Denda ---
      * ==========================================================
-     * Menggantikan 'markAsPaid'
-     *
-     * @param Request $request
-     * @param Borrowing $borrowing
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function payInstallment(Request $request, Borrowing $borrowing)
     {
@@ -55,9 +52,8 @@ class FineController extends Controller
         }
 
         // 3. Hitung sisa denda
-        //    (Mengasumsikan Anda sudah menjalankan migration 'add_fine_paid_to_borrowings_table')
         $totalFine = $borrowing->fine_amount;
-        $alreadyPaid = $borrowing->fine_paid ?? 0; // Kolom baru dari migration
+        $alreadyPaid = $borrowing->fine_paid ?? 0;
         $remainingFine = $totalFine - $alreadyPaid;
 
         // 4. Validasi jika pembayaran melebihi sisa denda
@@ -71,7 +67,7 @@ class FineController extends Controller
         try {
             DB::transaction(function () use ($borrowing, $amountToPay) {
                 
-                // Tambahkan pembayaran ke total 'fine_paid'
+                // A. Update tabel 'borrowings'
                 $borrowing->fine_paid += $amountToPay; 
                 
                 // Cek apakah lunas
@@ -81,6 +77,19 @@ class FineController extends Controller
                 }
                 
                 $borrowing->save();
+
+                // ==========================================================
+                // --- B. TAMBAHAN BARU: Catat di Log Pembayaran ---
+                // ==========================================================
+                FinePayment::create([
+                    'borrowing_id' => $borrowing->id,
+                    'processed_by_user_id' => Auth::id(), // ID Petugas yang sedang login
+                    'amount_paid' => $amountToPay,
+                    'created_at' => now(), // Catat waktu transaksi
+                    'updated_at' => now(),
+                ]);
+                // ==========================================================
+
             });
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
@@ -100,13 +109,12 @@ class FineController extends Controller
 
     /**
      * Menampilkan riwayat denda yang SUDAH LUNAS.
-     * (Method ini tidak perlu diubah, sudah benar)
      */
     public function history(Request $request)
     {
         // Ambil tahun unik untuk filter dropdown
         $years = Borrowing::where('fine_status', 'paid')
-                            ->where('fine_amount', '>', 0) // Hanya dari denda yg memang ada
+                            ->where('fine_amount', '>', 0)
                             ->select(DB::raw('YEAR(updated_at) as year'))
                             ->distinct()
                             ->orderBy('year', 'desc')
@@ -149,7 +157,6 @@ class FineController extends Controller
 
     /**
      * Export riwayat denda lunas ke Excel.
-     * (Method ini tidak perlu diubah, sudah benar)
      */
      public function export(Request $request)
      {

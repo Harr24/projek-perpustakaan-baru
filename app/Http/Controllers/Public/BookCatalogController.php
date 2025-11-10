@@ -259,7 +259,7 @@ class BookCatalogController extends Controller
             ->whereHas('learningMaterials')
             ->orderBy('name')
             ->get();
-        return view('public.catalog.all_materials', compact('materials', 'teachers'));
+        return view('public.catalog.all_materials',  compact('materials', 'teachers'));
     }
 }
 
