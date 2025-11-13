@@ -851,7 +851,7 @@
                                         <div class="avatar mx-auto mb-3">{{ strtoupper(substr($borrower->user->name, 0, 2)) }}</div>
                                     @endif
                                     <h5 class="card-title fw-bold text-danger">{{ $borrower->user->name }}</h5>
-                                    <p class="text-muted mb-3 small">
+                                    <!-- <p class="text-muted mb-3 small">
                                         @if($borrower->user->role === 'siswa' && $borrower->user->class_name)
                                             {{ $borrower->user->class_name }}
                                         @elseif($borrower->user->role === 'guru')
@@ -859,7 +859,28 @@
                                         @else
                                             Anggota Perpustakaan
                                         @endif
-                                    </p>
+                                    </p> -->
+                                    <p class="text-muted mb-3 small">
+    @if($borrower->user->role === 'siswa')
+        {{-- 
+            LOGIKA BARU:
+            1. Cek data BARU (class & major) dulu.
+            2. Jika tidak ada, cek data LAMA (class_name) sebagai fallback.
+            3. Jika tidak ada keduanya, tampilkan "Siswa".
+        --}}
+        @if($borrower->user->class && $borrower->user->major)
+            {{ $borrower->user->class }} {{ $borrower->user->major }}
+        @elseif($borrower->user->class_name)
+            {{ $borrower->user->class_name }} {{-- Fallback untuk data lama --}}
+        @else
+            Siswa {{-- Jika tidak ada data sama sekali --}}
+        @endif
+    @elseif($borrower->user->role === 'guru')
+        Guru
+    @else
+        Anggota
+    @endif
+</p>
                                     <div class="stats d-flex justify-content-center gap-4 border-top pt-3">
                                         <div>
                                             <div class="fw-bolder fs-4 text-primary">{{ $borrower->loans_count }}</div>

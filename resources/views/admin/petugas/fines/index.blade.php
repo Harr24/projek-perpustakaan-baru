@@ -83,7 +83,16 @@
                         @forelse ($unpaidFines as $fine)
                             <tr>
                                 <td class="px-3">{{ $fine->user->name }}</td>
-                                <td class="px-3">{{ $fine->user->class_name ?? 'N/A' }}</td>
+                                
+                                {{-- ========================================================== --}}
+                                {{-- --- 🔥 INI DIA PERBAIKANNYA (FINAL!) 🔥 --- --}}
+                                {{-- ========================================================== --}}
+                                <td class="px-3">
+                                    {{-- Menggabungkan kelas dan jurusan, atau tampilkan N/A jika salah satunya kosong --}}
+                                    {{ ($fine->user->class && $fine->user->major) ? $fine->user->class . ' ' . $fine->user->major : 'N/A' }}
+                                </td>
+                                {{-- ========================================================== --}}
+
                                 <td class="px-3">
                                     @if($fine->user->phone_number)
                                         @php

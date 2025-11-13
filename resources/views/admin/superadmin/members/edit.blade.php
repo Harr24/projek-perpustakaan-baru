@@ -38,12 +38,38 @@
                 </div>
                 
                 {{-- ====================================================== --}}
-                {{-- PERUBAHAN DI SINI: Sesuaikan input 'class' menjadi 'class_name' --}}
+                {{-- --- 🔥 INI DIA PERUBAHANNYA 🔥 --- --}}
+                {{-- Mengganti input 'class_name' menjadi 2 dropdown --}}
                 {{-- ====================================================== --}}
+                
+                {{-- 1. Dropdown untuk Tingkat Kelas (Statis) --}}
                 <div class="mb-4">
-                    <label for="class_name" class="block text-gray-700 text-sm font-bold mb-2">Kelas:</label>
-                    <input type="text" id="class_name" name="class_name" value="{{ old('class_name', $member->class_name) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+                    <label for="class" class="block text-gray-700 text-sm font-bold mb-2">Kelas:</label>
+                    <select id="class" name="class" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                        <option value="">Pilih Tingkat Kelas</option>
+                        <option value="X" @selected(old('class', $member->class) == 'X')>X</option>
+                        <option value="XI" @selected(old('class', $member->class) == 'XI')>XI</option>
+                        <option value="XII" @selected(old('class', $member->class) == 'XII')>XII</option>
+                    </select>
                 </div>
+                
+                {{-- 2. Dropdown untuk Jurusan (Dinamis) --}}
+                <div class="mb-4">
+                    <label for="major" class="block text-gray-700 text-sm font-bold mb-2">Jurusan:</label>
+                    <select id="major" name="major" class="shadow border rounded w-full py-2 px-3 text-gray-700">
+                        <option value="">Pilih Jurusan</option>
+                        {{-- Variabel $majors ini WAJIB dikirim dari MemberController --}}
+                        @if(isset($majors))
+                            @foreach($majors as $major)
+                                <option value="{{ $major->name }}" @selected(old('major', $member->major) == $major->name)>
+                                    {{ $major->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+                {{-- ====================================================== --}}
+
             </div>
 
             <div id="teacher-fields" style="{{ old('role', $member->role) == 'guru' ? '' : 'display:none;' }}">

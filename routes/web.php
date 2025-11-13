@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\Superadmin\HeroSliderController;
 use App\Http\Controllers\Admin\Petugas\BorrowingReportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminFineController;
+use App\Http\Controllers\Admin\Superadmin\MajorController;
 // ==========================================================
 // --- TAMBAHAN: Import HolidayController ---
 // ==========================================================
@@ -166,4 +167,19 @@ Route::middleware('auth')->group(function () {
         // ==========================================================
 
     });
+Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
+    Route::resource('petugas', SuperadminPetugasController::class);
+    Route::resource('members', MemberController::class)->except(['create', 'store']);
+    Route::resource('sliders', HeroSliderController::class);
+
+    // ... rute denda, holiday, schedule Anda ...
+
+    // ==========================================================
+    // --- TAMBAHAN BARU: Rute Manajemen Jurusan ---
+    // ==========================================================
+    Route::resource('majors', MajorController::class)->except(['show']);
+    // ==========================================================
+
+});
+    
 });
