@@ -26,7 +26,7 @@
 @endsection
 
 @section('content')
- <main class="container py-4">
+<main class="container py-4">
     <div class="row g-4">
         {{-- Kolom Kiri: Form Edit Utama --}}
         <div class="col-lg-8">
@@ -115,9 +115,21 @@
                             @error('genre_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         
-                        <!-- ========================================================== -->
-                        <!-- --- PERBAIKAN: Ganti 'paket_7_hari' menjadi 'paket' --- -->
-                        <!-- ========================================================== -->
+                        {{-- Lokasi Rak --}}
+                        <div class="mb-3">
+                            <label for="shelf_id" class="form-label required">Lokasi Rak</label>
+                            <select id="shelf_id" name="shelf_id" required class="form-select @error('shelf_id') is-invalid @enderror">
+                                <option value="" disabled>-- Pilih Lokasi Rak --</option>
+                                @foreach ($shelves as $shelf)
+                                    <option value="{{ $shelf->id }}" {{ (old('shelf_id', $book->shelf_id) == $shelf->id) ? 'selected' : '' }}>
+                                        {{ $shelf->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('shelf_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        {{-- Tipe Buku --}}
                         <div class="mb-3">
                             <label for="book_type" class="form-label required">Tipe Buku</label>
                             <select id="book_type" name="book_type" required class="form-select @error('book_type') is-invalid @enderror">
@@ -134,7 +146,6 @@
                             <div class="form-text help-text mt-0">Pilih tipe buku untuk menentukan aturan peminjaman.</div>
                             @error('book_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <!-- ========================================================== -->
 
                         {{-- Sampul Buku --}}
                         <div class="row g-3 align-items-center mb-3">
@@ -226,11 +237,8 @@
                                                     <span class="badge bg-dark">{{ ucfirst($copy->status) }}</span>
                                                 @endif
                                             </td>
-                                            
                                             <td class="text-end">
-                                                
                                                 @if ($copy->status == 'tersedia')
-                                                    
                                                     <form action="{{ route('admin.petugas.books.copies.destroy', $copy->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus eksemplar {{ $copy->book_code }}?');" style="display: inline;">
                                                         @csrf
                                                         @method('DELETE')
@@ -238,9 +246,7 @@
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>
-
                                                 @elseif ($copy->status == 'hilang')
-                                                
                                                     <form action="{{ route('admin.petugas.books.copies.markFound', $copy->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menandai eksemplar {{ $copy->book_code }} sebagai DITEMUKAN?');" style="display: inline;">
                                                         @csrf
                                                         @method('PUT')
@@ -248,13 +254,10 @@
                                                             <i class="bi bi-check-circle-fill"></i>
                                                         </button>
                                                     </form>
-                                                
                                                 @else
-                                                
                                                     <span class="text-muted" title="Tidak dapat dihapus (status: {{ $copy->status }})">
                                                         <i class="bi bi-lock-fill"></i>
                                                     </span>
-
                                                 @endif
                                             </td>
                                         </tr>
@@ -271,10 +274,10 @@
             </div>
         </div>
     </div>
- </main>
+</main>
  
- {{-- Modal Konfirmasi Hapus Buku Utama --}}
- <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+{{-- Modal Konfirmasi Hapus Buku Utama --}}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -294,7 +297,7 @@
             </div>
         </div>
     </div>
- </div>
+</div>
 
 @endsection
 
@@ -314,18 +317,18 @@
     }
 
     (function () {
-      'use strict'
-      var forms = document.querySelectorAll('.needs-validation')
-      Array.prototype.slice.call(forms)
-        .forEach(function (form) {
-          form.addEventListener('submit', function (event) {
-            if (!form.checkValidity()) {
-              event.preventDefault()
-              event.stopPropagation()
-            }
-            form.classList.add('was-validated')
-          }, false)
-        })
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
     })()
 </script>
 @endpush

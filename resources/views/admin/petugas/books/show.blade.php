@@ -49,12 +49,14 @@
                         <h3 class="fw-bold">{{ $book->title }}</h3>
                         <p class="mb-1"><strong>Penulis:</strong> {{ $book->author }}</p>
                         <p class="mb-1"><strong>Genre:</strong> {{ optional($book->genre)->name ?? 'N/A' }}</p>
+                        
+                        {{-- ========================================================== --}}
+                        {{-- --- BARIS INI SAYA TAMBAHKAN --- --}}
+                        <p class="mb-1"><strong>Lokasi Rak:</strong> {{ optional($book->shelf)->name ?? 'Belum Diatur' }}</p>
+                        {{-- ========================================================== --}}
 
                         <p class="mb-1">
                             <strong>Tipe Buku:</strong>
-                            <!-- ========================================================== -->
-                            <!-- --- PERBAIKAN: Ganti 'paket_7_hari' menjadi 'paket' --- -->
-                            <!-- ========================================================== -->
                             @switch($book->book_type)
                                 @case('reguler')
                                     <span class="badge bg-primary">Buku Reguler</span>
@@ -68,9 +70,14 @@
                                 @default
                                     <span class="badge bg-dark">{{ ucfirst($book->book_type) }}</span>
                             @endswitch
-                            <!-- ========================================================== -->
-                        </p>
+                            </p>
 
+                        {{-- 
+                            CATATAN: 
+                            Di screenshot Anda, ini adalah "Total Stok Awal: 10".
+                            Di kode Anda, ini mengambil dari $book->stock.
+                            Ini sudah benar dan sesuai.
+                        --}}
                         <p><strong>Total Stok Awal:</strong> {{ $book->stock }}</p>
                     </div>
                 </div>

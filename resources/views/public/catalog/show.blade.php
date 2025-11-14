@@ -32,7 +32,7 @@
             <div>
                  <a href="{{ route('catalog.index') }}" class="btn btn-sm btn-outline-secondary me-2">
                      <i class="bi bi-house-door-fill"></i> Kembali ke Beranda
-                </a>
+                 </a>
                 @auth
                     <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-secondary">Dashboard</a>
                 @else
@@ -67,9 +67,6 @@
                         <div>
                             <span class="badge bg-danger mb-3">{{ $book->genre->name }}</span>
                             
-                            <!-- ========================================================== -->
-                            <!-- PERBAIKAN 1: Mengganti 'paket_7_hari' dengan 'paket' -->
-                            <!-- ========================================================== -->
                             @switch($book->book_type)
                                 @case('paket')
                                     <span class="badge bg-info text-dark mb-3">Buku Paket</span>
@@ -83,9 +80,14 @@
                                 @default
                                     {{-- Tidak perlu badge untuk 'reguler' jika tidak mau --}}
                             @endswitch
-                            <!-- ========================================================== -->
+                            </div>
 
-                        </div>
+                        {{-- ========================================================== --}}
+                        {{-- --- TAMBAHAN BARU UNTUK LOKASI RAK --- --}}
+                        <p class="mt-3">
+                            <strong>Lokasi Rak:</strong> {{ optional($book->shelf)->name ?? 'Belum Diatur' }}
+                        </p>
+                        {{-- ========================================================== --}}
                         
                         {{-- Menampilkan Sinopsis --}}
                         @if ($book->synopsis)
@@ -100,8 +102,6 @@
 
                 @auth
                     {{-- ========================================================== --}}
-                    <!-- PERBAIKAN 2: Logika 'isBookPackage' diubah -->
-                    <!-- ========================================================== -->
                     @php
                         // Cek HANYA apakah buku ini adalah 'paket'
                         $isBookPackage = ($book->book_type == 'paket');
@@ -136,8 +136,6 @@
                             </div>
                         </div>
                     @endif
-                    <!-- ========================================================== -->
-
                     {{-- Tabel Pinjam Satuan --}}
                     <h3 class="h5 fw-bold mt-4">Daftar Salinan Buku (Pinjam Satuan)</h3>
                     <div class="table-responsive">
@@ -194,4 +192,4 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>

@@ -16,31 +16,32 @@
     </div>
 
     {{-- Notifikasi Error Validasi --}}
-     @if ($errors->has('general'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Gagal Menyimpan!</h6>
-             <p class="mb-0 small">{{ $errors->first('general') }}</p>
-             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-     @endif
-     @if ($errors->has('books.*'))
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Periksa Kembali Input Anda:</h6>
-            <ul class="mb-0 small ps-4">
-                 @foreach ($errors->get('books.*') as $fieldErrors)
-                     @foreach ($fieldErrors as $error)
-                         <li>{{ $error }}</li>
-                     @endforeach
-                 @endforeach
-                 @foreach ($errors->keys() as $key)
-                     @if (preg_match('/^books\.\d+\.initial_code$/', $key) && !in_array($key, array_keys($errors->get('books.*'))))
-                         <li>{{ $errors->first($key) }}</li>
-                     @endif
-                 @endforeach
-            </ul>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-     @endif
+    @if ($errors->has('general'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Gagal Menyimpan!</h6>
+        <p class="mb-0 small">{{ $errors->first('general') }}</p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+    @if ($errors->has('books.*'))
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Periksa Kembali Input Anda:</h6>
+        <ul class="mb-0 small ps-4">
+            @foreach ($errors->get('books.*') as $fieldErrors)
+                @foreach ($fieldErrors as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            @endforeach
+            {{-- Ini untuk menampilkan error 'initial_code' kustom --}}
+            @foreach (array_keys($errors->messages()) as $key)
+                @if (preg_match('/^books\.\d+\.initial_code$/', $key))
+                    <li>{{ $errors->first($key) }}</li>
+                @endif
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
 
 
     <form action="{{ route('admin.petugas.books.store.bulk.form') }}" method="POST" id="bulk-book-form">
@@ -60,6 +61,11 @@
                                 <th class="ps-3 py-2" style="width: 18%;">Judul <span class="text-danger">*</span></th>
                                 <th class="py-2" style="width: 15%;">Penulis <span class="text-danger">*</span></th>
                                 <th class="py-2" style="width: 13%;">Genre <span class="text-danger">*</span></th>
+                                {{-- ========================================================== --}}
+                                {{-- ===== 1. TAMBAHAN HEADER BARU ===== --}}
+                                {{-- ========================================================== --}}
+                                <th class="py-2" style="width: 13%;">Lokasi Rak <span class="text-danger">*</span></th>
+                                {{-- ========================================================== --}}
                                 <th class="py-2" style="width: 10%;">Kode Awal <span class="text-danger">*</span></th>
                                 <th class="py-2" style="width: 7%;">Stok <span class="text-danger">*</span></th>
                                 <th class="py-2" style="width: 8%;">Thn Terbit</th>
@@ -85,12 +91,26 @@
                                     <select name="books[{{ $i }}][genre_id]" class="form-select form-select-sm @error('books.'.$i.'.genre_id') is-invalid @enderror" required>
                                         <option value="">-- Pilih --</option>
                                         @foreach ($genres as $genre)
-                                            <option value="{{ $genre->id }}" {{ old('books.'.$i.'.genre_id') == $genre->id ? 'selected' : '' }}>
-                                                {{ $genre->name }}
-                                            </option>
+                                        <option value="{{ $genre->id }}" {{ old('books.'.$i.'.genre_id') == $genre->id ? 'selected' : '' }}>
+                                            {{ $genre->name }}
+                                        </option>
                                         @endforeach
                                     </select>
                                 </td>
+                                {{-- ========================================================== --}}
+                                {{-- ===== 2. TAMBAHAN DROPDOWN RAK ===== --}}
+                                {{-- ========================================================== --}}
+                                <td class="py-2">
+                                    <select name="books[{{ $i }}][shelf_id]" class="form-select form-select-sm @error('books.'.$i.'.shelf_id') is-invalid @enderror" required>
+                                        <option value="">-- Pilih --</option>
+                                        @foreach ($shelves as $shelf)
+                                        <option value="{{ $shelf->id }}" {{ old('books.'.$i.'.shelf_id') == $shelf->id ? 'selected' : '' }}>
+                                            {{ $shelf->name }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                {{-- ========================================================== --}}
                                 <td class="py-2">
                                     <input type="text" name="books[{{ $i }}][initial_code]" class="form-control form-control-sm @error('books.'.$i.'.initial_code') is-invalid @enderror" placeholder="Cont: LPL" maxlength="10" value="{{ old('books.'.$i.'.initial_code') }}" required>
                                 </td>
@@ -116,13 +136,13 @@
                                 </td>
                                 <td class="pe-3 py-2 text-end">
                                     @if($i > 0 || $rowCount > 1)
-                                        <button type="button" class="btn btn-outline-danger btn-sm remove-book-row" title="Hapus Baris Ini">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm remove-book-row" title="Hapus Baris Ini">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
                                     @else
-                                        <button type="button" class="btn btn-outline-danger btn-sm invisible" disabled>
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm invisible" disabled>
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
                                     @endif
                                 </td>
                             </tr>
@@ -140,7 +160,6 @@
     </form>
 
 </div>
-
 @endsection
 
 @push('scripts')
@@ -166,7 +185,7 @@
                     }
                 } else {
                     if (!removeButton || removeButton.classList.contains('invisible')) {
-                         actionCell.innerHTML = `<button type="button" class="btn btn-outline-danger btn-sm remove-book-row" title="Hapus Baris Ini"><i class="bi bi-trash-fill"></i></button>`;
+                        actionCell.innerHTML = `<button type="button" class="btn btn-outline-danger btn-sm remove-book-row" title="Hapus Baris Ini"><i class="bi bi-trash-fill"></i></button>`;
                     } else {
                         removeButton.disabled = false;
                     }
@@ -174,12 +193,11 @@
             });
         }
 
-
         addButton.addEventListener('click', function () {
             const lastRow = container.querySelector('.book-row:last-child');
             if (!lastRow) return;
 
-            const newRow = lastRow.cloneNode(true); 
+            const newRow = lastRow.cloneNode(true);
 
             newRow.querySelectorAll('input, select, textarea').forEach(input => {
                 const name = input.getAttribute('name');
@@ -187,30 +205,29 @@
                     input.setAttribute('name', name.replace(/\[\d+\]/, `[${rowIndex}]`));
                 }
                 const id = input.getAttribute('id');
-                 if (id) {
+                if (id) {
                     const newId = id.replace(/_\d+$/, `_${rowIndex}`);
                     input.setAttribute('id', newId);
                     const label = newRow.querySelector(`label[for="${id}"]`);
                     if (label) {
-                       label.setAttribute('for', newId);
+                        label.setAttribute('for', newId);
                     }
                 }
 
                 if (input.type === 'checkbox') {
                     input.checked = false;
                 } else if (input.tagName === 'SELECT') {
-                     if (input.name && input.name.includes('[book_type]')) {
-                         input.value = 'reguler'; 
-                     } else {
-                         input.selectedIndex = 0; // Untuk Genre
-                     }
+                    if (input.name && input.name.includes('[book_type]')) {
+                        input.value = 'reguler'; // Default Tipe Buku
+                    } else {
+                        input.selectedIndex = 0; // Untuk Genre (dan Rak)
+                    }
                 } else if (input.name && input.name.includes('[stock]')) {
-                     input.value = '1';
+                    input.value = '1'; // Default Stok
+                } else {
+                    input.value = ''; // Kosongkan inputan lain
                 }
-                 else { 
-                    input.value = '';
-                }
-                input.classList.remove('is-invalid');
+                input.classList.remove('is-invalid'); // Hapus status validasi
             });
 
             const actionCell = newRow.cells[newRow.cells.length - 1];
@@ -228,11 +245,11 @@
                 if (container.querySelectorAll('.book-row').length > 1) {
                     rowToRemove.remove();
                     updateRemoveButtons();
-                 }
+                }
             }
         });
 
-        updateRemoveButtons(); // Panggil saat load
+        updateRemoveButtons(); // Panggil saat load untuk memastikan status tombol Hapus
     });
 </script>
 @endpush

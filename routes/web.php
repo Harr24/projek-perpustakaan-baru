@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\Petugas\BorrowingReportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminFineController;
 use App\Http\Controllers\Admin\Superadmin\MajorController;
+use App\Http\Controllers\Admin\Superadmin\ShelfController;
 // ==========================================================
 // --- TAMBAHAN: Import HolidayController ---
 // ==========================================================
@@ -178,6 +179,8 @@ Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.su
     // --- TAMBAHAN BARU: Rute Manajemen Jurusan ---
     // ==========================================================
     Route::resource('majors', MajorController::class)->except(['show']);
+
+    Route::resource('shelves', ShelfController::class)->except(['show']); // <-- BARU
     // ==========================================================
 
 });

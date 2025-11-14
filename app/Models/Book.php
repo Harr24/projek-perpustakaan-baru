@@ -8,6 +8,10 @@ use App\Models\Borrowing; // Ini sudah benar, tetap ada
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+// <-- TAMBAHAN: Kita import Shelf di sini, meskipun tidak wajib,
+// tapi ini praktik yang baik untuk melihat relasinya.
+use App\Models\Shelf;
+
 class Book extends Model
 {
     use HasFactory;
@@ -22,10 +26,10 @@ class Book extends Model
         'author',
         'synopsis',
         'genre_id',
+        'shelf_id', // <-- TAMBAHAN (1 dari 2): Tambahkan shelf_id ke fillable
         'cover_image',
-        'stock', 
-        // 'is_textbook', // <-- DIHAPUS DARI FILLABLE
-        'book_type',     // <-- DITAMBAHKAN
+        'stock',
+        'book_type',
         'publication_year',
     ];
 
@@ -35,7 +39,7 @@ class Book extends Model
      * @var array
      */
     protected $attributes = [
-        'book_type' => 'reguler', // <-- TAMBAHAN: Atur 'reguler' sebagai default
+        'book_type' => 'reguler',
     ];
 
     /**
@@ -44,8 +48,7 @@ class Book extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        // Kita biarkan cast ini untuk menangani data lama di database
-        'is_textbook' => 'boolean', 
+        // 'is_textbook' => 'boolean', // Komentari atau hapus jika sudah tidak ada
     ];
 
     /**
@@ -65,13 +68,24 @@ class Book extends Model
     }
 
     /**
-     * ==========================================================
-     * FUNGSI LAMA ANDA - INI TETAP ADA
-     * ==========================================================
      * Relasi untuk menghitung semua peminjaman melalui book copies.
      */
     public function borrowings()
     {
         return $this->hasManyThrough(Borrowing::class, BookCopy::class);
+    }
+
+    /**
+     * ==========================================================
+     * --- 🔥 TAMBAHAN BARU (2 dari 2) 🔥 ---
+     * ==========================================================
+     * Mendefinisikan relasi many-to-one:
+     * Satu Buku (Book) hanya dimiliki oleh satu Rak (Shelf).
+     */
+    public function shelf()
+    {
+        // 'return $this->belongsTo(Shelf::class);' berarti:
+        // "Model ini (Book) DIMILIKI OLEH (belongsTo) satu Model Shelf"
+        return $this->belongsTo(Shelf::class);
     }
 }

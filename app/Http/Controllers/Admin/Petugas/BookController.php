@@ -6,12 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\BookCopy;
 use App\Models\Genre;
+use App\Models\Shelf; // Import Model Shelf
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Validation\Rule; // Pastikan Rule di-import
+use Illuminate\Validation\Rule;
 
 class BookController extends Controller
 {
@@ -24,7 +25,11 @@ class BookController extends Controller
         $search = $request->input('search');
         $genreId = $request->input('genre_id');
 
-        $query = Book::with('genre')
+        // ==========================================================
+        // --- 🔥 PERUBAHAN DI SINI (1 dari 2) 🔥 ---
+        // --- Kita tambahkan 'shelf' ke eager loading ---
+        // ==========================================================
+        $query = Book::with('genre', 'shelf') // <-- TAMBAHAN 'shelf'
             ->withCount([
                 'copies as copies_count' => function ($query) {
                     $query->where('status', '!=', 'hilang');
@@ -34,6 +39,7 @@ class BookController extends Controller
                 }
             ])
             ->latest();
+        // ==========================================================
 
         $query->when($search, function ($q) use ($search) {
             return $q->where(function ($subQuery) use ($search) {
@@ -53,8 +59,10 @@ class BookController extends Controller
      */
     public function create()
     {
+        // (Kode ini sudah benar dari langkah sebelumnya)
         $genres = Genre::orderBy('name')->get();
-        return view('admin.petugas.books.create', compact('genres'));
+        $shelves = Shelf::orderBy('name')->get(); 
+        return view('admin.petugas.books.create', compact('genres', 'shelves'));
     }
 
     /**
@@ -62,26 +70,23 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        // --- MODIFIKASI VALIDASI ---
+        // (Kode ini sudah benar dari langkah sebelumnya)
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'publication_year' => 'nullable|digits:4|integer|min:1900|max:' . (date('Y')),
             'synopsis' => 'nullable|string',
             'genre_id' => 'required|exists:genres,id',
+            'shelf_id' => 'required|exists:shelves,id', 
             'initial_code' => 'required|string|max:10|alpha_num',
             'stock' => 'required|integer|min:1|max:100',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'book_type' => [ 
+            'book_type' => [
                 'required',
                 'string',
-                // ==========================================================
-                // --- PERBAIKAN 1: Ganti 'paket_7_hari' menjadi 'paket' ---
-                // ==========================================================
                 Rule::in(['reguler', 'paket', 'laporan']),
             ],
         ]);
-        // --- AKHIR MODIFIKASI VALIDASI ---
 
         $genre = Genre::find($validated['genre_id']);
         $prefix = ($genre ? $genre->genre_code : 'GEN') . '-' . Str::upper($validated['initial_code']) . '-';
@@ -99,8 +104,9 @@ class BookController extends Controller
                 'publication_year' => $validated['publication_year'] ?? null,
                 'synopsis' => $validated['synopsis'] ?? null,
                 'genre_id' => $validated['genre_id'],
-                'book_type' => $validated['book_type'], 
-                'stock' => $validated['stock'], 
+                'shelf_id' => $validated['shelf_id'], 
+                'book_type' => $validated['book_type'],
+                'stock' => $validated['stock'],
             ];
 
             if ($request->hasFile('cover_image')) {
@@ -128,7 +134,11 @@ class BookController extends Controller
      */
     public function show(Book $book)
     {
-        $book->load('genre', 'copies');
+        // ==========================================================
+        // --- 🔥 PERUBAHAN DI SINI (2 dari 2) 🔥 ---
+        // --- Kita tambahkan 'shelf' ke relasi yang di-load ---
+        // ==========================================================
+        $book->load('genre', 'copies', 'shelf'); // <-- TAMBAHAN 'shelf'
         return view('admin.petugas.books.show', compact('book'));
     }
 
@@ -137,9 +147,11 @@ class BookController extends Controller
      */
     public function edit(Book $book)
     {
+        // (Kode ini sudah benar dari langkah sebelumnya)
         $genres = Genre::orderBy('name')->get();
+        $shelves = Shelf::orderBy('name')->get();
         $book->load('copies');
-        return view('admin.petugas.books.edit', compact('book', 'genres'));
+        return view('admin.petugas.books.edit', compact('book', 'genres', 'shelves'));
     }
 
     /**
@@ -147,30 +159,27 @@ class BookController extends Controller
      */
     public function update(Request $request, Book $book)
     {
-        // --- MODIFIKASI VALIDASI ---
+        // (Kode ini sudah benar dari langkah sebelumnya)
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'publication_year' => 'nullable|digits:4|integer|min:1900|max:' . (date('Y')),
             'synopsis' => 'nullable|string',
             'genre_id' => 'required|exists:genres,id',
+            'shelf_id' => 'required|exists:shelves,id',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'book_type' => [ 
+            'book_type' => [
                 'required',
                 'string',
-                // ==========================================================
-                // --- PERBAIKAN 2: Ganti 'paket_7_hari' menjadi 'paket' ---
-                // ==========================================================
                 Rule::in(['reguler', 'paket', 'laporan']),
             ],
             'add_stock' => 'nullable|integer|min:1|max:100',
         ]);
-        // --- AKHIR MODIFIKASI VALIDASI ---
 
         DB::transaction(function () use ($request, $validated, $book) {
             $updateData = $validated;
-            $addStockAmount = $updateData['add_stock'] ?? 0; 
-            unset($updateData['add_stock']); 
+            $addStockAmount = $updateData['add_stock'] ?? 0;
+            unset($updateData['add_stock']);
 
             if ($request->hasFile('cover_image')) {
                 if ($book->cover_image && Storage::disk('public')->exists($book->cover_image)) {
@@ -182,7 +191,8 @@ class BookController extends Controller
                 unset($updateData['cover_image']);
             }
 
-            $updateData['book_type'] = $validated['book_type']; 
+            $updateData['book_type'] = $validated['book_type'];
+            $updateData['shelf_id'] = $validated['shelf_id']; 
 
             if ($addStockAmount > 0) {
                 $updateData['stock'] = $book->stock + $addStockAmount;
@@ -214,7 +224,7 @@ class BookController extends Controller
                     throw ValidationException::withMessages(['add_stock' => 'Gagal menentukan prefix kode buku.']);
                 }
 
-                for ($i = 1; $i <= $addStockAmount; $i++) { 
+                for ($i = 1; $i <= $addStockAmount; $i++) {
                     $newNumber = $lastNumber + $i;
                     $copyNumber = str_pad($newNumber, 3, '0', STR_PAD_LEFT);
                     BookCopy::create([
@@ -235,6 +245,7 @@ class BookController extends Controller
      */
     public function destroy(Book $book)
     {
+        // (Tidak ada perubahan di sini)
         if ($book->copies()->whereIn('status', ['dipinjam', 'pending'])->exists()) {
             return redirect()->route('admin.petugas.books.index')->with('error', 'Buku tidak dapat dihapus karena masih ada salinan yang dipinjam/pending.');
         }
@@ -243,18 +254,19 @@ class BookController extends Controller
             if ($book->cover_image && Storage::disk('public')->exists($book->cover_image)) {
                 Storage::disk('public')->delete($book->cover_image);
             }
-            $book->copies()->delete(); 
-            $book->delete(); 
+            $book->copies()->delete();
+            $book->delete();
         });
 
         return redirect()->route('admin.petugas.books.index')->with('success', 'Buku dan semua salinannya berhasil dihapus.');
     }
 
      /**
-     * Remove the specified book copy from storage.
-     */
+      * Remove the specified book copy from storage.
+      */
     public function destroyCopy(BookCopy $copy)
     {
+        // (Tidak ada perubahan di sini)
         if (in_array($copy->status, ['dipinjam', 'pending', 'overdue'])) {
             return redirect()->route('admin.petugas.books.edit', $copy->book_id)
                 ->with('error', "Eksemplar {$copy->book_code} tidak dapat dihapus (status: {$copy->status}).");
@@ -278,6 +290,7 @@ class BookController extends Controller
      */
     public function markCopyAsFound(BookCopy $copy)
     {
+        // (Tidak ada perubahan di sini)
         if ($copy->status !== 'hilang') {
             return redirect()->route('admin.petugas.books.edit', $copy->book_id)
                 ->with('error', "Eksemplar {$copy->book_code} tidak dalam status 'hilang'.");
@@ -306,8 +319,10 @@ class BookController extends Controller
      */
     public function showCreateBulkForm()
     {
+        // (Kode ini sudah benar dari langkah sebelumnya)
         $genres = Genre::orderBy('name')->get();
-        return view('admin.petugas.books.create-bulk', compact('genres'));
+        $shelves = Shelf::orderBy('name')->get();
+        return view('admin.petugas.books.create-bulk', compact('genres', 'shelves'));
     }
 
     /**
@@ -315,32 +330,30 @@ class BookController extends Controller
      */
     public function storeBulkForm(Request $request)
     {
-        // --- MODIFIKASI VALIDASI ---
+        // (Kode ini sudah benar dari langkah sebelumnya)
         $validated = $request->validate([
             'books' => 'required|array|min:1',
             'books.*.title' => 'required|string|max:255',
             'books.*.author' => 'required|string|max:255',
             'books.*.genre_id' => 'required|exists:genres,id',
+            'books.*.shelf_id' => 'required|exists:shelves,id',
             'books.*.initial_code' => 'required|string|max:10|alpha_num',
             'books.*.stock' => 'required|integer|min:1|max:100',
             'books.*.publication_year' => 'nullable|digits:4|integer|min:1900|max:' . date('Y'),
-            'books.*.synopsis' => 'nullable|string', 
-            'books.*.book_type' => [ 
+            'books.*.synopsis' => 'nullable|string',
+            'books.*.book_type' => [
                 'required',
                 'string',
-                // ==========================================================
-                // --- PERBAIKAN 3: Ganti 'paket_7_hari' menjadi 'paket' ---
-                // ==========================================================
                 Rule::in(['reguler', 'paket', 'laporan']),
             ],
         ], [
             'books.*.title.required' => 'Judul buku di baris :index wajib diisi.',
             'books.*.author.required' => 'Penulis di baris :index wajib diisi.',
             'books.*.genre_id.required' => 'Genre di baris :index wajib dipilih.',
-            'books.*.book_type.required' => 'Tipe Buku di baris :index wajib diisi.', 
+            'books.*.shelf_id.required' => 'Rak di baris :index wajib dipilih.',
+            'books.*.book_type.required' => 'Tipe Buku di baris :index wajib diisi.',
             'books.*.book_type.in' => 'Tipe Buku di baris :index tidak valid.',
         ]);
-        // --- AKHIR MODIFIKASI VALIDASI ---
 
         $allBooksData = $validated['books'];
         $errors = [];
@@ -393,8 +406,9 @@ class BookController extends Controller
                         'publication_year' => $bookData['publication_year'] ?? null,
                         'synopsis' => $bookData['synopsis'] ?? null,
                         'genre_id' => $bookData['genre_id'],
-                        'book_type' => $bookData['book_type'], 
-                        'stock' => $bookData['stock'], 
+                        'shelf_id' => $bookData['shelf_id'],
+                        'book_type' => $bookData['book_type'],
+                        'stock' => $bookData['stock'],
                     ]);
 
                     for ($i = 1; $i <= $bookData['stock']; $i++) {
@@ -414,5 +428,4 @@ class BookController extends Controller
 
         return redirect()->route('admin.petugas.books.index')->with('success', count($allBooksData) . ' buku berhasil ditambahkan.');
     }
-
 }

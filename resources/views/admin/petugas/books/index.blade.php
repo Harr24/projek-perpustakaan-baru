@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid px-3 px-md-4 py-4">
-    {{-- Header Halaman xoy--}}
+    {{-- Header Halaman --}}
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
             <h1 class="h3 fw-bold mb-2" style="color: #d9534f;">Kelola Buku</h1>
@@ -48,9 +48,9 @@
                     <select name="genre_id" class="form-select form-select-sm">
                         <option value="">-- Semua Genre --</option>
                         @foreach ($genres as $genre)
-                            <option value="{{ $genre->id }}" {{ request('genre_id') == $genre->id ? 'selected' : '' }}>
-                                {{ $genre->name }}
-                            </option>
+                        <option value="{{ $genre->id }}" {{ request('genre_id') == $genre->id ? 'selected' : '' }}>
+                            {{ $genre->name }}
+                        </option>
                         @endforeach
                     </select>
                 </div>
@@ -60,9 +60,9 @@
                     <div class="input-group input-group-sm">
                         <input type="text" name="search" class="form-control" placeholder="Cari berdasarkan judul atau penulis..." value="{{ request('search') }}">
                         @if(request('search'))
-                            <a href="{{ route('admin.petugas.books.index', ['genre_id' => request('genre_id')]) }}" class="btn btn-outline-secondary" title="Hapus Filter Pencarian">
-                                <i class="bi bi-x"></i>
-                            </a>
+                        <a href="{{ route('admin.petugas.books.index', ['genre_id' => request('genre_id')]) }}" class="btn btn-outline-secondary" title="Hapus Filter Pencarian">
+                            <i class="bi bi-x"></i>
+                        </a>
                         @endif
                         <button class="btn btn-danger" type="submit"><i class="bi bi-search"></i> Cari</button>
                     </div>
@@ -78,7 +78,8 @@
                             <th class="py-3" style="width: 10%;">Sampul</th>
                             <th class="py-3">Judul & Penulis</th>
                             <th class="py-3">Genre</th>
-                            <th class="py-3">Tipe</th> <!-- TAMBAHAN TIPE BUKU -->
+                            <th class="py-3">Lokasi Rak</th>
+                            <th class="py-3">Tipe</th>
                             <th class="py-3">Tahun</th>
                             <th class="py-3 text-center">Stok Total</th>
                             <th class="py-3 text-center">Dipinjam</th>
@@ -90,34 +91,34 @@
                         <tr>
                             <td class="ps-4">{{ $loop->iteration + ($books->currentPage() - 1) * $books->perPage() }}</td>
                             <td>
-                                <img src="{{ $book->cover_image && Storage::disk('public')->exists($book->cover_image) ? Storage::url($book->cover_image) : 'https://placehold.co/80x120/E91E63/FFFFFF?text=No+Cover' }}"
-                                     alt="Cover" class="img-fluid rounded" style="width: 60px; height: 90px; object-fit: cover;">
+                                <img src="{{ $book->cover_image && Storage::disk('public')->exists($book->cover_image) ? Storage::url($book->cover_image) : 'https://placehold.co/80x120/E91E63/FFFFFF?text=No+Cover' }}" alt="Cover" class="img-fluid rounded" style="width: 60px; height: 90px; object-fit: cover;">
                             </td>
                             <td>
                                 <div class="fw-bold">{{ $book->title }}</div>
                                 <small class="text-muted">{{ $book->author }}</small>
                             </td>
                             <td><span class="badge bg-secondary">{{ $book->genre->name ?? 'N/A' }}</span></td>
-                           
-                            {{-- ================================================== --}}
-                            {{-- --- PERBAIKAN: Tampilkan Tipe Buku --- --}}
-                            {{-- ================================================== --}}
+
+                            <td>
+                                {{-- Kita panggil relasi 'shelf'. Tanda '??' adalah 'jika null' --}}
+                                <span class="badge bg-dark">{{ $book->shelf->name ?? 'N/A' }}</span>
+                            </td>
+
                             <td>
                                 @switch($book->book_type)
-                                    @case('reguler')
-                                        <span class="badge bg-primary">Reguler</span>
-                                        @break
-                                    @case('paket')
-                                        <span class="badge bg-info text-dark">Paket</span>
-                                        @break
-                                    @case('laporan')
-                                        <span class="badge bg-secondary">Laporan</span>
-                                        @break
-                                    @default
-                                        <span class="badge bg-dark">{{ ucfirst($book->book_type) }}</span>
+                                @case('reguler')
+                                <span class="badge bg-primary">Reguler</span>
+                                @break
+                                @case('paket')
+                                <span class="badge bg-info text-dark">Paket</span>
+                                @break
+                                @case('laporan')
+                                <span class="badge bg-secondary">Laporan</span>
+                                @break
+                                @default
+                                <span class="badge bg-dark">{{ ucfirst($book->book_type) }}</span>
                                 @endswitch
                             </td>
-                            {{-- ================================================== --}}
 
                             <td>{{ $book->publication_year ?? 'N/A' }}</td>
                             <td class="text-center">
@@ -128,43 +129,44 @@
                                     {{ $book->copies_count }} Salinan
                                 </span>
                             </td>
-                             <td class="text-center">
+                            <td class="text-center">
                                 @if($book->borrowed_copies_count > 0)
-                                    <span class="badge bg-info text-dark">{{ $book->borrowed_copies_count }}</span>
+                                <span class="badge bg-info text-dark">{{ $book->borrowed_copies_count }}</span>
                                 @else
-                                    <span class="text-muted small">0</span>
+                                <span class="text-muted small">0</span>
                                 @endif
                             </td>
                             <td class="pe-4 text-end">
                                 <div class="d-flex gap-2 justify-content-end">
                                     <a href="{{ route('admin.petugas.books.show', $book) }}" class="btn btn-info btn-sm" title="Detail"><i class="bi bi-eye-fill"></i></a>
                                     <a href="{{ route('admin.petugas.books.edit', $book) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-fill"></i></a>
-                                   
+
                                     {{-- Tombol Hapus hanya muncul jika tidak ada buku dipinjam --}}
                                     @if($book->borrowed_copies_count == 0)
-                                        <form action="{{ route('admin.petugas.books.destroy', $book) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus buku ini dan semua salinannya?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash-fill"></i></button>
-                                        </form>
+                                    <form action="{{ route('admin.petugas.books.destroy', $book) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus buku ini dan semua salinannya?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash-fill"></i></button>
+                                    </form>
                                     @else
-                                        <button type="button" class="btn btn-danger btn-sm" disabled title="Tidak bisa dihapus (masih ada buku dipinjam)">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
+                                    <button type="button" class="btn btn-danger btn-sm" disabled title="Tidak bisa dihapus (masih ada buku dipinjam)">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
                                     @endif
                                 </div>
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="text-center py-5"> {{-- Colspan diubah jadi 9 --}}
+                            {{-- Colspan diubah jadi 10 untuk mengakomodasi kolom baru --}}
+                            <td colspan="10" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="bi bi-search display-4 d-block mb-3 opacity-25"></i>
                                     <p class="mb-0">
                                         @if(request('search') || request('genre_id'))
-                                            Tidak ada buku yang cocok dengan kriteria filter Anda.
+                                        Tidak ada buku yang cocok dengan kriteria filter Anda.
                                         @else
-                                            Belum ada data buku. Silakan tambahkan buku baru.
+                                        Belum ada data buku. Silakan tambahkan buku baru.
                                         @endif
                                     </p>
                                 </div>
@@ -176,10 +178,10 @@
             </div>
         </div>
         @if ($books->hasPages())
-            <div class="card-footer bg-white">
-                {{ $books->links() }}
-            </div>
+        <div class="card-footer bg-white">
+            {{ $books->links() }}
+        </div>
         @endif
     </div>
 </div>
-@endsection 
+@endsection

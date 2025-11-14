@@ -208,7 +208,7 @@ class BookCatalogController extends Controller
  
     public function show(Book $book)
     {
-        $book->load('genre', 'copies');
+       $book->load(['shelf', 'genre', 'copies']);
         // Memuat semua count yang relevan
         $book->loadCount([
             'copies as copies_count',

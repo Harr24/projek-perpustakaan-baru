@@ -17,10 +17,9 @@ class ReturnController extends Controller
      */
     public function index(Request $request)
     {
-        // ... (Tidak ada perubahan di method index) ...
         $search = $request->input('search');
         $query = Borrowing::whereIn('status', ['dipinjam', 'overdue'])
-                            ->with('user', 'bookCopy.book');
+                             ->with('user', 'bookCopy.book');
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('user', function ($subq) use ($search) {
@@ -31,15 +30,29 @@ class ReturnController extends Controller
                 });
             });
         }
-        $activeBorrowings = $query->latest('approved_at')->get();
+
+        // ==========================================================
+        // --- 🔥 PERUBAHAN PENTING DI SINI 🔥 ---
+        // --- PENTING: Tambahkan orderBy('user_id', 'asc') ---
+        // Ini WAJIB agar fungsionalitas "Pilih Semua per User" di view 
+        // dapat mengelompokkan peminjaman dengan benar.
+        // We MUST add orderBy('user_id', 'asc') here.
+        // This is MANDATORY so the "Select All per User" feature in the view
+        // can group the borrowings correctly.
+        // ==========================================================
+        $activeBorrowings = $query->orderBy('user_id', 'asc')
+                                 ->latest('approved_at')
+                                 ->get();
+        // ==========================================================
+        
         
         // ==========================================================
         // --- TAMBAHAN: Mengambil holidays untuk view ---
         // Anda mungkin perlu ini untuk mewarnai baris yang telat di view
         // ==========================================================
         $holidays = DB::table('holidays')
-                        ->pluck('holiday_date')
-                        ->map(fn($dateStr) => (new Carbon($dateStr))->format('Y-m-d'));
+                            ->pluck('holiday_date')
+                            ->map(fn($dateStr) => (new Carbon($dateStr))->format('Y-m-d'));
 
         return view('admin.petugas.returns.index', [
             'activeBorrowings' => $activeBorrowings,
@@ -146,9 +159,9 @@ class ReturnController extends Controller
         // --- TAMBAHAN: Eager load relasi 'user' saat query ---
         // ==========================================================
         $borrowingsToReturn = Borrowing::with('user') // <-- Tambahkan 'user'
-                                    ->whereIn('id', $borrowingIds)
-                                    ->whereIn('status', ['dipinjam', 'overdue'])
-                                    ->get();
+                                        ->whereIn('id', $borrowingIds)
+                                        ->whereIn('status', ['dipinjam', 'overdue'])
+                                        ->get();
 
         if ($borrowingsToReturn->isEmpty()) {
             return redirect()->back()->with('error', 'Tidak ada buku valid yang dipilih untuk dikembalikan.');
