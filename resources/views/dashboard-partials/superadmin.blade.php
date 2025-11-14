@@ -11,6 +11,16 @@
 </a>
 
 {{-- ========================================================== --}}
+{{-- --- 🔥 INI DIA TAMBAHAN BARUNYA 🔥 --- --}}
+{{-- ========================================================== --}}
+<a class="nav-item" href="{{ route('admin.superadmin.majors.index') }}">
+<div class="nav-item-main"><span>Kelola Jurusan</span></div>
+<span class="meta">Manajemen Jurusan</span>
+</a>
+{{-- ========================================================== --}}
+
+
+{{-- ========================================================== --}}
 {{-- BAGIAN 3: MANAJEMEN SISTEM & KONTEN --}}
 {{-- ========================================================== --}}
 <a class="nav-item" href="{{ route('admin.superadmin.sliders.index') }}">

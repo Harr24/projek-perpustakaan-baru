@@ -26,7 +26,7 @@
                 @method('PUT')
 
                 <div class="row">
-                    {{-- Bagian Foto Profil --}}
+                    {{-- Bagian Foto Profil (BISA DIEDIT) --}}
                     <div class="col-md-4 text-center">
                         <img src="{{ $user->profile_photo ? asset('storage/' . $user->profile_photo) : 'https://placehold.co/150x150/6c757d/FFFFFF?text=' . strtoupper(substr($user->name, 0, 1)) }}" 
                              alt="Foto Profil" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
@@ -42,25 +42,26 @@
 
                     {{-- Bagian Data Diri --}}
                     <div class="col-md-8">
+                        
+                        {{-- ========================================================== --}}
+                        {{-- --- 🔥 PERUBAHAN KEAMANAN DIMULAI DI SINI 🔥 --- --}}
+                        {{-- ========================================================== --}}
+                        
                         <div class="mb-3">
                             <label for="name" class="form-label">Nama Lengkap</label>
-                            <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $user->name) }}" required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            {{-- TAMBAHKAN 'disabled' --}}
+                            <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $user->name) }}" disabled>
+                            <div class="form-text">Nama tidak dapat diubah. Hubungi petugas untuk pembaruan data.</div>
                         </div>
 
                         <div class="mb-3">
                             <label for="email" class="form-label">Alamat Email</label>
-                            <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $user->email) }}" required>
-                             @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                             {{-- TAMBAHKAN 'disabled' --}}
+                            <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $user->email) }}" disabled>
+                            <div class="form-text">Email tidak dapat diubah. Hubungi petugas untuk pembaruan data.</div>
                         </div>
 
-                        {{-- ========================================================== --}}
-                        {{-- PERUBAHAN DI SINI: Tambahkan Input Nomor WhatsApp --}}
-                        {{-- ========================================================== --}}
+                        {{-- Nomor WhatsApp (BISA DIEDIT) --}}
                         <div class="mb-3">
                             <label for="phone_number" class="form-label">Nomor WhatsApp</label>
                             <input type="tel" class="form-control @error('phone_number') is-invalid @enderror" id="phone_number" name="phone_number" value="{{ old('phone_number', $user->phone_number) }}" placeholder="Contoh: 081234567890">
@@ -69,21 +70,45 @@
                             @enderror
                         </div>
 
-                        {{-- Kelas (HANYA UNTUK SISWA) --}}
+                        {{-- Kelas (HANYA UNTUK SISWA & DIKUNCI) --}}
                         @if ($user->role === 'siswa')
+                            
                             <div class="mb-3">
-                                <label for="class_name" class="form-label">Kelas</label>
-                                <input type="text" class="form-control @error('class_name') is-invalid @enderror" id="class_name" name="class_name" value="{{ old('class_name', $user->class_name) }}" placeholder="Contoh: XII RPL 1">
-                                <div class="form-text">Mohon isi kelas Anda saat ini.</div>
-                                @error('class_name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label for="class" class="form-label">Kelas</label>
+                                 {{-- TAMBAHKAN 'disabled' --}}
+                                <select class="form-select" id="class" name="class" disabled>
+                                    <option value="X" {{ old('class', $user->class) == 'X' ? 'selected' : '' }}>X</option>
+                                    <option value="XI" {{ old('class', $user->class) == 'XI' ? 'selected' : '' }}>XI</option>
+                                    <option value="XII" {{ old('class', $user->class) == 'XII' ? 'selected' : '' }}>XII</option>
+                                </select>
                             </div>
+
+                            <div class="mb-3">
+                                <label for="major" class="form-label">Jurusan</label>
+                                 {{-- TAMBAHKAN 'disabled' --}}
+                                <select class="form-select" id="major" name="major" disabled>
+                                    @if(isset($majors))
+                                        @foreach($majors as $major)
+                                            <option value="{{ $major->name }}" {{ old('major', $user->major) == $major->name ? 'selected' : '' }}>
+                                                {{ $major->name }}
+                                            </option>
+                                        @endforeach
+                                    @else
+                                        <option value="{{ $user->major }}" selected>{{ $user->major }}</option>
+                                    @endif
+                                </select>
+                                <div class="form-text">Kelas & Jurusan tidak dapat diubah. Hubungi petugas untuk pembaruan data.</div>
+                            </div>
+                        
                         @endif
+                        {{-- ========================================================== --}}
+                        {{-- --- 🔥 PERUBAHAN KEAMANAN SELESAI 🔥 --- --}}
+                        {{-- ========================================================== --}}
+
 
                         <hr class="my-4">
 
-                        {{-- Bagian Ubah Password --}}
+                        {{-- Bagian Ubah Password (BISA DIEDIT) --}}
                         <h5 class="mb-3">Ubah Password (Opsional)</h5>
                         <p class="text-muted small">Kosongkan kolom di bawah ini jika Anda tidak ingin mengubah password.</p>
                         

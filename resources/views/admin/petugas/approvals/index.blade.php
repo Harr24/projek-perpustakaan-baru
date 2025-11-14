@@ -109,10 +109,10 @@
                             <td class="ps-4">
                                 {{-- Setiap baris WAJIB memiliki checkbox ini untuk data --}}
                                 <input class="form-check-input borrowing-checkbox" 
-                                    type="checkbox" 
-                                    value="{{ $borrow->id }}"
-                                    data-user-id="{{ $borrow->user_id }}"
-                                    id="borrowing-{{ $borrow->id }}">
+                                       type="checkbox" 
+                                       value="{{ $borrow->id }}"
+                                       data-user-id="{{ $borrow->user_id }}"
+                                       id="borrowing-{{ $borrow->id }}">
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
@@ -125,15 +125,24 @@
                                     @if ($isNewUser)
                                         <span class="ms-1 border rounded px-2 py-1 bg-light-subtle" title="Pilih Semua Pengajuan {{ $borrow->user->name }}">
                                             <input class="form-check-input check-all-user" 
-                                                type="checkbox" 
-                                                data-user-id="{{ $borrow->user_id }}" 
-                                                id="user-{{ $borrow->user_id }}-check">
+                                                   type="checkbox" 
+                                                   data-user-id="{{ $borrow->user_id }}" 
+                                                   id="user-{{ $borrow->user_id }}-check">
                                             <label class="form-check-label small text-muted" for="user-{{ $borrow->user_id }}-check">Pilih Semua</label>
                                         </span>
                                     @endif
                                 </div>
                             </td>
-                            <td>{{ $borrow->user->class_name ?? 'N/A' }}</td>
+
+                            {{-- ========================================================== --}}
+                            {{-- --- 🔥 INI DIA PERBAIKANNYA (LAGI!) 🔥 --- --}}
+                            {{-- ========================================================== --}}
+                            <td>
+                                {{-- Menggabungkan kelas dan jurusan, atau tampilkan N/A jika salah satunya kosong --}}
+                                {{ ($borrow->user->class && $borrow->user->major) ? $borrow->user->class . ' ' . $borrow->user->major : 'N/A' }}
+                            </td>
+                            {{-- ========================================================== --}}
+
                             <td><span class="text-dark">{{ $borrow->bookCopy->book->title }}</span></td>
                             <td><span class="badge bg-secondary">{{ $borrow->bookCopy->book_code }}</span></td>
                             <td>
@@ -171,6 +180,7 @@
 @endsection
 
 @push('scripts')
+{{-- Seluruh JavaScript Anda ada di sini, tidak ada yang diubah --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const selectAllHeader = document.getElementById('selectAll');

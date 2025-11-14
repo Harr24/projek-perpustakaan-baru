@@ -112,10 +112,14 @@
             color: var(--text);
         }
 
+        /* ========================================================== */
+        /* --- PERUBAHAN 1: Menambahkan 'select' ke styling --- */
+        /* ========================================================== */
         .input-group input[type="text"],
         .input-group input[type="email"],
         .input-group input[type="tel"],
-        .input-group input[type="password"] {
+        .input-group input[type="password"],
+        .input-group select { /* <-- TAMBAHKAN INI */
             width: 100%;
             padding: 12px 14px;
             border: 1px solid var(--border);
@@ -123,21 +127,33 @@
             font-family: 'Poppins', sans-serif;
             font-size: 0.95rem;
             transition: all 0.2s ease;
+            -webkit-appearance: none; /* Hapus style bawaan browser */
+            -moz-appearance: none;
+            appearance: none;
+            background-color: var(--card); /* Pastikan background putih */
+            /* Tambahkan ikon panah dropdown kustom */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 1.25em;
         }
         
         .input-group input::placeholder {
             color: #9ca3af;
         }
 
-        .input-group input:focus {
+        .input-group input:focus,
+        .input-group select:focus { /* <-- TAMBAHKAN INI */
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(217, 83, 79, 0.1);
         }
 
-        .input-group input.is-invalid {
+        .input-group input.is-invalid,
+        .input-group select.is-invalid { /* <-- TAMBAHKAN INI */
             border-color: var(--error);
         }
+        /* ========================================================== */
 
         .input-error-message {
             color: var(--error);
@@ -272,21 +288,55 @@
                     @enderror
                 </div>
                 
+                <!-- ========================================================== -->
+                <!-- --- PERUBAHAN 2: Mengganti Input Teks 'Kelas' --- -->
+                <!-- ========================================================== -->
+
+                <!-- INPUT 'class_name' LAMA DIHAPUS -->
+
+                <!-- MENJADI DROPDOWN KELAS (TINGKAT) -->
                 <div class="input-group">
-                    <label for="class_name">Kelas</label>
-                    <input id="class_name" type="text" name="class_name" value="{{ old('class_name') }}" required placeholder="Contoh: XII RPL 1" class="@error('class_name') is-invalid @enderror">
-                    @error('class_name')
+                    <label for="class">Kelas</label>
+                    <select id="class" name="class" class="@error('class') is-invalid @enderror" required>
+                        <option value="">Pilih Tingkat Kelas</option>
+                        <option value="X" {{ old('class') == 'X' ? 'selected' : '' }}>X</option>
+                        <option value="XI" {{ old('class') == 'XI' ? 'selected' : '' }}>XI</option>
+                        <option value="XII" {{ old('class') == 'XII' ? 'selected' : '' }}>XII</option>
+                    </select>
+                    @error('class')
                         <div class="input-error-message">{{ $message }}</div>
                     @enderror
                 </div>
 
+                <!-- MENJADI DROPDOWN JURUSAN (DINAMIS) -->
                 <div class="input-group">
+                    <label for="major">Jurusan</label>
+                    <select id="major" name="major" class="@error('major') is-invalid @enderror" required>
+                        <option value="">Pilih Jurusan</option>
+                        {{-- Loop data $majors (pastikan $majors dikirim dari AuthController) --}}
+                        @if(isset($majors))
+                            @foreach($majors as $major)
+                                <option value="{{ $major->name }}" {{ old('major') == $major->name ? 'selected' : '' }}>
+                                    {{ $major->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                    @error('major')
+                        <div class="input-error-message">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <!-- INPUT 'phone_number' DIPINDAH KE BAWAH MENJADI full-width -->
+                <div class="input-group full-width">
                     <label for="phone_number">Nomor WhatsApp (Aktif)</label>
                     <input id="phone_number" type="tel" name="phone_number" value="{{ old('phone_number') }}" required placeholder="Contoh: 081234567890" class="@error('phone_number') is-invalid @enderror">
                     @error('phone_number')
                         <div class="input-error-message">{{ $message }}</div>
                     @enderror
                 </div>
+                <!-- ========================================================== -->
+
                 
                 <div class="input-group full-width">
                     <label for="student_card_photo">Foto Kartu Pelajar (Untuk Verifikasi)</label>

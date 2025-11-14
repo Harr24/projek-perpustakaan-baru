@@ -27,7 +27,7 @@
         </div>
          <div class="d-flex gap-2">
              <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
+                 <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
             </a>
             <a href="{{ route('admin.petugas.fines.index') }}" class="btn btn-outline-danger btn-sm">
                 <i class="bi bi-clock-history me-1"></i> Lihat Denda Aktif
@@ -38,14 +38,14 @@
      {{-- Notifikasi Sukses/Error --}}
      @if(session('success'))
      <div class="alert alert-success alert-dismissible fade show" role="alert">
-         <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
-         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
      </div>
      @endif
      @if(session('error'))
      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-         <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
-         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
      </div>
      @endif
 
@@ -130,7 +130,16 @@
                         @forelse ($paidFines as $fine)
                             <tr>
                                 <td class="px-3">{{ $fine->user->name ?? 'Pengguna Dihapus' }}</td>
-                                <td class="px-3">{{ $fine->user->class_name ?? 'N/A' }}</td>
+
+                                {{-- ========================================================== --}}
+                                {{-- --- 🔥 INI DIA PERBAIKANNYA (FINAL!) 🔥 --- --}}
+                                {{-- ========================================================== --}}
+                                <td class="px-3">
+                                    {{-- Menggabungkan kelas dan jurusan, atau tampilkan N/A jika salah satunya kosong --}}
+                                    {{ ($fine->user && $fine->user->class && $fine->user->major) ? $fine->user->class . ' ' . $fine->user->major : 'N/A' }}
+                                </td>
+                                {{-- ========================================================== --}}
+
                                 {{-- <td class="px-3"> --}}
                                     {{-- ... (kode WA link dihilangkan) ... --}}
                                 {{-- </td> --}}
@@ -168,9 +177,9 @@
             </div>
              {{-- Pagination --}}
              @if ($paidFines->hasPages())
-                <div class="card-footer bg-white border-top-0 py-2">
-                    {{ $paidFines->links() }}
-                </div>
+                 <div class="card-footer bg-white border-top-0 py-2">
+                     {{ $paidFines->links() }}
+                 </div>
             @endif
         </div>
     </div>

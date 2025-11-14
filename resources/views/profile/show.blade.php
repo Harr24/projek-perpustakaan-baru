@@ -15,6 +15,7 @@
             </div>
 
             @if(session('success'))
+                {{-- Ini adalah pesan "Profil berhasil diperbarui!" yang Anda lihat --}}
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
 
@@ -37,20 +38,24 @@
                             </p>
                             <hr>
 
-                            {{-- ========================================================== --}}
-                            {{-- PERUBAHAN UTAMA: Menggunakan Grid Bootstrap --}}
-                            {{-- ========================================================== --}}
-                            
                             {{-- Tampilkan info spesifik untuk Siswa --}}
                             @if (Auth::user()->role === 'siswa')
                             <div class="row mb-2">
                                 <div class="col-sm-4 fw-semibold text-muted">NISN</div>
                                 <div class="col-sm-8">: {{ Auth::user()->nis ?: '-' }}</div>
                             </div>
+                            
+                            {{-- ========================================================== --}}
+                            {{-- --- 🔥 INI DIA PERBAIKANNYA 🔥 --- --}}
+                            {{-- ========================================================== --}}
                             <div class="row mb-2">
                                 <div class="col-sm-4 fw-semibold text-muted">Kelas</div>
-                                <div class="col-sm-8">: {{ Auth::user()->class_name ?: '-' }}</div>
+                                {{-- Kita gabungkan Auth::user()->class dan Auth::user()->major --}}
+                                <div class="col-sm-8">: {{ (Auth::user()->class && Auth::user()->major) ? Auth::user()->class . ' ' . Auth::user()->major : '-' }}</div>
                             </div>
+                            {{-- ========================================================== --}}
+                            {{-- --- 🔥 PERBAIKAN SELESAI 🔥 --- --}}
+                            {{-- ========================================================== --}}
                             @endif
 
                             {{-- Tampilkan Mata Pelajaran untuk Guru --}}
@@ -70,8 +75,6 @@
                                 <div class="col-sm-4 fw-semibold text-muted">Nomor WhatsApp</div>
                                 <div class="col-sm-8">: {{ Auth::user()->phone_number ?: '-' }}</div>
                             </div>
-                            {{-- ========================================================== --}}
-
 
                             <div class="mt-4">
                                 <a href="{{ route('profile.edit') }}" class="btn btn-danger">
@@ -86,4 +89,3 @@
     </div>
 </div>
 @endsection
-

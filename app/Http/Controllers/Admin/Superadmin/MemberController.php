@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Superadmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Major; // --- 🔥 PERBAIKAN 1: Import Model Major ---
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -39,7 +40,11 @@ class MemberController extends Controller
      */
     public function edit(User $member)
     {
-        return view('admin.superadmin.members.edit', compact('member'));
+        // --- 🔥 PERBAIKAN 2: Ambil data Jurusan untuk dropdown ---
+        $majors = Major::orderBy('name', 'asc')->get();
+        
+        // Kirim data 'member' DAN 'majors' ke view
+        return view('admin.superadmin.members.edit', compact('member', 'majors'));
     }
 
     /**
@@ -47,6 +52,7 @@ class MemberController extends Controller
      */
     public function update(Request $request, User $member)
     {
+        // --- 🔥 PERBAIKAN 3: Perbarui Aturan Validasi ---
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($member->id)],
@@ -54,11 +60,13 @@ class MemberController extends Controller
             'account_status' => 'required|in:pending,active,rejected,suspended',
             'password' => 'nullable|string|min:8|confirmed',
             
-            // ==========================================================
-            // PERUBAHAN 1: Validasi untuk data siswa disempurnakan
-            // ==========================================================
+            // Validasi data siswa
             'nis' => ['nullable', 'string', 'max:20', Rule::unique('users')->ignore($member->id), Rule::requiredIf($request->role === 'siswa')],
-            'class_name' => ['nullable', 'string', 'max:50', Rule::requiredIf($request->role === 'siswa')], // Diubah dari 'class'
+            // 'class_name' => ['nullable', 'string', 'max:50', Rule::requiredIf($request->role === 'siswa')], // <-- HAPUS ATURAN LAMA
+            
+            // ATURAN VALIDASI BARU UNTUK KELAS & JURUSAN
+            'class' => ['nullable', Rule::requiredIf($request->role === 'siswa'), 'in:X,XI,XII'],
+            'major' => ['nullable', Rule::requiredIf($request->role === 'siswa'), 'string', 'exists:majors,name'],
             
             // Validasi data guru
             'phone_number' => 'nullable|string|max:15',
@@ -71,21 +79,30 @@ class MemberController extends Controller
         $member->role = $request->role;
         $member->account_status = $request->account_status;
 
-        // ==========================================================
-        // PERUBAHAN 2: Logika penyimpanan data spesifik role diperbaiki
-        // ==========================================================
+        // --- 🔥 PERBAIKAN 4: Perbarui Logika Penyimpanan ---
         if ($request->role == 'siswa') {
             $member->nis = $request->nis;
-            $member->class_name = $request->class_name; // Diubah dari 'class'
             $member->phone_number = $request->phone_number;
+            
+            // Simpan data BARU
+            $member->class = $request->class;
+            $member->major = $request->major;
+            
             // Kosongkan data guru
             $member->subject = null;
+            
+            // Kosongkan data lama (opsional tapi bagus untuk kebersihan data)
+            $member->class_name = null; 
+
         } elseif ($request->role == 'guru') {
             $member->subject = $request->subject;
             $member->phone_number = $request->phone_number;
+            
             // Kosongkan data siswa
             $member->nis = null;
-            $member->class_name = null; // Diubah dari 'class'
+            $member->class = null; // <-- BARU
+            $member->major = null; // <-- BARU
+            $member->class_name = null;
         }
 
         // Update password jika diisi

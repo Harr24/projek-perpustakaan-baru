@@ -112,7 +112,16 @@
                                     <small class="d-block text-muted">{{ $borrow->bookCopy->book_code }}</small>
                                 </td>
                                 <td class="px-3">{{ $borrow->user->name }}</td>
-                                <td class="px-3">{{ $borrow->user->class_name ?? 'N/A' }}</td>
+
+                                {{-- ========================================================== --}}
+                                {{-- --- 🔥 INI DIA PERBAIKANNYA (FINAL!) 🔥 --- --}}
+                                {{-- ========================================================== --}}
+                                <td class="px-3">
+                                    {{-- Menggabungkan kelas dan jurusan, atau tampilkan N/A jika salah satunya kosong --}}
+                                    {{ ($borrow->user->class && $borrow->user->major) ? $borrow->user->class . ' ' . $borrow->user->major : 'N/A' }}
+                                </td>
+                                {{-- ========================================================== --}}
+
                                 <td class="px-3">
                                     @if($borrow->user->phone_number)
                                         @php
@@ -158,9 +167,9 @@
                                     </div>
                                 </td>
                             </tr>
-                        @empty
-                            <tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-check2-all d-block display-4 opacity-25"></i>Tidak ada buku yang sedang dipinjam.</td></tr>
-                        @endforelse
+                            @empty
+                                <tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-check2-all d-block display-4 opacity-25"></i>Tidak ada buku yang sedang dipinjam.</td></tr>
+                            @endforelse
                     </tbody>
                 </table>
             </div>
