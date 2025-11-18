@@ -129,7 +129,15 @@ Route::middleware('auth')->group(function () {
     // RUTE KHUSUS UNTUK ROLE SUPERADMIN
     Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
         Route::resource('petugas', SuperadminPetugasController::class);
+        
+        // ==========================================================
+        // --- TAMBAHAN BARU: Rute Hapus Masal Siswa Lulus ---
+        // ==========================================================
+        // Taruh INI SEBELUM Route::resource('members') agar tidak bentrok dengan {member} id
+        Route::delete('/members/graduated', [MemberController::class, 'destroyGraduated'])->name('members.destroy.graduated');
+        
         Route::resource('members', MemberController::class)->except(['create', 'store']);
+        
         Route::resource('sliders', HeroSliderController::class);
 
         // ==========================================================
@@ -167,22 +175,14 @@ Route::middleware('auth')->group(function () {
         Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
         // ==========================================================
 
+        // ==========================================================
+        // --- TAMBAHAN BARU: Rute Manajemen Jurusan ---
+        // ==========================================================
+        Route::resource('majors', MajorController::class)->except(['show']);
+
+        Route::resource('shelves', ShelfController::class)->except(['show']); // <-- BARU
+        // ==========================================================
+
     });
-Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
-    Route::resource('petugas', SuperadminPetugasController::class);
-    Route::resource('members', MemberController::class)->except(['create', 'store']);
-    Route::resource('sliders', HeroSliderController::class);
-
-    // ... rute denda, holiday, schedule Anda ...
-
-    // ==========================================================
-    // --- TAMBAHAN BARU: Rute Manajemen Jurusan ---
-    // ==========================================================
-    Route::resource('majors', MajorController::class)->except(['show']);
-
-    Route::resource('shelves', ShelfController::class)->except(['show']); // <-- BARU
-    // ==========================================================
-
-});
     
 });
