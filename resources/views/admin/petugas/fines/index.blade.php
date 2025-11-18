@@ -71,9 +71,6 @@
                             <th class="py-3 px-3">Kelas</th>
                             <th class="py-3 px-3">Kontak (WA)</th>
                             <th class="py-3 px-3">Judul Buku</th>
-                            <!-- ========================================================== -->
-                            <!-- PERUBAHAN 1: Mengganti "Jumlah Denda" menjadi "Detail Denda" -->
-                            <!-- ========================================================== -->
                             <th class="py-3 px-3">Detail Denda</th>
                             <th class="py-3 px-3">Telat (Hari Kerja)</th>
                             <th class="py-3 px-3">Aksi</th>
@@ -82,19 +79,48 @@
                     <tbody>
                         @forelse ($unpaidFines as $fine)
                             <tr>
-                                <td class="px-3">{{ $fine->user->name }}</td>
+                                <td class="px-3">{{ $fine->user->name ?? 'User Terhapus' }}</td>
                                 
                                 {{-- ========================================================== --}}
-                                {{-- --- 🔥 INI DIA PERBAIKANNYA (FINAL!) 🔥 --- --}}
+                                {{-- --- 🔥 LOGIKA KELAS DIPERBAIKI (ANTI N/A) 🔥 --- --}}
                                 {{-- ========================================================== --}}
                                 <td class="px-3">
-                                    {{-- Menggabungkan kelas dan jurusan, atau tampilkan N/A jika salah satunya kosong --}}
-                                    {{ ($fine->user->class && $fine->user->major) ? $fine->user->class . ' ' . $fine->user->major : 'N/A' }}
+                                    @if ($fine->user)
+                                        @if ($fine->user->role == 'siswa')
+                                            {{-- 1. Cek Lulus --}}
+                                            @if ($fine->user->class == 'Lulus')
+                                                <span class="badge bg-secondary">LULUS</span>
+                                            
+                                            {{-- 2. Data Lengkap --}}
+                                            @elseif (!empty($fine->user->class) && !empty($fine->user->major))
+                                                {{ $fine->user->class }} - {{ $fine->user->major }}
+                                            
+                                            {{-- 3. Data Parsial --}}
+                                            @elseif (!empty($fine->user->class) || !empty($fine->user->major))
+                                                {{ $fine->user->class }} {{ $fine->user->major }}
+                                            
+                                            {{-- 4. Data Lama --}}
+                                            @elseif (!empty($fine->user->class_name))
+                                                {{ $fine->user->class_name }}
+                                            
+                                            {{-- 5. Kosong --}}
+                                            @else
+                                                <span class="text-muted small">-</span>
+                                            @endif
+
+                                        @elseif ($fine->user->role == 'guru')
+                                            <span class="badge bg-info text-dark">Guru</span>
+                                        @else
+                                            -
+                                        @endif
+                                    @else
+                                        <span class="text-muted small">User Hilang</span>
+                                    @endif
                                 </td>
                                 {{-- ========================================================== --}}
 
                                 <td class="px-3">
-                                    @if($fine->user->phone_number)
+                                    @if($fine->user && $fine->user->phone_number)
                                         @php
                                             $cleanedPhone = preg_replace('/[^0-9]/', '', $fine->user->phone_number);
                                             $waNumber = (substr($cleanedPhone, 0, 1) === '0') ? '62' . substr($cleanedPhone, 1) : $cleanedPhone;
@@ -103,17 +129,14 @@
                                             <i class="bi bi-whatsapp"></i> Chat
                                         </a>
                                     @else
-                                        <span class="text-muted small">N/A</span>
+                                        <span class="text-muted small">-</span>
                                     @endif
                                 </td>
                                 <td class="px-3">
-                                    {{ $fine->bookCopy->book->title }}
-                                    <small class="d-block text-muted">{{ $fine->bookCopy->book_code }}</small>
+                                    {{ $fine->bookCopy->book->title ?? 'Buku Terhapus' }}
+                                    <small class="d-block text-muted">{{ $fine->bookCopy->book_code ?? '-' }}</small>
                                 </td>
 
-                                <!-- ========================================================== -->
-                                <!-- PERUBAHAN 2: Menampilkan detail sisa denda -->
-                                <!-- ========================================================== -->
                                 <td class="px-3">
                                     <div style="min-width: 170px;">
                                         <small class="d-block text-muted">Total: Rp {{ number_format($fine->fine_amount, 0, ',', '.') }}</small>
@@ -122,11 +145,10 @@
                                     </div>
                                 </td>
                                 
-                                <td class="px-3">{{ $fine->late_days }} hari</td>
+                                <td class="px-3">
+                                    <span class="badge bg-danger">{{ $fine->late_days }} hari</span>
+                                </td>
                                 
-                                <!-- ========================================================== -->
-                                <!-- PERUBAHAN 3: Mengganti tombol "Lunas" dengan Form Cicilan -->
-                                <!-- ========================================================== -->
                                 <td class="px-3">
                                     <form action="{{ route('admin.petugas.fines.pay', $fine) }}" method="POST" class="form-cicilan">
                                         @csrf
@@ -134,7 +156,7 @@
                                             <input type="number" 
                                                    name="amount" 
                                                    class="form-control" 
-                                                   placeholder="Jumlah Bayar" 
+                                                   placeholder="Jml Bayar" 
                                                    aria-label="Jumlah Bayar"
                                                    required
                                                    min="1"
@@ -142,7 +164,7 @@
                                                    value="{{ $fine->fine_amount - ($fine->fine_paid ?? 0) }}"
                                                    title="Masukkan jumlah bayar (cicilan)">
                                             <button type="submit" class="btn btn-success" title="Bayar">
-                                                <i class="bi bi-cash-stack"></i>
+                                                <i class="bi bi-cash-stack"></i> Bayar
                                             </button>
                                         </div>
                                     </form>
@@ -150,8 +172,11 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
-                                    Tidak ada denda yang belum lunas.
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="bi bi-check-circle display-4 text-success mb-2"></i>
+                                        <p class="mb-0">Tidak ada denda yang belum lunas.</p>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse

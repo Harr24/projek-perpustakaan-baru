@@ -51,8 +51,8 @@
 
     {{-- Form Filter --}}
     <div class="card shadow-sm mb-4 border-0">
-        <div class="card-body p-3"> {{-- Perkecil padding --}}
-            <form action="{{ route('admin.petugas.fines.history') }}" method="GET" class="row gx-2 gy-3 align-items-end"> {{-- Ubah gutter --}}
+        <div class="card-body p-3"> 
+            <form action="{{ route('admin.petugas.fines.history') }}" method="GET" class="row gx-2 gy-3 align-items-end">
                 <div class="col-md-3 col-sm-6">
                     <label for="search" class="form-label small">Cari Nama/Judul</label>
                     <input type="text" name="search" id="search" class="form-control form-control-sm" value="{{ request('search') }}" placeholder="Nama peminjam atau judul...">
@@ -91,12 +91,12 @@
                 <div class="col-md-3 col-sm-6">
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-danger btn-sm flex-grow-1"><i class="bi bi-funnel-fill"></i> Filter</button>
-                        {{-- Tombol Export tetap ada --}}
+                        
                         <a href="{{ route('admin.petugas.fines.export', request()->query()) }}" class="btn btn-success btn-sm" title="Export ke Excel">
                             <i class="bi bi-file-earmark-excel-fill"></i> <span class="d-none d-lg-inline">Export</span>
                         </a>
-                         {{-- Tombol Reset Filter --}}
-                         @if(request()->has('search') || request()->has('year') || request()->has('month'))
+                        
+                        @if(request()->has('search') || request()->has('year') || request()->has('month'))
                             <a href="{{ route('admin.petugas.fines.history') }}" class="btn btn-outline-secondary btn-sm" title="Reset Filter">
                                 <i class="bi bi-x-lg"></i>
                             </a>
@@ -109,21 +109,20 @@
 
     {{-- Tabel Riwayat Denda --}}
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-danger text-white py-2"> {{-- Perkecil padding header --}}
+        <div class="card-header bg-danger text-white py-2">
             <h6 class="mb-0 fw-semibold"><i class="bi bi-check-circle-fill me-2"></i>Denda Lunas</h6>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-striped align-middle mb-0 small"> {{-- Tambah striped, perkecil font --}}
+                <table class="table table-hover table-striped align-middle mb-0 small">
                     <thead class="table-light text-muted">
                         <tr>
                             <th class="py-2 px-3">Nama Peminjam</th>
                             <th class="py-2 px-3">Kelas</th>
-                            {{-- <th class="py-2 px-3">Kontak (WA)</th> --}} {{-- Dihapus agar lebih ringkas --}}
+                            {{-- <th class="py-2 px-3">Kontak (WA)</th> --}}
                             <th class="py-2 px-3">Judul Buku</th>
                             <th class="py-2 px-3 text-end">Jml Denda</th>
                             <th class="py-2 px-3">Tgl Lunas</th>
-                            {{-- <th class="py-2 px-3 text-center">Aksi</th> --}} {{-- Kolom Aksi Dihapus --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -132,30 +131,53 @@
                                 <td class="px-3">{{ $fine->user->name ?? 'Pengguna Dihapus' }}</td>
 
                                 {{-- ========================================================== --}}
-                                {{-- --- 🔥 INI DIA PERBAIKANNYA (FINAL!) 🔥 --- --}}
+                                {{-- --- 🔥 LOGIKA KELAS DIPERBAIKI (ANTI N/A) 🔥 --- --}}
                                 {{-- ========================================================== --}}
                                 <td class="px-3">
-                                    {{-- Menggabungkan kelas dan jurusan, atau tampilkan N/A jika salah satunya kosong --}}
-                                    {{ ($fine->user && $fine->user->class && $fine->user->major) ? $fine->user->class . ' ' . $fine->user->major : 'N/A' }}
+                                    @if ($fine->user)
+                                        @if ($fine->user->role == 'siswa')
+                                            {{-- 1. Cek Lulus --}}
+                                            @if ($fine->user->class == 'Lulus')
+                                                <span class="badge bg-secondary">LULUS</span>
+                                            
+                                            {{-- 2. Data Lengkap --}}
+                                            @elseif (!empty($fine->user->class) && !empty($fine->user->major))
+                                                {{ $fine->user->class }} - {{ $fine->user->major }}
+                                            
+                                            {{-- 3. Data Parsial --}}
+                                            @elseif (!empty($fine->user->class) || !empty($fine->user->major))
+                                                {{ $fine->user->class }} {{ $fine->user->major }}
+                                            
+                                            {{-- 4. Data Lama --}}
+                                            @elseif (!empty($fine->user->class_name))
+                                                {{ $fine->user->class_name }}
+                                            
+                                            {{-- 5. Kosong --}}
+                                            @else
+                                                <span class="text-muted small">-</span>
+                                            @endif
+
+                                        @elseif ($fine->user->role == 'guru')
+                                            <span class="badge bg-info text-dark">Guru</span>
+                                        @else
+                                            -
+                                        @endif
+                                    @else
+                                        <span class="text-muted small">User Hilang</span>
+                                    @endif
                                 </td>
                                 {{-- ========================================================== --}}
 
-                                {{-- <td class="px-3"> --}}
-                                    {{-- ... (kode WA link dihilangkan) ... --}}
-                                {{-- </td> --}}
                                 <td class="px-3">
                                     {{ $fine->bookCopy->book->title ?? 'Buku Dihapus' }}
                                     <span class="d-block text-muted" style="font-size: 0.8em;">{{ $fine->bookCopy->book_code ?? 'Kode Dihapus' }}</span>
                                 </td>
                                 <td class="px-3 text-end">Rp{{ number_format($fine->fine_amount, 0, ',', '.') }}</td>
-                                <td class="px-3">{{ $fine->updated_at ? $fine->updated_at->format('d/m/Y H:i') : 'N/A' }}</td> {{-- Format tanggal lebih singkat --}}
-                                {{-- <td class="px-3 text-center"> --}}
-                                    {{-- Form Hapus Dihilangkan --}}
-                                {{-- </td> --}}
+                                <td class="px-3">{{ $fine->updated_at ? $fine->updated_at->format('d/m/Y H:i') : 'N/A' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4"> {{-- Update colspan jadi 5 --}}
+                                <td colspan="5" class="text-center text-muted py-4">
                                     <i class="bi bi-search d-block fs-1 mb-2 opacity-50"></i>
                                     Tidak ada data riwayat denda yang cocok.
                                 </td>
@@ -165,11 +187,10 @@
                     @if($paidFines->isNotEmpty())
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="3" class="px-3 py-2 text-end">Total Pemasukan (sesuai filter):</td> {{-- Update colspan --}}
-                            <td class="px-3 py-2 text-end" colspan="2"> {{-- Update colspan --}}
+                            <td colspan="3" class="px-3 py-2 text-end">Total Pemasukan (sesuai filter):</td>
+                            <td class="px-3 py-2 text-end" colspan="2">
                                 Rp {{ number_format($totalFine, 0, ',', '.') }}
                             </td>
-                           {{-- <td class="px-3 py-2"></td> --}} {{-- Hapus cell untuk kolom Aksi --}}
                         </tr>
                     </tfoot>
                     @endif
