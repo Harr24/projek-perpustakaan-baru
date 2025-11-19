@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="id">
 <head>
-    <meta charset="utf-tF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Katalog Buku - Perpustakaan Multicomp</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -677,7 +677,7 @@
                                     </ul>
                                 @else
                                     <div class="text-center text-muted d-flex flex-column justify-content-center h-100">
-                                        <i class="fas fa-coffee" style="font-size: 1.5rem;"></i>
+                                        <i class="bi bi-cup-hot" style="font-size: 1.5rem;"></i>
                                         <small class="mt-2">Jadwal Kosong</small>
                                     </div>
                                 @endif
@@ -687,6 +687,7 @@
                 @endforeach
             </div>
         </section>
+        
         {{-- Section 1: Kategori/Genre --}}
         <div class="container py-5" id="search-section"> <div class="text-center mb-5" data-aos="fade-up">
                 <h2 class="fw-bold display-6">Jelajahi Berdasarkan Kategori</h2>
@@ -786,7 +787,7 @@
                         <a href="{{ $material->link_url }}" target="_blank" rel="noopener noreferrer" class="material-card h-100 d-flex flex-column text-decoration-none">
                             
                             {{-- GAMBAR THUMBNAIL BARU --}}
-                            <img src="{{ $material->thumbnail_url }}" class="card-img-top material-card-img" alt="Thumbnail {{ $material->title }}">
+                            <img src="{{ $material->thumbnail_url ?? asset('images/default-material.jpg') }}" class="card-img-top material-card-img" alt="Thumbnail {{ $material->title }}">
                             
                             <div class="card-body d-flex flex-column p-3">
                                 <h5 class="card-title fw-bold mb-2 text-dark" style="font-size: 1rem;">
@@ -829,79 +830,87 @@
             </div>
         </div>
         @endif
-        {{-- Peminjam Teratas --}}
-        <div class="top-borrowers-section mt-5 py-5" data-aos="fade-up">
+
+
+        {{-- ========================================================== --}}
+        {{-- 🔥 BAGIAN APRESIASI PEMINJAM (TOP BORROWERS) - DIPERBAIKI 🔥 --}}
+        {{-- ========================================================== --}}
+        @if($topBorrowers->count() > 0)
+        <section class="top-borrowers-section mt-5 py-5" data-aos="fade-up">
             <div class="container">
                 <div class="text-center mb-5">
-                    {{-- ========================================================== --}}
-                    {{-- --- PERBAIKAN: Gunakan Title Semester Dinamis --- --}}
-                    {{-- ========================================================== --}}
                     <h2 class="fw-bold display-6">{{ $semesterTitle ?? 'Peminjam Teratas' }}</h2>
-                    {{-- ========================================================== --}}
+                    <div class="h-1 w-20 bg-red-500 mx-auto mt-2 mb-4 rounded"></div>
                     <p class="lead text-muted">Apresiasi bagi para penikmat koleksi kami.</p>
                 </div>
+                
                 <div class="row g-4 justify-content-center">
-                    @forelse ($topBorrowers as $borrower)
+                    @foreach ($topBorrowers as $borrower)
                         <div class="col-md-6 col-lg-4">
-                            <div class="card text-center h-100 shadow-sm borrower-card bg-white">
-                                <div class="card-body p-4">
+                            <div class="card text-center h-100 shadow-sm borrower-card bg-white border-0">
+                                <div class="card-body p-4 d-flex flex-column align-items-center">
+                                    
+                                    {{-- Avatar dengan Fallback --}}
                                     @if($borrower->user->profile_photo)
-                                        <img src="{{ asset('storage/' . $borrower->user->profile_photo) }}" alt="{{ $borrower->user->name }}" class="avatar mx-auto mb-3" style="object-fit: cover;">
+                                        <img src="{{ asset('storage/' . $borrower->user->profile_photo) }}" 
+                                             alt="{{ $borrower->user->name }}" 
+                                             class="avatar mb-3" 
+                                             style="object-fit: cover;">
                                     @else
-                                        <div class="avatar mx-auto mb-3">{{ strtoupper(substr($borrower->user->name, 0, 2)) }}</div>
+                                        <div class="avatar mb-3">
+                                            {{ strtoupper(substr($borrower->user->name, 0, 2)) }}
+                                        </div>
                                     @endif
-                                    <h5 class="card-title fw-bold text-danger">{{ $borrower->user->name }}</h5>
-                                    <!-- <p class="text-muted mb-3 small">
-                                        @if($borrower->user->role === 'siswa' && $borrower->user->class_name)
-                                            {{ $borrower->user->class_name }}
+                                    
+                                    <h5 class="card-title fw-bold text-danger mb-1 text-truncate w-100" title="{{ $borrower->user->name }}">
+                                        {{ $borrower->user->name }}
+                                    </h5>
+                                    
+                                    {{-- 🔥 LOGIKA KELAS ANTI-BUG 🔥 --}}
+                                    <div class="mb-3">
+                                        @if($borrower->user->role === 'siswa')
+                                            {{-- Cek Lulus --}}
+                                            @if($borrower->user->class == 'Lulus')
+                                                <span class="badge bg-secondary text-uppercase tracking-wide">Alumni</span>
+                                            
+                                            {{-- Data Lengkap --}}
+                                            @elseif(!empty($borrower->user->class) && !empty($borrower->user->major))
+                                                <span class="text-muted small">{{ $borrower->user->class }} {{ $borrower->user->major }}</span>
+                                            
+                                            {{-- Data Parsial (Class Name Lama) --}}
+                                            @elseif(!empty($borrower->user->class_name))
+                                                <span class="text-muted small">{{ $borrower->user->class_name }}</span>
+                                            
+                                            {{-- Default --}}
+                                            @else
+                                                <span class="text-muted small fst-italic">Siswa Aktif</span>
+                                            @endif
+                                        
                                         @elseif($borrower->user->role === 'guru')
-                                            Guru
+                                            <span class="badge bg-info text-dark">Guru</span>
                                         @else
-                                            Anggota Perpustakaan
+                                            <span class="text-muted small">Anggota</span>
                                         @endif
-                                    </p> -->
-                                    <p class="text-muted mb-3 small">
-    @if($borrower->user->role === 'siswa')
-        {{-- 
-            LOGIKA BARU:
-            1. Cek data BARU (class & major) dulu.
-            2. Jika tidak ada, cek data LAMA (class_name) sebagai fallback.
-            3. Jika tidak ada keduanya, tampilkan "Siswa".
-        --}}
-        @if($borrower->user->class && $borrower->user->major)
-            {{ $borrower->user->class }} {{ $borrower->user->major }}
-        @elseif($borrower->user->class_name)
-            {{ $borrower->user->class_name }} {{-- Fallback untuk data lama --}}
-        @else
-            Siswa {{-- Jika tidak ada data sama sekali --}}
-        @endif
-    @elseif($borrower->user->role === 'guru')
-        Guru
-    @else
-        Anggota
-    @endif
-</p>
-                                    <div class="stats d-flex justify-content-center gap-4 border-top pt-3">
+                                    </div>
+
+                                    <div class="stats w-100 border-top pt-3 mt-auto">
                                         <div>
-                                            <div class="fw-bolder fs-4 text-primary">{{ $borrower->loans_count }}</div>
-                                            <div class="small text-muted">Buku Dipinjam</div>
+                                            <div class="fw-bolder fs-3 text-primary lh-1">{{ $borrower->loans_count }}</div>
+                                            <div class="small text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">Buku Dipinjam</div>
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
-                    @empty
-                        {{-- ========================================================== --}}
-                        {{-- --- PERBAIKAN: Ubah Pesan Kosong --- --}}
-                        {{-- ========================================================== --}}
-                        <div class="col-12"><p class="text-center text-muted">Belum ada data peminjaman di semester ini.</p></div>
-                        {{-- ========================================================== --}}
-                    @endforelse
+                    @endforeach
                 </div>
             </div>
-        </div>
+        </section>
+        @endif
+        {{-- ========================================================== --}}
 
-        {{-- Section 4: Tentang Kami (Kontak & Peta) --}}
+        {{-- FOOTER INFO (Kontak & Peta) --}}
         <div class="bg-white py-5 mt-5 shadow-sm">
             <div class="container">
                 
