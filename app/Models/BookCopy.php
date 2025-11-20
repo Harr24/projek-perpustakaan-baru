@@ -32,4 +32,14 @@ class BookCopy extends Model
     {
         return $this->belongsTo(Book::class);
     }
+
+    // Relasi untuk mengambil data peminjaman yang sedang AKTIF (belum dikembalikan)
+    public function activeBorrowing()
+    {
+        return $this->hasOne(Borrowing::class, 'book_copy_id')
+                    ->whereNull('returned_at') // Hanya ambil yang belum kembali
+                    ->latest(); // Ambil yang paling baru
+    }
+
+    
 }

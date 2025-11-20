@@ -15,6 +15,15 @@
             line-height: 1.6;
             color: #495057;
         }
+        /* Tambahan style untuk info peminjam */
+        .borrower-info {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 6px;
+            line-height: 1.3;
+            border-left: 3px solid #ffc107;
+            padding-left: 8px;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -50,10 +59,7 @@
                         <p class="mb-1"><strong>Penulis:</strong> {{ $book->author }}</p>
                         <p class="mb-1"><strong>Genre:</strong> {{ optional($book->genre)->name ?? 'N/A' }}</p>
                         
-                        {{-- ========================================================== --}}
-                        {{-- --- BARIS INI SAYA TAMBAHKAN --- --}}
                         <p class="mb-1"><strong>Lokasi Rak:</strong> {{ optional($book->shelf)->name ?? 'Belum Diatur' }}</p>
-                        {{-- ========================================================== --}}
 
                         <p class="mb-1">
                             <strong>Tipe Buku:</strong>
@@ -70,14 +76,8 @@
                                 @default
                                     <span class="badge bg-dark">{{ ucfirst($book->book_type) }}</span>
                             @endswitch
-                            </p>
+                        </p>
 
-                        {{-- 
-                            CATATAN: 
-                            Di screenshot Anda, ini adalah "Total Stok Awal: 10".
-                            Di kode Anda, ini mengambil dari $book->stock.
-                            Ini sudah benar dan sesuai.
-                        --}}
                         <p><strong>Total Stok Awal:</strong> {{ $book->stock }}</p>
                     </div>
                 </div>
@@ -107,7 +107,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {{-- INI ADALAH BLOK YANG DIPERBAIKI --}}
                             @forelse ($book->copies as $copy)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
@@ -115,8 +114,34 @@
                                     <td>
                                         @if($copy->status == 'tersedia')
                                             <span class="badge bg-success">Tersedia</span>
+
+                                        {{-- ==================================================== --}}
+                                        {{-- LOGIC BARU: TAMPILKAN NAMA PEMINJAM JIKA DIPINJAM --}}
+                                        {{-- ==================================================== --}}
                                         @elseif ($copy->status == 'dipinjam')
-                                            <span class="badge bg-warning text-dark">Dipinjam</span>
+                                            <span class="badge bg-warning text-dark mb-1">Dipinjam</span>
+                                            
+                                            {{-- Cek apakah ada data peminjaman aktif --}}
+                                            @if($copy->activeBorrowing && $copy->activeBorrowing->user)
+                                                <div class="borrower-info">
+                                                    <div>
+                                                        <i class="bi bi-person-circle me-1"></i> 
+                                                        <strong>{{ $copy->activeBorrowing->user->name }}</strong>
+                                                    </div>
+                                                    <div style="font-size: 0.75rem;">
+                                                        ({{ $copy->activeBorrowing->user->class ?? '' }} {{ $copy->activeBorrowing->user->major ?? '' }})
+                                                    </div>
+                                                    
+                                                    @if($copy->activeBorrowing->due_date)
+                                                        <div class="text-danger mt-1" style="font-size: 0.75rem;">
+                                                            <i class="bi bi-calendar-event me-1"></i>
+                                                            Kembali: {{ \Carbon\Carbon::parse($copy->activeBorrowing->due_date)->format('d M Y') }}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        {{-- ==================================================== --}}
+
                                         @elseif ($copy->status == 'pending')
                                             <span class="badge bg-info text-dark">Pending</span>
                                         @elseif ($copy->status == 'overdue')
@@ -133,7 +158,6 @@
                                     </td>
                                 </tr>
                             @endforelse 
-                            {{-- ^ PASTIKAN INI @endforelse --}}
                         </tbody>
                     </table>
                 </div>

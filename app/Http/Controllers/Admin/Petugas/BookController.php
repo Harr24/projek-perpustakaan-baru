@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\BookCopy;
 use App\Models\Genre;
-use App\Models\Shelf; // Import Model Shelf
+use App\Models\Shelf; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -25,11 +25,7 @@ class BookController extends Controller
         $search = $request->input('search');
         $genreId = $request->input('genre_id');
 
-        // ==========================================================
-        // --- 🔥 PERUBAHAN DI SINI (1 dari 2) 🔥 ---
-        // --- Kita tambahkan 'shelf' ke eager loading ---
-        // ==========================================================
-        $query = Book::with('genre', 'shelf') // <-- TAMBAHAN 'shelf'
+        $query = Book::with('genre', 'shelf') 
             ->withCount([
                 'copies as copies_count' => function ($query) {
                     $query->where('status', '!=', 'hilang');
@@ -39,7 +35,6 @@ class BookController extends Controller
                 }
             ])
             ->latest();
-        // ==========================================================
 
         $query->when($search, function ($q) use ($search) {
             return $q->where(function ($subQuery) use ($search) {
@@ -59,7 +54,6 @@ class BookController extends Controller
      */
     public function create()
     {
-        // (Kode ini sudah benar dari langkah sebelumnya)
         $genres = Genre::orderBy('name')->get();
         $shelves = Shelf::orderBy('name')->get(); 
         return view('admin.petugas.books.create', compact('genres', 'shelves'));
@@ -70,7 +64,6 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        // (Kode ini sudah benar dari langkah sebelumnya)
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
@@ -135,10 +128,15 @@ class BookController extends Controller
     public function show(Book $book)
     {
         // ==========================================================
-        // --- 🔥 PERUBAHAN DI SINI (2 dari 2) 🔥 ---
-        // --- Kita tambahkan 'shelf' ke relasi yang di-load ---
+        // --- 🔥 UPDATE PENTING UNTUK FITUR NAMA PEMINJAM 🔥 ---
         // ==========================================================
-        $book->load('genre', 'copies', 'shelf'); // <-- TAMBAHAN 'shelf'
+        // Kita load:
+        // 1. genre
+        // 2. shelf
+        // 3. copies.activeBorrowing.user (Ambil copy -> cek pinjaman aktif -> ambil user-nya)
+        
+        $book->load(['genre', 'shelf', 'copies.activeBorrowing.user']); 
+        
         return view('admin.petugas.books.show', compact('book'));
     }
 
@@ -147,7 +145,6 @@ class BookController extends Controller
      */
     public function edit(Book $book)
     {
-        // (Kode ini sudah benar dari langkah sebelumnya)
         $genres = Genre::orderBy('name')->get();
         $shelves = Shelf::orderBy('name')->get();
         $book->load('copies');
@@ -159,7 +156,6 @@ class BookController extends Controller
      */
     public function update(Request $request, Book $book)
     {
-        // (Kode ini sudah benar dari langkah sebelumnya)
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
@@ -245,7 +241,6 @@ class BookController extends Controller
      */
     public function destroy(Book $book)
     {
-        // (Tidak ada perubahan di sini)
         if ($book->copies()->whereIn('status', ['dipinjam', 'pending'])->exists()) {
             return redirect()->route('admin.petugas.books.index')->with('error', 'Buku tidak dapat dihapus karena masih ada salinan yang dipinjam/pending.');
         }
@@ -266,7 +261,6 @@ class BookController extends Controller
       */
     public function destroyCopy(BookCopy $copy)
     {
-        // (Tidak ada perubahan di sini)
         if (in_array($copy->status, ['dipinjam', 'pending', 'overdue'])) {
             return redirect()->route('admin.petugas.books.edit', $copy->book_id)
                 ->with('error', "Eksemplar {$copy->book_code} tidak dapat dihapus (status: {$copy->status}).");
@@ -290,7 +284,6 @@ class BookController extends Controller
      */
     public function markCopyAsFound(BookCopy $copy)
     {
-        // (Tidak ada perubahan di sini)
         if ($copy->status !== 'hilang') {
             return redirect()->route('admin.petugas.books.edit', $copy->book_id)
                 ->with('error', "Eksemplar {$copy->book_code} tidak dalam status 'hilang'.");
@@ -314,23 +307,15 @@ class BookController extends Controller
     // METODE UNTUK FORM TAMBAH BUKU MULTI-BARIS (BULK)
     // ==========================================================
 
-    /**
-     * Menampilkan halaman form tambah buku multi-baris.
-     */
     public function showCreateBulkForm()
     {
-        // (Kode ini sudah benar dari langkah sebelumnya)
         $genres = Genre::orderBy('name')->get();
         $shelves = Shelf::orderBy('name')->get();
         return view('admin.petugas.books.create-bulk', compact('genres', 'shelves'));
     }
 
-    /**
-     * Menyimpan data buku dari form multi-baris.
-     */
     public function storeBulkForm(Request $request)
     {
-        // (Kode ini sudah benar dari langkah sebelumnya)
         $validated = $request->validate([
             'books' => 'required|array|min:1',
             'books.*.title' => 'required|string|max:255',
