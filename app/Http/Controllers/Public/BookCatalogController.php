@@ -1,7 +1,7 @@
 <?php
- 
+
 namespace App\Http\Controllers\Public;
- 
+
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\Genre;
@@ -9,17 +9,13 @@ use App\Models\HeroSlider;
 use App\Models\Borrowing;
 use App\Models\LearningMaterial;
 use App\Models\User;
-// ==========================================================
-// --- TAMBAHAN: Import Model LibrarySchedule ---
-// ==========================================================
 use App\Models\LibrarySchedule;
-// ==========================================================
- 
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon; // <-- PASTIKAN CARBON DI-IMPORT
- 
+use Carbon\Carbon; 
+
 class BookCatalogController extends Controller
 {
     public function index(Request $request)
@@ -27,118 +23,84 @@ class BookCatalogController extends Controller
         $heroSliders = HeroSlider::where('is_active', true)->latest()->get();
         $genres = Genre::take(6)->get();
         
-        // ==========================================================
-        // PERBAIKAN: Mengganti 'is_textbook' dengan 'book_type'
-        // ==========================================================
         $nonTextbookQuery = Book::where('book_type', 'reguler');
-        // ==========================================================
- 
-        // ==========================================================
-        // PERBAIKAN LOGIKA BUKU FAVORIT (Chat-038)
-        // ...
-        // ==========================================================
+
+        // 1. Buku Favorit (Populer)
         $favoriteBooks = (clone $nonTextbookQuery)
             ->withCount([
-                // 1. Dihitung untuk tombol "Stok Habis"
                 'copies as available_copies_count' => function ($query) {
                     $query->where('status', 'tersedia');
                 },
-                // 2. Dihitung untuk teks "X / Y Tersedia"
                 'copies as copies_count',
-                // 3. Dihitung untuk sorting popularitas
                 'borrowings' => function ($query) {
                     $query->where('borrowings.status', '!=', 'pending')
                             ->where('borrowings.status', '!=', 'ditolak');
                 }
             ])
-            ->orderByDesc('borrowings_count') // Diurutkan berdasarkan popularitas
+            ->orderByDesc('borrowings_count')
             ->limit(10)
             ->get();
-        // ==========================================================
-        // AKHIR PERBAIKAN
-        // ==========================================================
- 
-        // ==========================================================
-        // PERBAIKAN LOGIKA BUKU TERBARU (Chat-038)
-        // ...
-        // ==========================================================
+
+        // 2. Buku Terbaru
         $latestBooks = (clone $nonTextbookQuery)
             ->withCount([
-                // 1. Dihitung untuk tombol "Stok Habis"
                 'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia'),
-                // 2. Dihitung untuk teks "X / Y Tersedia"
                 'copies as copies_count'
             ])
             ->latest()
             ->limit(10)
             ->get();
+
+
         // ==========================================================
-        // AKHIR PERBAIKAN
-        // ==========================================================
- 
- 
-        // ==========================================================
-        // --- PERBAIKAN: Logika Peminjam Teratas (Semester) ---
+        // --- 🔥 FITUR BARU: Top Readers (Juara Membaca) 🔥 ---
         // ==========================================================
         $now = now();
         $currentYear = $now->year;
         
-        // Tentukan rentang tanggal semester
+        // Tentukan Semester (Jan-Jun atau Jul-Des)
         if ($now->month >= 1 && $now->month <= 6) {
-            // Semester 1: 1 Januari - 30 Juni
             $startDate = Carbon::create($currentYear, 1, 1)->startOfDay();
             $endDate = Carbon::create($currentYear, 6, 30)->endOfDay();
             $semesterTitle = "Semester Ini (Jan - Jun)";
         } else {
-            // Semester 2: 1 Juli - 31 Desember
             $startDate = Carbon::create($currentYear, 7, 1)->startOfDay();
             $endDate = Carbon::create($currentYear, 12, 31)->endOfDay();
             $semesterTitle = "Semester Ini (Jul - Des)";
         }
- 
-        $topBorrowers = Borrowing::select('user_id', DB::raw('count(*) as loans_count'))
-            // Ganti 'whereMonth' dan 'whereYear' dengan 'whereBetween'
-            ->whereBetween('created_at', [$startDate, $endDate])
- 
-            // ==========================================================
-            // --- PERBAIKAN BUG: Hanya hitung status 'dipinjam' atau 'returned' ---
-            // ==========================================================
-            ->whereIn('status', ['dipinjam', 'returned'])
-            // ==========================================================
-            
-            ->whereHas('user', function ($query) {
-                $query->where('role', 'siswa');
-            })
-            ->groupBy('user_id')
-            ->orderByDesc('loans_count')
-            ->limit(3)
-            ->with('user')
+
+        // Query Mencari 3 Siswa Terrajin
+        $topBorrowers = User::where('role', 'siswa') // Hanya siswa
+            ->withCount(['borrowings' => function($q) use ($startDate, $endDate) {
+                // Hanya hitung peminjaman di semester ini & status valid
+                $q->whereBetween('created_at', [$startDate, $endDate])
+                  ->whereIn('status', ['dipinjam', 'returned']);
+            }])
+            ->orderBy('borrowings_count', 'desc') // Urutkan dari terbanyak
+            ->take(3) // Ambil 3 Juara
             ->get();
+
         // ==========================================================
-        // --- AKHIR PERBAIKAN ---
+        // --- AKHIR FITUR BARU ---
         // ==========================================================
- 
+
+
+        // 3. Materi Pembelajaran
         $learningMaterials = LearningMaterial::where('is_active', true)
             ->with('user')
             ->latest()
             ->limit(4)
             ->get();
- 
-        // ==========================================================
-        // --- TAMBAHAN: Logika Ambil Jadwal untuk Homepage ---
-        // ==========================================================
-        
-        // Ambil semua jadwal, di-grup berdasarkan hari
+
+        // 4. Jadwal Perpustakaan
         $schedulesByDay = LibrarySchedule::with('user')
-            ->whereIn('day_of_week', [1, 2, 3, 4, 5]) // Hanya Senin-Jumat
+            ->whereIn('day_of_week', [1, 2, 3, 4, 5])
             ->orderBy('day_of_week')
             ->get()
             ->groupBy('day_of_week');
         
-        // Dapatkan hari ini (1 = Senin, 7 = Minggu)
         $todayDayOfWeek = now()->dayOfWeekIso; 
         
-        // Buat mapping angka ke nama hari
         $days = [
             1 => 'Senin',
             2 => 'Selasa',
@@ -146,44 +108,38 @@ class BookCatalogController extends Controller
             4 => 'Kamis',
             5 => 'Jumat',
         ];
-        // ==========================================================
-        // --- AKHIR TAMBAHAN ---
-        // ==========================================================
- 
- 
+
+        // Kirim semua variabel ke View
         return view('public.catalog.index', compact(
             'heroSliders', 
             'genres', 
             'favoriteBooks', 
             'latestBooks', 
-            'topBorrowers', 
+            'topBorrowers', // <-- Variabel Juara Membaca
             'learningMaterials',
-            'semesterTitle', // <-- Title dari logika semester
-            
-            // --- TAMBAHAN: Variabel Jadwal ---
+            'semesterTitle',
             'schedulesByDay',
             'todayDayOfWeek',
             'days'
-            // --- AKHIR TAMBAHAN ---
         ));
     }
- 
+
     public function allBooks(Request $request)
     {
         $genres = Genre::orderBy('name')->get();
         $search = $request->input('search');
         $selectedGenreName = $request->input('genre');
         $sort = $request->input('sort', 'latest');
- 
+
         $booksQuery = Book::query()->withCount([
-            'copies as copies_count', // <-- Diperbaiki
+            'copies as copies_count',
             'copies as available_copies_count' => fn($q) => $q->where('status', 'tersedia'),
             'borrowings' => function ($query) {
                 $query->where('borrowings.status', '!=', 'pending')
                         ->where('borrowings.status', '!=', 'ditolak');
             }
         ]);
- 
+
         $booksQuery->when($search, function ($query, $search) {
             return $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', '%' . $search . '%')
@@ -195,46 +151,40 @@ class BookCatalogController extends Controller
                 $q->where('name', $genreName);
             });
         });
- 
+
         if ($sort === 'popular') {
             $booksQuery->orderByDesc('borrowings_count'); 
         } else {
             $booksQuery->latest();
         }
- 
+
         $books = $booksQuery->paginate(12)->withQueryString();
         return view('public.catalog.all_books', compact('books', 'genres'));
     }
- 
+
     public function show(Book $book)
     {
        $book->load(['shelf', 'genre', 'copies']);
-        // Memuat semua count yang relevan
-        $book->loadCount([
-            'copies as copies_count',
-            'copies as available_copies_count' => function ($query) {
-                $query->where('status', 'tersedia');
-            }
-        ]);
-        return view('public.catalog.show', compact('book'));
+       $book->loadCount([
+           'copies as copies_count',
+           'copies as available_copies_count' => function ($query) {
+               $query->where('status', 'tersedia');
+           }
+       ]);
+       return view('public.catalog.show', compact('book'));
     }
- 
+
     public function showCover(Book $book)
     {
         $path = $book->cover_image;
         if (!$path || !Storage::disk('public')->exists($path)) {
-            // Jika gambar tidak ada, kita bisa return placeholder Tome.png
-            // Tapi untuk sekarang, kita kembalikan 404 saja agar tidak error di 'file()'
              abort(404, 'Gambar tidak ditemukan.');
- 
-            // Alternatif: Redirect ke gambar default
-            // return redirect(asset('images/Tome.png'));
         }
         $file = Storage::disk('public')->get($path);
         $type = Storage::disk('public')->mimeType($path);
         return response($file)->header('Content-Type', $type);
     }
- 
+
     public function showLibrarians()
     {
         $staff = User::whereIn('role', ['petugas', 'guru'])
@@ -242,7 +192,7 @@ class BookCatalogController extends Controller
             ->get();
         return view('public.librarians', compact('staff'));
     }
- 
+
     public function allMaterials(Request $request)
     {
         $query = LearningMaterial::where('is_active', true)
