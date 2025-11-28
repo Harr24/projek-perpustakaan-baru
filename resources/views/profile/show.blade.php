@@ -15,7 +15,6 @@
             </div>
 
             @if(session('success'))
-                {{-- Ini adalah pesan "Profil berhasil diperbarui!" yang Anda lihat --}}
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
 
@@ -23,6 +22,7 @@
                 <div class="card-body p-4 p-md-5">
                     <div class="row align-items-center">
                         <div class="col-md-4 text-center mb-4 mb-md-0">
+                            {{-- Pastikan user punya akses ke foto profil --}}
                             <img src="{{ Auth::user()->profile_photo_url }}" alt="Foto Profil" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
                         </div>
                         <div class="col-md-8">
@@ -45,17 +45,11 @@
                                 <div class="col-sm-8">: {{ Auth::user()->nis ?: '-' }}</div>
                             </div>
                             
-                            {{-- ========================================================== --}}
-                            {{-- --- 🔥 INI DIA PERBAIKANNYA 🔥 --- --}}
-                            {{-- ========================================================== --}}
+                            {{-- Menggunakan class_info agar otomatis mendeteksi Kelas/Jurusan/Lulus --}}
                             <div class="row mb-2">
                                 <div class="col-sm-4 fw-semibold text-muted">Kelas</div>
-                                {{-- Kita gabungkan Auth::user()->class dan Auth::user()->major --}}
-                                <div class="col-sm-8">: {{ (Auth::user()->class && Auth::user()->major) ? Auth::user()->class . ' ' . Auth::user()->major : '-' }}</div>
+                                <div class="col-sm-8">: {{ Auth::user()->class_info ?? '-' }}</div>
                             </div>
-                            {{-- ========================================================== --}}
-                            {{-- --- 🔥 PERBAIKAN SELESAI 🔥 --- --}}
-                            {{-- ========================================================== --}}
                             @endif
 
                             {{-- Tampilkan Mata Pelajaran untuk Guru --}}
@@ -77,9 +71,12 @@
                             </div>
 
                             <div class="mt-4">
+                                {{-- Pastikan rute profile.edit ada --}}
+                                @if (Route::has('profile.edit'))
                                 <a href="{{ route('profile.edit') }}" class="btn btn-danger">
                                     <i class="bi bi-pencil-square me-2"></i> Edit Profil
                                 </a>
+                                @endif
                             </div>
                         </div>
                     </div>

@@ -4,18 +4,12 @@ namespace App\Http\Controllers\Admin\Petugas;
 
 use App\Http\Controllers\Controller;
 use App\Models\Borrowing;
+use App\Models\FinePayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Spatie\SimpleExcel\SimpleExcelWriter; // Pastikan use statement ini ada
-use Carbon\Carbon;
-
-// ==========================================================
-// --- TAMBAHAN BARU: Import Model FinePayment dan Auth ---
-// ==========================================================
-use App\Models\FinePayment;
 use Illuminate\Support\Facades\Auth;
-// ==========================================================
-
+use Spatie\SimpleExcel\SimpleExcelWriter;
+use Carbon\Carbon;
 
 class FineController extends Controller
 {
@@ -27,185 +21,160 @@ class FineController extends Controller
         $unpaidFines = Borrowing::where('fine_amount', '>', 0)
                                 ->where('fine_status', 'unpaid')
                                 ->with('user', 'bookCopy.book')
-                                ->latest()->get();
+                                ->latest()
+                                ->get();
 
         return view('admin.petugas.fines.index', compact('unpaidFines'));
     }
 
     /**
-     * ==========================================================
-     * --- METHOD BARU: Menangani Pembayaran Cicilan Denda ---
-     * ==========================================================
+     * Menangani Pembayaran Cicilan Denda.
      */
     public function payInstallment(Request $request, Borrowing $borrowing)
     {
-        // 1. Validasi input dari form (harus ada angka)
         $request->validate([
-            'amount' => 'required|numeric|min:1' // Minimal bayar 1
+            'amount' => 'required|numeric|min:1'
         ]);
 
         $amountToPay = (int) $request->input('amount');
         
-        // 2. Cek status denda
         if ($borrowing->fine_status == 'paid') {
             return redirect()->back()->with('error', 'Denda ini sudah lunas.');
         }
 
-        // 3. Hitung sisa denda
         $totalFine = $borrowing->fine_amount;
         $alreadyPaid = $borrowing->fine_paid ?? 0;
         $remainingFine = $totalFine - $alreadyPaid;
 
-        // 4. Validasi jika pembayaran melebihi sisa denda
         if ($amountToPay > $remainingFine) {
-            $message = 'Jumlah pembayaran (Rp ' . number_format($amountToPay) . ')';
-            $message .= ' melebihi sisa denda (Rp ' . number_format($remainingFine) . ').';
-            return redirect()->back()->with('error', $message);
+            return redirect()->back()->with('error', 'Pembayaran melebihi sisa denda.');
         }
 
-        // 5. Update database
         try {
             DB::transaction(function () use ($borrowing, $amountToPay) {
-                
-                // A. Update tabel 'borrowings'
+                // 1. Update Borrowing
                 $borrowing->fine_paid += $amountToPay; 
                 
-                // Cek apakah lunas
                 if ($borrowing->fine_paid >= $borrowing->fine_amount) {
-                    $borrowing->fine_paid = $borrowing->fine_amount; // Pastikan tidak lebih
-                    $borrowing->fine_status = 'paid'; // Ubah status jadi lunas
+                    $borrowing->fine_paid = $borrowing->fine_amount;
+                    $borrowing->fine_status = 'paid';
                 }
                 
                 $borrowing->save();
 
-                // ==========================================================
-                // --- B. TAMBAHAN BARU: Catat di Log Pembayaran ---
-                // ==========================================================
+                // 2. Catat di Log Pembayaran
                 FinePayment::create([
                     'borrowing_id' => $borrowing->id,
-                    'processed_by_user_id' => Auth::id(), // ID Petugas yang sedang login
+                    'processed_by_user_id' => Auth::id(),
                     'amount_paid' => $amountToPay,
-                    'created_at' => now(), // Catat waktu transaksi
+                    'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-                // ==========================================================
-
             });
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage());
         }
 
-        // 6. Beri pesan sukses
-        if ($borrowing->fine_status == 'paid') {
-            return redirect()->back()->with('success', 'Pembayaran diterima dan denda telah lunas.');
-        } else {
-            // Jika belum lunas, tampilkan sisa denda
-            $newRemaining = $remainingFine - $amountToPay;
-            $message = 'Cicilan diterima. Sisa denda: Rp ' . number_format($newRemaining);
-            return redirect()->back()->with('success', $message);
-        }
+        $newRemaining = $remainingFine - $amountToPay;
+        $msg = $borrowing->fine_status == 'paid' 
+            ? 'Pembayaran lunas!' 
+            : 'Cicilan Rp ' . number_format($amountToPay) . ' diterima. Sisa: Rp ' . number_format($newRemaining);
+
+        return redirect()->back()->with('success', $msg);
     }
 
 
     /**
-     * Menampilkan riwayat denda yang SUDAH LUNAS.
+     * Riwayat Transaksi (Cicilan)
      */
     public function history(Request $request)
     {
-        // Ambil tahun unik untuk filter dropdown
-        $years = Borrowing::where('fine_status', 'paid')
-                            ->where('fine_amount', '>', 0)
-                            ->select(DB::raw('YEAR(updated_at) as year'))
+        $years = FinePayment::select(DB::raw('YEAR(created_at) as year'))
                             ->distinct()
                             ->orderBy('year', 'desc')
                             ->get();
 
-        // Query dasar untuk riwayat denda lunas
-        $query = Borrowing::where('fine_status', 'paid')
-                            ->where('fine_amount', '>', 0)
-                            ->with(['user', 'bookCopy.book']) // Eager load relasi
-                            ->latest('updated_at'); // Urutkan berdasarkan tanggal lunas terbaru
+        // --- PERBAIKAN 1: Gunakan 'processedBy' bukan 'processor' ---
+        $query = FinePayment::with(['borrowing.user', 'borrowing.bookCopy.book', 'processedBy']);
 
-        // Terapkan filter
         if ($request->filled('year')) {
-            $query->whereYear('updated_at', $request->year);
+            $query->whereYear('created_at', $request->year);
         }
         if ($request->filled('month')) {
-            $query->whereMonth('updated_at', $request->month);
+            $query->whereMonth('created_at', $request->month);
         }
+
         if ($request->filled('search')) {
             $searchTerm = $request->search;
-            // Pencarian berdasarkan nama user ATAU judul buku
-            $query->where(function ($q) use ($searchTerm) {
-                $q->whereHas('user', function ($subQ) use ($searchTerm) {
-                    $subQ->where('name', 'LIKE', '%' . $searchTerm . '%');
-                })->orWhereHas('bookCopy.book', function ($subQ) use ($searchTerm) {
-                        $subQ->where('title', 'LIKE', '%' . $searchTerm . '%');
-                    });
+            $query->whereHas('borrowing', function ($q) use ($searchTerm) {
+                $q->whereHas('user', function ($u) use ($searchTerm) {
+                    $u->where('name', 'LIKE', '%' . $searchTerm . '%');
+                })
+                ->orWhereHas('bookCopy.book', function ($b) use ($searchTerm) {
+                    $b->where('title', 'LIKE', '%' . $searchTerm . '%');
+                });
             });
         }
 
-        // Clone query sebelum pagination untuk menghitung total
-        $totalFineQuery = clone $query;
-        $totalFine = $totalFineQuery->sum('fine_amount');
+        $totalIncome = (clone $query)->sum('amount_paid');
 
-        // Lakukan pagination setelah filter
-        $paidFines = $query->paginate(15)->withQueryString(); // Gunakan paginate
+        $payments = $query->latest('created_at')
+                          ->paginate(15)
+                          ->withQueryString();
 
-        return view('admin.petugas.fines.history', compact('paidFines', 'years', 'totalFine'));
+        return view('admin.petugas.fines.history', compact('payments', 'years', 'totalIncome'));
     }
 
     /**
-     * Export riwayat denda lunas ke Excel.
+     * Export Excel
      */
      public function export(Request $request)
      {
-        // Query untuk mengambil data (sama seperti history, tapi tanpa pagination)
-        $query = Borrowing::where('fine_status', 'paid')
-                            ->where('fine_amount', '>', 0)
-                            ->with(['user', 'bookCopy.book']) // Eager load
-                            ->latest('updated_at');
+        // --- PERBAIKAN 2: Gunakan 'processedBy' di sini juga ---
+        $query = FinePayment::with(['borrowing.user', 'borrowing.bookCopy.book', 'processedBy']);
 
-        // Terapkan filter yang sama
-        if ($request->filled('year')) { $query->whereYear('updated_at', $request->year); }
-        if ($request->filled('month')) { $query->whereMonth('updated_at', $request->month); }
+        if ($request->filled('year')) { $query->whereYear('created_at', $request->year); }
+        if ($request->filled('month')) { $query->whereMonth('created_at', $request->month); }
         if ($request->filled('search')) {
             $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->whereHas('user', function ($subQ) use ($searchTerm) {
-                    $subQ->where('name', 'LIKE', '%' . $searchTerm . '%');
-                })->orWhereHas('bookCopy.book', function ($subQ) use ($searchTerm) {
-                        $subQ->where('title', 'LIKE', '%' . $searchTerm . '%');
-                    });
+            $query->whereHas('borrowing', function ($q) use ($searchTerm) {
+                $q->whereHas('user', function ($u) use ($searchTerm) {
+                    $u->where('name', 'LIKE', '%' . $searchTerm . '%');
+                })->orWhereHas('bookCopy.book', function ($b) use ($searchTerm) {
+                    $b->where('title', 'LIKE', '%' . $searchTerm . '%');
+                });
             });
         }
 
-        $fines = $query->get();
+        $payments = $query->latest('created_at')->get();
 
-        // Buat nama file dinamis
-        $fileName = 'riwayat-denda-lunas-' . Carbon::now()->format('Ymd-His') . '.xlsx';
-        // Simpan sementara di storage/app
+        $fileName = 'laporan-uang-denda-' . Carbon::now()->format('Ymd-His') . '.xlsx';
         $filePath = storage_path('app/' . $fileName);
 
-        // Buat file Excel dan tulis datanya
         $writer = SimpleExcelWriter::create($filePath)
-            ->addRow([ // Header kolom
-                'Nama Peminjam', 'Kelas', 'Judul Buku', 'Kode Buku', 'Jumlah Denda', 'Tanggal Lunas'
+            ->addRow([
+                'Tanggal Bayar', 
+                'Petugas Penerima',
+                'Nama Siswa', 
+                'Kelas', 
+                'Judul Buku', 
+                'Nominal Bayar (Rp)', 
+                'Status Akhir'
             ]);
 
-        foreach ($fines as $fine) {
+        foreach ($payments as $payment) {
             $writer->addRow([
-                // Menggunakan null coalescing operator (??) untuk handle jika relasi null (misal user dihapus)
-                'Nama Peminjam' => $fine->user?->name ?? 'Pengguna Dihapus',
-                'Kelas'         => $fine->user?->class_name ?? 'N/A',
-                'Judul Buku'    => $fine->bookCopy?->book?->title ?? 'Buku Dihapus',
-                'Kode Buku'     => $fine->bookCopy?->book_code ?? 'N/A',
-                'Jumlah Denda'  => $fine->fine_amount,
-                'Tanggal Lunas' => $fine->updated_at ? $fine->updated_at->format('d-m-Y H:i:s') : 'N/A',
+                'Tanggal Bayar'    => $payment->created_at->format('d/m/Y H:i'),
+                // --- PERBAIKAN 3: Panggil relasi yang benar ---
+                'Petugas Penerima' => $payment->processedBy->name ?? 'System', 
+                'Nama Siswa'       => $payment->borrowing->user->name ?? 'User Dihapus',
+                'Kelas'            => $payment->borrowing->user->class_name ?? '-',
+                'Judul Buku'       => $payment->borrowing->bookCopy->book->title ?? '-',
+                'Nominal Bayar (Rp)' => $payment->amount_paid,
+                'Status Akhir'     => $payment->borrowing->fine_status == 'paid' ? 'Lunas' : 'Belum Lunas',
             ]);
         }
 
-        // Gunakan response()->download() untuk mengirim file ke browser dan menghapusnya setelah terkirim
         return response()->download($filePath)->deleteFileAfterSend(true);
      }
 }

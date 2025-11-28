@@ -43,9 +43,6 @@
                         <label for="search" class="form-label small">Nama Peminjam</label>
                         <div class="input-group">
                             <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama siswa atau guru..." value="{{ request('search') }}">
-                            {{-- ========================================================== --}}
-                            {{-- PENAMBAHAN: Tombol Clear untuk Search --}}
-                            {{-- ========================================================== --}}
                             @if(request('search'))
                                 <a href="{{ route('admin.petugas.reports.borrowings.index', ['month' => request('month'), 'year' => request('year')]) }}" class="btn btn-outline-secondary" title="Hapus Filter Nama">
                                     <i class="bi bi-x"></i>
@@ -80,7 +77,8 @@
                             <th class="py-3 ps-4">No</th>
                             <th class="py-3 text-start">Nama Peminjam</th>
                             <th class="py-3">Role</th>
-                            <th class="py-3">Kelas</th>
+                            {{-- UPDATE JUDUL KOLOM --}}
+                            <th class="py-3">Kelas / Mapel</th>
                             <th class="py-3 text-start">Buku yang Dipinjam</th>
                             <th class="py-3">Kode Eksemplar</th>
                             <th class="py-3">Tgl. Pinjam</th>
@@ -99,7 +97,13 @@
                                     </a>
                                 </td>
                                 <td><span class="badge bg-secondary">{{ ucfirst($borrowing->user->role) }}</span></td>
-                                <td>{{ $borrowing->user->class_name ?? 'N/A' }}</td>
+                                
+                                {{-- ========================================================== --}}
+                                {{-- 🔥 UPDATE PENTING: Menggunakan class_info 🔥 --}}
+                                {{-- ========================================================== --}}
+                                <td>{{ $borrowing->user->class_info ?? '-' }}</td>
+                                {{-- ========================================================== --}}
+
                                 <td class="text-start" title="{{ $borrowing->bookCopy->book->title }}">
                                     {{ Str::limit($borrowing->bookCopy->book->title, 30) }}
                                 </td>

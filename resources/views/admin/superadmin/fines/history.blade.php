@@ -1,4 +1,4 @@
-{{-- Menggunakan layout admin umum, ganti jika Superadmin punya layout khusus --}}
+{{-- Menggunakan layout admin umum --}}
 @extends('layouts.app')
 
 @section('content')
@@ -6,7 +6,6 @@
     {{-- Header --}}
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
-            {{-- Sesuaikan Judul untuk Superadmin --}}
             <h1 class="h3 fw-bold mb-1" style="color: #d9534f;">Manajemen Riwayat Denda (Superadmin)</h1>
             <p class="text-muted mb-0 small">Daftar semua denda keterlambatan yang sudah lunas.</p>
         </div>
@@ -14,10 +13,6 @@
              <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm">
                  <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
              </a>
-             {{-- Tambahkan link ke Denda Aktif jika Superadmin perlu melihatnya --}}
-             {{-- <a href="{{ route('admin.superadmin.fines.index') }}" class="btn btn-outline-danger btn-sm">
-                 <i class="bi bi-clock-history me-1"></i> Lihat Denda Aktif
-             </a> --}}
          </div>
     </div>
 
@@ -38,7 +33,6 @@
     {{-- Form Filter --}}
     <div class="card shadow-sm mb-4 border-0">
         <div class="card-body p-3">
-            {{-- Form action mengarah ke rute history Superadmin --}}
             <form action="{{ route('admin.superadmin.fines.history') }}" method="GET" class="row gx-2 gy-3 align-items-end">
                 <div class="col-md-3 col-sm-6">
                     <label for="search" class="form-label small">Cari Nama/Judul</label>
@@ -79,12 +73,10 @@
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-danger btn-sm flex-grow-1"><i class="bi bi-funnel-fill"></i> Filter</button>
                         
-                        {{-- Hapus komentar untuk memunculkan tombol --}}
                         <a href="{{ route('admin.superadmin.fines.export', request()->query()) }}" class="btn btn-success btn-sm" title="Export ke Excel">
                             <i class="bi bi-file-earmark-excel-fill"></i> <span class="d-none d-lg-inline">Export</span>
                         </a>
                         @if(request()->has('search') || request()->has('year') || request()->has('month'))
-                            {{-- Link reset mengarah ke rute history Superadmin --}}
                             <a href="{{ route('admin.superadmin.fines.history') }}" class="btn btn-outline-secondary btn-sm" title="Reset Filter">
                                 <i class="bi bi-x-lg"></i>
                             </a>
@@ -103,33 +95,30 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover table-striped align-middle mb-0 small">
-                    
                     <thead class="table-light text-muted">
                         <tr>
                             <th class="py-2 px-3">Nama Peminjam</th>
-                            <th class="py-2 px-3">Kelas</th>
+                            <th class="py-2 px-3">Kelas / Mapel</th> {{-- Header disesuaikan --}}
                             <th class="py-2 px-3">Judul Buku</th>
                             <th class="py-2 px-3 text-end">Jml Denda</th>
                             <th class="py-2 px-3">Tgl Lunas</th>
-                            <th class="py-2 px-3">Diproses Oleh</th> {{-- <-- KOLOM BARU --}}
+                            <th class="py-2 px-3">Diproses Oleh</th>
                             <th class="py-2 px-3 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($paidFines as $fine)
                             @php
-                                // Ambil data pembayaran terakhir (yang paling baru)
                                 $lastPayment = $fine->finePayments->last();
                             @endphp
                             <tr>
                                 <td class="px-3">{{ $fine->user->name ?? 'Pengguna Dihapus' }}</td>
                                 
                                 {{-- ========================================================== --}}
-                                {{-- --- 🔥 INI DIA PERBAIKANNYA (LAGI!) 🔥 --- --}}
+                                {{-- 🔥 PERBAIKAN UTAMA: Menggunakan class_info 🔥 --}}
                                 {{-- ========================================================== --}}
                                 <td class="px-3">
-                                    {{-- Cek jika user ada, DAN jika class/major ada, baru tampilkan --}}
-                                    {{ ($fine->user && $fine->user->class && $fine->user->major) ? $fine->user->class . ' ' . $fine->user->major : 'N/A' }}
+                                    {{ $fine->user->class_info ?? '-' }}
                                 </td>
                                 {{-- ========================================================== --}}
 
@@ -139,30 +128,26 @@
                                 </td>
                                 <td class="px-3 text-end">Rp{{ number_format($fine->fine_amount, 0, ',', '.') }}</td>
                                 
-                                {{-- UPDATE: Tgl Lunas diambil dari log pembayaran, bukan updated_at --}}
                                 <td class="px-3">
                                     {{ $lastPayment ? $lastPayment->created_at->format('d/m/Y H:i') : 'N/A' }}
                                 </td>
                                 
-                                {{-- BARU: Tampilkan nama petugas yang memproses --}}
                                 <td class="px-3">
                                     {{ $lastPayment && $lastPayment->processedBy ? $lastPayment->processedBy->name : 'N/A' }}
                                 </td>
                                 
                                 <td class="px-3 text-center">
-                                    {{-- Form action mengarah ke rute destroy Superadmin --}}
                                     <form action="{{ route('admin.superadmin.fines.destroy', $fine->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus riwayat denda ini secara permanen? Ini tidak bisa dibatalkan.');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Riwayat Permanen">
-                                            <i class="bi bi-trash3-fill"></i> {{-- Icon berbeda --}}
+                                            <i class="bi bi-trash3-fill"></i>
                                         </button>
                                     </form>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                {{-- UPDATE: Colspan jadi 7 --}}
                                 <td colspan="7" class="text-center text-muted py-4">
                                     <i class="bi bi-search d-block fs-1 mb-2 opacity-50"></i>
                                     Tidak ada data riwayat denda yang cocok.
@@ -177,13 +162,12 @@
                             <td class="px-3 py-2 text-end">
                                 Rp {{ number_format($totalFine, 0, ',', '.') }}
                             </td>
-                            <td class="px-3 py-2" colspan="3"></td> {{-- UPDATE: Colspan jadi 3 --}}
+                            <td class="px-3 py-2" colspan="3"></td>
                         </tr>
                     </tfoot>
                     @endif
                 </table>
             </div>
-             {{-- Pagination --}}
              @if ($paidFines->hasPages())
                  <div class="card-footer bg-white border-top-0 py-2">
                      {{ $paidFines->links() }}
