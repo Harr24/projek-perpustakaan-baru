@@ -131,7 +131,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('petugas', SuperadminPetugasController::class);
         
         // ==========================================================
-        // --- TAMBAHAN BARU: Rute Hapus Masal Siswa Lulus ---
+        // --- TAMBAHAN BARU: Rute Hapus Masal Siswa Luluss ---
         // ==========================================================
         // Taruh INI SEBELUM Route::resource('members') agar tidak bentrok dengan {member} id
         Route::delete('/members/graduated', [MemberController::class, 'destroyGraduated'])->name('members.destroy.graduated');
