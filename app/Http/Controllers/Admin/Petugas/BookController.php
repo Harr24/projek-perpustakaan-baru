@@ -128,14 +128,20 @@ class BookController extends Controller
     public function show(Book $book)
     {
         // ==========================================================
-        // --- 🔥 UPDATE PENTING UNTUK FITUR NAMA PEMINJAM 🔥 ---
+        // --- 🔥 UPDATE PENTING UNTUK FITUR NAMA PEMINJAM & HILANG 🔥 ---
         // ==========================================================
-        // Kita load:
-        // 1. genre
-        // 2. shelf
-        // 3. copies.activeBorrowing.user (Ambil copy -> cek pinjaman aktif -> ambil user-nya)
         
-        $book->load(['genre', 'shelf', 'copies.activeBorrowing.user']); 
+        // 1. Load data dasar
+        $book->load(['genre', 'shelf']);
+
+        // 2. Load copies beserta relasi history peminjaman terakhirnya
+        // Kita gunakan 'borrowings' (relasi hasMany di BookCopy ke Borrowing)
+        // dan ambil yang paling baru.
+        $book->load(['copies' => function ($query) {
+            $query->with(['borrowings' => function ($q) {
+                $q->latest()->limit(1)->with('user'); // Ambil 1 transaksi terakhir + user-nya
+            }]);
+        }]);
         
         return view('admin.petugas.books.show', compact('book'));
     }

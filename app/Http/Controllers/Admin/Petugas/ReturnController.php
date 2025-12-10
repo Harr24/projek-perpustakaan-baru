@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Borrowing;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // Pastikan DB di-import
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\BookCopy; 
 
@@ -19,7 +19,8 @@ class ReturnController extends Controller
     {
         $search = $request->input('search');
         $query = Borrowing::whereIn('status', ['dipinjam', 'overdue'])
-                             ->with('user', 'bookCopy.book');
+                        ->with('user', 'bookCopy.book');
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->whereHas('user', function ($subq) use ($search) {
@@ -32,33 +33,22 @@ class ReturnController extends Controller
         }
 
         // ==========================================================
-        // --- 🔥 PERUBAHAN PENTING DI SINI 🔥 ---
-        // --- PENTING: Tambahkan orderBy('user_id', 'asc') ---
-        // Ini WAJIB agar fungsionalitas "Pilih Semua per User" di view 
-        // dapat mengelompokkan peminjaman dengan benar.
-        // We MUST add orderBy('user_id', 'asc') here.
-        // This is MANDATORY so the "Select All per User" feature in the view
-        // can group the borrowings correctly.
+        // Pengurutan berdasarkan user_id agar fitur "Pilih Semua per User" bekerja
         // ==========================================================
         $activeBorrowings = $query->orderBy('user_id', 'asc')
                                  ->latest('approved_at')
                                  ->get();
-        // ==========================================================
         
-        
-        // ==========================================================
-        // --- TAMBAHAN: Mengambil holidays untuk view ---
-        // Anda mungkin perlu ini untuk mewarnai baris yang telat di view
-        // ==========================================================
+        // Ambil data hari libur untuk pewarnaan di view (opsional tapi berguna)
         $holidays = DB::table('holidays')
-                            ->pluck('holiday_date')
-                            ->map(fn($dateStr) => (new Carbon($dateStr))->format('Y-m-d'));
+                    ->pluck('holiday_date')
+                    ->map(fn($dateStr) => (new Carbon($dateStr))->format('Y-m-d'));
 
         return view('admin.petugas.returns.index', [
             'activeBorrowings' => $activeBorrowings,
             'search' => $search,
-            'holidays' => $holidays, // Kirim data libur ke view
-            'today' => Carbon::today() // Kirim tanggal hari ini ke view
+            'holidays' => $holidays, 
+            'today' => Carbon::today() 
         ]);
     }
 
@@ -71,58 +61,39 @@ class ReturnController extends Controller
             return redirect()->back()->with('error', 'Peminjaman ini tidak dalam status aktif.');
         }
 
-        // Ambil Daftar Tanggal Merah
         $holidayDates = DB::table('holidays')
-                            ->pluck('holiday_date')
-                            ->map(fn($dateStr) => (new Carbon($dateStr))->format('Y-m-d'))
-                            ->toArray();
+                        ->pluck('holiday_date')
+                        ->map(fn($dateStr) => (new Carbon($dateStr))->format('Y-m-d'))
+                        ->toArray();
 
-        // ==========================================================
-        // --- TAMBAHAN: Eager load relasi user ---
-        // ==========================================================
         $borrowing->loadMissing('user');
-        // ==========================================================
 
-
-        DB::transaction(function () use ($borrowing, $holidayDates) { // <-- Kirim $holidayDates ke transaction
+        DB::transaction(function () use ($borrowing, $holidayDates) { 
             $returnDate = Carbon::now();
-
             $book = $borrowing->bookCopy->book;
             $dueDate = $borrowing->due_date ? Carbon::parse($borrowing->due_date) : null; 
             
             $lateDays = 0;
             $fine = 0; 
 
-            // ==========================================================
-            // --- PERBAIKAN: Cek role user sebelum hitung denda ---
-            // ==========================================================
-            // HANYA hitung denda jika:
-            // 1. User ada (tidak null)
-            // 2. Role user BUKAN 'guru'
-            // 3. Tipe buku BUKAN 'laporan'
-            // 4. Ada tanggal jatuh tempo
-            // 5. Tanggal kembali > tanggal jatuh tempo
-            // ==========================================================
+            // Logika Denda: User ada, bukan Guru, bukan buku Laporan, dan Lewat Jatuh Tempo
             if (
                 $borrowing->user && $borrowing->user->role !== 'guru' && 
                 $book->book_type != 'laporan' && 
                 $dueDate && 
                 $returnDate->isAfter($dueDate)
             ) {
-                
-                // --- MODIFIKASI: Logika Filter Denda ---
+                // Hitung hari terlambat (skip weekend & holidays)
                 $lateDays = $dueDate->diffInDaysFiltered(function (Carbon $date) use ($holidayDates) {
                     $isWeekend = $date->isSaturday() || $date->isSunday();
                     $isHoliday = in_array($date->format('Y-m-d'), $holidayDates);
                     return !$isWeekend && !$isHoliday;
                 }, $returnDate);
-                // --- AKHIR MODIFIKASI ---
 
-                $fine = $lateDays * 1000; // Asumsi denda 1000
+                $fine = $lateDays * 1000; // Denda 1000 per hari
             }
-            // Jika user adalah 'guru', $fine dan $lateDays akan tetap 0
 
-            $borrowing->status = 'returned';
+            $borrowing->status = 'returned'; // Status peminjaman selesai (normal)
             $borrowing->returned_at = $returnDate;
             $borrowing->fine_amount = $fine;
             $borrowing->late_days = $lateDays;
@@ -130,6 +101,7 @@ class ReturnController extends Controller
             $borrowing->fine_status = ($fine > 0) ? 'unpaid' : 'paid'; 
             $borrowing->save();
 
+            // Update status fisik buku menjadi tersedia
             $bookCopy = $borrowing->bookCopy;
             $bookCopy->status = 'tersedia';
             $bookCopy->save();
@@ -155,59 +127,47 @@ class ReturnController extends Controller
 
         $borrowingIds = $request->input('borrowing_ids');
         
-        // ==========================================================
-        // --- TAMBAHAN: Eager load relasi 'user' saat query ---
-        // ==========================================================
-        $borrowingsToReturn = Borrowing::with('user') // <-- Tambahkan 'user'
-                                        ->whereIn('id', $borrowingIds)
-                                        ->whereIn('status', ['dipinjam', 'overdue'])
-                                        ->get();
+        $borrowingsToReturn = Borrowing::with('user')
+                                ->whereIn('id', $borrowingIds)
+                                ->whereIn('status', ['dipinjam', 'overdue'])
+                                ->get();
 
         if ($borrowingsToReturn->isEmpty()) {
             return redirect()->back()->with('error', 'Tidak ada buku valid yang dipilih untuk dikembalikan.');
         }
 
-        // Ambil Daftar Tanggal Merah (untuk massal)
         $holidayDates = DB::table('holidays')
-                            ->pluck('holiday_date')
-                            ->map(fn($dateStr) => (new Carbon($dateStr))->format('Y-m-d'))
-                            ->toArray();
+                        ->pluck('holiday_date')
+                        ->map(fn($dateStr) => (new Carbon($dateStr))->format('Y-m-d'))
+                        ->toArray();
 
         $totalReturned = 0;
         $totalFine = 0;
         $petugasId = Auth::id();
 
-        DB::transaction(function () use ($borrowingsToReturn, &$totalReturned, &$totalFine, $petugasId, $holidayDates) { // <-- Kirim $holidayDates
+        DB::transaction(function () use ($borrowingsToReturn, &$totalReturned, &$totalFine, $petugasId, $holidayDates) {
             foreach ($borrowingsToReturn as $borrowing) {
                 $returnDate = Carbon::now();
-
                 $book = $borrowing->bookCopy->book;
                 $dueDate = $borrowing->due_date ? Carbon::parse($borrowing->due_date) : null; 
                 
                 $lateDays = 0;
                 $fine = 0; 
 
-                // ==========================================================
-                // --- PERBAIKAN: Cek role user sebelum hitung denda ---
-                // ==========================================================
                 if (
                     $borrowing->user && $borrowing->user->role !== 'guru' && 
                     $book->book_type != 'laporan' && 
                     $dueDate && 
                     $returnDate->isAfter($dueDate)
                 ) {
-                    // --- MODIFIKASI: Logika Filter Denda ---
                     $lateDays = $dueDate->diffInDaysFiltered(function (Carbon $date) use ($holidayDates) {
                         $isWeekend = $date->isSaturday() || $date->isSunday();
                         $isHoliday = in_array($date->format('Y-m-d'), $holidayDates);
                         return !$isWeekend && !$isHoliday;
                     }, $returnDate);
-                    // --- AKHIR MODIFIKASI ---
                     
                     $fine = $lateDays * 1000;
                 }
-                // Jika user adalah 'guru', $fine dan $lateDays akan tetap 0
-                // ==========================================================
                 
                 $totalFine += $fine;
                 $borrowing->status = 'returned';
@@ -239,14 +199,17 @@ class ReturnController extends Controller
      */
     public function markAsLost(Borrowing $borrowing)
     {
-        // ... (Tidak ada perubahan di method markAsLost) ...
-        // Logika Anda di sini sudah benar, denda telat dan denda hilang = 0
         if (!in_array($borrowing->status, ['dipinjam', 'overdue'])) {
             return redirect()->back()->with('error', 'Peminjaman ini tidak dalam status aktif.');
         }
+
+        // Asumsi: Denda hilang dihandle manual / 0 di sistem otomatis
         $lostFineAmount = 0; 
+
         DB::transaction(function () use ($borrowing, $lostFineAmount) {
             $processDate = Carbon::now();
+            
+            // 1. Update Status Fisik Buku -> 'hilang'
             $bookCopy = $borrowing->bookCopy;
             if ($bookCopy) {
                 $bookCopy->status = 'hilang'; 
@@ -254,18 +217,23 @@ class ReturnController extends Controller
             } else {
                  throw new \Exception("Data eksemplar buku tidak ditemukan untuk peminjaman ID: {$borrowing->id}");
             }
-            $borrowing->status = 'returned'; 
+
+            // 2. Update Status Transaksi -> 'missing' (BUKAN 'returned')
+            // Ini kuncinya agar di laporan bisa dibedakan.
+            $borrowing->status = 'missing'; 
+            
             $borrowing->returned_at = $processDate; 
             $borrowing->late_days = 0; 
             $borrowing->fine_amount = $lostFineAmount; 
-            $borrowing->fine_status = 'paid'; 
+            $borrowing->fine_status = 'paid'; // Atau sesuaikan jika ada denda ganti rugi
             $borrowing->returned_by = Auth::id(); 
             $borrowing->save();
         });
         
         $bookTitle = $borrowing->bookCopy && $borrowing->bookCopy->book ? $borrowing->bookCopy->book->title : '[Judul Tidak Ditemukan]';
         $bookCode = $borrowing->bookCopy ? $borrowing->bookCopy->book_code : '[Kode Tidak Ditemukan]';
-        $message = "Buku '{$bookTitle}' (Eksemplar: {$bookCode}) berhasil ditandai sebagai hilang.";
+        
+        $message = "Buku '{$bookTitle}' (Eksemplar: {$bookCode}) berhasil ditandai sebagai HILANG.";
         return redirect()->back()->with('success', $message);
     }
 }

@@ -77,10 +77,16 @@
                             <th class="py-3 ps-4">No</th>
                             <th class="py-3 text-start">Nama Peminjam</th>
                             <th class="py-3">Role</th>
-                            {{-- UPDATE JUDUL KOLOM --}}
                             <th class="py-3">Kelas / Mapel</th>
                             <th class="py-3 text-start">Buku yang Dipinjam</th>
                             <th class="py-3">Kode Eksemplar</th>
+
+                            {{-- ========================================================== --}}
+                            {{-- 🔥 KOLOM BARU: Status Pengembalian 🔥 --}}
+                            {{-- ========================================================== --}}
+                            <th class="py-3">Status</th>
+                            {{-- ========================================================== --}}
+
                             <th class="py-3">Tgl. Pinjam</th>
                             <th class="py-3">Tgl. Kembali</th>
                             <th class="py-3">Petugas Approval</th>
@@ -97,17 +103,25 @@
                                     </a>
                                 </td>
                                 <td><span class="badge bg-secondary">{{ ucfirst($borrowing->user->role) }}</span></td>
-                                
-                                {{-- ========================================================== --}}
-                                {{-- 🔥 UPDATE PENTING: Menggunakan class_info 🔥 --}}
-                                {{-- ========================================================== --}}
                                 <td>{{ $borrowing->user->class_info ?? '-' }}</td>
-                                {{-- ========================================================== --}}
 
                                 <td class="text-start" title="{{ $borrowing->bookCopy->book->title }}">
                                     {{ Str::limit($borrowing->bookCopy->book->title, 30) }}
                                 </td>
                                 <td><span class="badge bg-dark fw-normal">{{ $borrowing->bookCopy->book_code }}</span></td>
+
+                                {{-- ========================================================== --}}
+                                {{-- 🔥 ISI KOLOM BARU 🔥 --}}
+                                {{-- ========================================================== --}}
+                                <td>
+                                    @if($borrowing->status == 'missing')
+                                        <span class="badge bg-danger">HILANG</span>
+                                    @else
+                                        <span class="badge bg-success bg-opacity-75">Dikembalikan</span>
+                                    @endif
+                                </td>
+                                {{-- ========================================================== --}}
+
                                 <td>{{ \Carbon\Carbon::parse($borrowing->borrowed_at)->format('d M Y') }}</td>
                                 <td>{{ $borrowing->returned_at ? \Carbon\Carbon::parse($borrowing->returned_at)->format('d M Y') : '-' }}</td>
                                 <td>{{ $borrowing->approvedBy->name ?? 'N/A' }}</td>
@@ -115,7 +129,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="text-center py-5">
+                                <td colspan="11" class="text-center py-5">
                                     <p class="text-muted mb-0">Tidak ada data peminjaman yang cocok dengan filter Anda.</p>
                                 </td>
                             </tr>

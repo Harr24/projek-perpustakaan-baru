@@ -20,9 +20,11 @@ class BorrowingReportController extends Controller
         $month = $request->input('month');
         $year = $request->input('year', date('Y'));
 
-        // Eager load semua relasi yang dibutuhkan untuk tampilan dan filter
+        // ==========================================================
+        // --- PERUBAHAN: Filter status 'returned' DAN 'missing' ---
+        // ==========================================================
         $borrowingsQuery = Borrowing::with(['user', 'bookCopy.book', 'approvedBy', 'returnedBy'])
-                                      ->whereNotNull('returned_at') // Ambil semua yang sudah dikembalikan
+                                      ->whereIn('status', ['returned', 'missing']) // <-- Ambil yang dikembalikan & hilang
                                       ->latest('returned_at');
 
         // Terapkan filter berdasarkan pencarian nama peminjam
@@ -67,9 +69,11 @@ class BorrowingReportController extends Controller
         $month = $request->input('month');
         $year = $request->input('year', date('Y'));
 
-        // Buat query yang sama persis dengan di method index()
+        // ==========================================================
+        // --- PERUBAHAN: Filter status 'returned' DAN 'missing' (Sama dgn Index) ---
+        // ==========================================================
         $borrowingsQuery = Borrowing::with(['user', 'bookCopy.book', 'approvedBy', 'returnedBy'])
-                                      ->whereNotNull('returned_at')
+                                      ->whereIn('status', ['returned', 'missing']) // <-- Konsisten dengan index
                                       ->latest('returned_at');
 
         $borrowingsQuery->when($search, function ($query, $search) {
@@ -87,13 +91,19 @@ class BorrowingReportController extends Controller
         $fileName = 'laporan-peminjaman-' . date('d-m-Y') . '.xlsx';
         $writer = SimpleExcelWriter::create(storage_path('app/' . $fileName));
 
-        // Tambahkan header ke file Excel, termasuk kolom baru
+        // ==========================================================
+        // --- PERUBAHAN: Tambah Header 'Status Pengembalian' ---
+        // ==========================================================
         $writer->addRow([
-            'Nama Peminjam', 'Role', 'Kelas', 'Judul Buku', 'Kode Eksemplar', 'Tanggal Pinjam', 'Tanggal Kembali', 'Petugas Approval', 'Petugas Pengembalian'
+            'Nama Peminjam', 'Role', 'Kelas', 'Judul Buku', 'Kode Eksemplar', 
+            'Tanggal Pinjam', 'Tanggal Kembali', 'Status Pengembalian', // <-- Kolom Baru
+            'Petugas Approval', 'Petugas Pengembalian'
         ]);
 
-        // Tambahkan data ke setiap baris file Excel
         foreach ($dataToExport as $item) {
+            // Logika Status Text untuk Excel
+            $statusText = ($item->status === 'missing') ? 'HILANG' : 'Dikembalikan';
+
             $writer->addRow([
                 'Nama Peminjam'         => $item->user->name,
                 'Role'                  => ucfirst($item->user->role),
@@ -102,6 +112,7 @@ class BorrowingReportController extends Controller
                 'Kode Eksemplar'        => $item->bookCopy->book_code,
                 'Tanggal Pinjam'        => Carbon::parse($item->borrowed_at)->format('d-m-Y'),
                 'Tanggal Kembali'       => $item->returned_at ? Carbon::parse($item->returned_at)->format('d-m-Y') : '-',
+                'Status Pengembalian'   => $statusText, // <-- Isi Data Baru
                 'Petugas Approval'      => $item->approvedBy->name ?? 'N/A',
                 'Petugas Pengembalian'  => $item->returnedBy->name ?? 'N/A',
             ]);
@@ -110,4 +121,3 @@ class BorrowingReportController extends Controller
         return response()->download(storage_path('app/' . $fileName))->deleteFileAfterSend(true);
     }
 }
-

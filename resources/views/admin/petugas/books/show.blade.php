@@ -15,14 +15,18 @@
             line-height: 1.6;
             color: #495057;
         }
-        /* Tambahan style untuk info peminjam */
+        /* Style untuk info peminjam/penghilang buku */
         .borrower-info {
             font-size: 0.85rem;
             color: #6c757d;
             margin-top: 6px;
             line-height: 1.3;
-            border-left: 3px solid #ffc107;
+            border-left: 3px solid #ffc107; /* Default warning for borrowing */
             padding-left: 8px;
+        }
+        .borrower-info.lost-info {
+            border-left: 3px solid #000; /* Hitam untuk hilang */
+            color: #000;
         }
     </style>
 </head>
@@ -116,31 +120,57 @@
                                             <span class="badge bg-success">Tersedia</span>
 
                                         {{-- ==================================================== --}}
-                                        {{-- LOGIC BARU: TAMPILKAN NAMA PEMINJAM JIKA DIPINJAM --}}
+                                        {{-- LOGIC: JIKA DIPINJAM --}}
                                         {{-- ==================================================== --}}
                                         @elseif ($copy->status == 'dipinjam')
                                             <span class="badge bg-warning text-dark mb-1">Dipinjam</span>
                                             
-                                            {{-- Cek apakah ada data peminjaman aktif --}}
-                                            @if($copy->activeBorrowing && $copy->activeBorrowing->user)
+                                            {{-- Ambil data peminjaman pertama (terbaru) dari relation --}}
+                                            @php $borrowing = $copy->borrowings->first(); @endphp
+
+                                            @if($borrowing && $borrowing->user)
                                                 <div class="borrower-info">
                                                     <div>
                                                         <i class="bi bi-person-circle me-1"></i> 
-                                                        <strong>{{ $copy->activeBorrowing->user->name }}</strong>
+                                                        <strong>{{ $borrowing->user->name }}</strong>
                                                     </div>
                                                     <div style="font-size: 0.75rem;">
-                                                        ({{ $copy->activeBorrowing->user->class ?? '' }} {{ $copy->activeBorrowing->user->major ?? '' }})
+                                                        ({{ $borrowing->user->class_info ?? '-' }})
                                                     </div>
                                                     
-                                                    @if($copy->activeBorrowing->due_date)
+                                                    @if($borrowing->due_date)
                                                         <div class="text-danger mt-1" style="font-size: 0.75rem;">
                                                             <i class="bi bi-calendar-event me-1"></i>
-                                                            Kembali: {{ \Carbon\Carbon::parse($copy->activeBorrowing->due_date)->format('d M Y') }}
+                                                            Kembali: {{ \Carbon\Carbon::parse($borrowing->due_date)->format('d M Y') }}
                                                         </div>
                                                     @endif
                                                 </div>
                                             @endif
+
                                         {{-- ==================================================== --}}
+                                        {{-- LOGIC: JIKA HILANG (BARU) --}}
+                                        {{-- ==================================================== --}}
+                                        @elseif ($copy->status == 'hilang')
+                                            <span class="badge bg-dark mb-1">HILANG</span>
+
+                                            {{-- Ambil data peminjaman terakhir (yang menyebabkan hilang) --}}
+                                            @php $borrowing = $copy->borrowings->first(); @endphp
+
+                                            @if($borrowing && $borrowing->user)
+                                                <div class="borrower-info lost-info">
+                                                    <div class="text-danger fw-bold" style="font-size: 0.7rem;">DIHILANGKAN OLEH:</div>
+                                                    <div>
+                                                        <i class="bi bi-person-x-fill me-1"></i> 
+                                                        <strong>{{ $borrowing->user->name }}</strong>
+                                                    </div>
+                                                    <div style="font-size: 0.75rem;">
+                                                        ({{ $borrowing->user->class_info ?? '-' }})
+                                                    </div>
+                                                    <div class="text-muted mt-1" style="font-size: 0.7rem;">
+                                                        Tgl Lapor: {{ \Carbon\Carbon::parse($borrowing->returned_at)->format('d M Y') }}
+                                                    </div>
+                                                </div>
+                                            @endif
 
                                         @elseif ($copy->status == 'pending')
                                             <span class="badge bg-info text-dark">Pending</span>
