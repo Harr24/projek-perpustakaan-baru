@@ -22,14 +22,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\Superadmin\SuperadminFineController;
 use App\Http\Controllers\Admin\Superadmin\MajorController;
 use App\Http\Controllers\Admin\Superadmin\ShelfController;
-// ==========================================================
-// --- TAMBAHAN: Import HolidayController ---
-// ==========================================================
 use App\Http\Controllers\Admin\Superadmin\HolidayController;
-
-// ==========================================================
-// --- TAMBAHAN: Import ScheduleController ---
-// ==========================================================
 use App\Http\Controllers\Admin\Superadmin\ScheduleController;
 
 
@@ -55,10 +48,16 @@ Route::middleware('auth')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-    // RUTE PROFIL
+    // ==========================================================
+    // RUTE PROFIL (Updated)
+    // ==========================================================
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // --- 🔥 RUTE BARU: HAPUS FOTO PROFIL 🔥 ---
+    Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.photo.delete');
+    // ==========================================================
 
     // RUTE PEMINJAMAN
     Route::post('/borrow/bulk', [BorrowingController::class, 'storeBulk'])->name('borrow.store.bulk');
@@ -73,11 +72,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/verifikasi-siswa/{user}/reject', [VerificationController::class, 'reject'])->name('verification.reject');
         Route::get('/verifikasi-siswa/lihat-kartu/{user}', [VerificationController::class, 'showStudentCard'])->name('verification.showCard');
 
-        // ==========================================================
-        // --- PERBAIKAN: Nonaktifkan rute 'show' untuk Genre ---
-        // ==========================================================
         Route::resource('genres', GenreController::class)->except(['show']);
-        // ==========================================================
 
         Route::get('/books/create-bulk', [BookController::class, 'showCreateBulkForm'])->name('books.create.bulk');
         Route::post('/books/store-bulk', [BookController::class, 'storeBulkForm'])->name('books.store.bulk.form');
@@ -86,22 +81,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('teachers', TeacherController::class)->except(['show']);
         Route::delete('/book-copies/{copy}', [BookController::class, 'destroyCopy'])->name('books.copies.destroy');
 
-        // ==========================================================
-        // ===== PENAMBAHAN BARIS BARU UNTUK BUKU DITEMUKAN =====
-        // ==========================================================
         Route::put('/book-copies/{copy}/mark-found', [BookController::class, 'markCopyAsFound'])->name('books.copies.markFound');
-        // ==========================================================
 
         Route::get('/approvals', [LoanApprovalController::class, 'index'])->name('approvals.index');
         Route::post('/approvals/{borrowing}/approve', [LoanApprovalController::class, 'approve'])->name('approvals.approve');
         Route::post('/approvals/{borrowing}/reject', [LoanApprovalController::class, 'reject'])->name('approvals.reject');
         Route::post('/approvals/approve-multiple', [LoanApprovalController::class, 'approveMultiple'])->name('approvals.approveMultiple');
 
-        // ==========================================================
-        // ===== PENAMBAHAN: Rute untuk Tolak Massal =====
-        // ==========================================================
         Route::post('/approvals/reject-multiple', [LoanApprovalController::class, 'rejectMultiple'])->name('approvals.rejectMultiple');
-        // ==========================================================
 
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns.index');
         Route::put('/returns/{borrowing}', [ReturnController::class, 'store'])->name('returns.store');
@@ -109,7 +96,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/returns/{borrowing}/mark-lost', [ReturnController::class, 'markAsLost'])->name('returns.markAsLost');
 
         Route::get('/fines', [FineController::class, 'index'])->name('fines.index');
-        Route::post('/fines/{borrowing}/pay-installment', [FineController::class, 'payInstallment'])->name('fines.pay'); // Sudah benar (untuk cicilan)
+        Route::post('/fines/{borrowing}/pay-installment', [FineController::class, 'payInstallment'])->name('fines.pay');
         Route::get('/fines/history', [FineController::class, 'history'])->name('fines.history');
         Route::get('/fines/history/export', [FineController::class, 'export'])->name('fines.export');
 
@@ -120,9 +107,6 @@ Route::middleware('auth')->group(function () {
 
     // RUTE KHUSUS UNTUK ROLE GURU
     Route::middleware('role:guru')->prefix('guru')->name('guru.')->group(function () {
-        // ==========================================================
-        // --- ðŸ”¥ INI DIA PERBAIKANNYA ðŸ”¥ ---
-        // ==========================================================
         Route::resource('materials', LearningMaterialController::class)->except(['show']);
     });
 
@@ -130,59 +114,33 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:superadmin')->prefix('admin/superadmin')->name('admin.superadmin.')->group(function () {
         Route::resource('petugas', SuperadminPetugasController::class);
         
-        // ==========================================================
-        // --- TAMBAHAN BARU: Rute Hapus Masal Siswa Luluss ---
-        // ==========================================================
-        // Taruh INI SEBELUM Route::resource('members') agar tidak bentrok dengan {member} id
         Route::delete('/members/graduated', [MemberController::class, 'destroyGraduated'])->name('members.destroy.graduated');
         
         Route::resource('members', MemberController::class)->except(['create', 'store']);
         
         Route::resource('sliders', HeroSliderController::class);
 
-        // ==========================================================
-        // PENAMBAHAN: Rute Riwayat Denda untuk Superadmin
-        // ==========================================================
         Route::get('/fines/history', [SuperadminFineController::class, 'history'])->name('fines.history');
         Route::delete('/fines/history/{fine}', [SuperadminFineController::class, 'destroy'])->name('fines.destroy');
         
-        // --- TAMBAHAN BARU: Rute untuk Export Excel Superadmin ---
         Route::get('/fines/history/export', [SuperadminFineController::class, 'export'])->name('fines.export');
-        // ==========================================================
         
-
-        // ==========================================================
-        // --- TAMBAHAN: Rute Manajemen Tanggal Merah ---
-        // ==========================================================
         Route::get('/holidays', [HolidayController::class, 'index'])->name('holidays.index');
         Route::post('/holidays', [HolidayController::class, 'store'])->name('holidays.store');
         
-        // --- TAMBAHAN: Rute untuk EDIT dan UPDATE ---
         Route::get('/holidays/{holiday}/edit', [HolidayController::class, 'edit'])->name('holidays.edit');
         Route::put('/holidays/{holiday}', [HolidayController::class, 'update'])->name('holidays.update');
-        // --- AKHIR TAMBAHAN EDIT/UPDATE ---
         
         Route::delete('/holidays/{holiday}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
-        // ==========================================================
 
-        
-        // ==========================================================
-        // --- TAMBAHAN: Rute Manajemen Jadwal Petugas ---
-        // ==========================================================
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
         Route::get('schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
         Route::post('schedules', [ScheduleController::class, 'store'])->name('schedules.store');
         Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
-        // ==========================================================
 
-        // ==========================================================
-        // --- TAMBAHAN BARU: Rute Manajemen Jurusan ---
-        // ==========================================================
         Route::resource('majors', MajorController::class)->except(['show']);
 
-        Route::resource('shelves', ShelfController::class)->except(['show']); // <-- BARU
-        // ==========================================================
-
+        Route::resource('shelves', ShelfController::class)->except(['show']);
     });
     
 });
