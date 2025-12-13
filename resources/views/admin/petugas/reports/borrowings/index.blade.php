@@ -21,11 +21,12 @@
         <div class="card-body">
             <form action="{{ route('admin.petugas.reports.borrowings.index') }}" method="GET">
                 <div class="row g-3 align-items-end">
-                    {{-- Filter Bulan --}}
-                    <div class="col-md-3">
+                    
+                    {{-- Filter Bulan (Lebar 2) --}}
+                    <div class="col-md-2">
                         <label for="month" class="form-label small">Bulan</label>
                         <select name="month" id="month" class="form-select">
-                            <option value="">-- Semua Bulan --</option>
+                            <option value="">-- Semua --</option>
                             @for ($m = 1; $m <= 12; $m++)
                                 <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
                                     {{ date('F', mktime(0, 0, 0, $m, 1)) }}
@@ -33,24 +34,40 @@
                             @endfor
                         </select>
                     </div>
-                    {{-- Filter Tahun --}}
+
+                    {{-- Filter Tahun (Lebar 2) --}}
                     <div class="col-md-2">
                         <label for="year" class="form-label small">Tahun</label>
                         <input type="number" name="year" id="year" class="form-control" placeholder="Tahun" value="{{ request('year', date('Y')) }}">
                     </div>
-                    {{-- Filter Nama Peminjam --}}
-                    <div class="col-md-4">
+
+                    {{-- ========================================================== --}}
+                    {{-- 🔥 KOLOM FILTER STATUS (BARU) (Lebar 2) 🔥 --}}
+                    {{-- ========================================================== --}}
+                    <div class="col-md-2">
+                        <label for="status" class="form-label small">Status</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="">-- Semua --</option>
+                            <option value="returned" {{ request('status') == 'returned' ? 'selected' : '' }}>Dikembalikan</option>
+                            <option value="missing" {{ request('status') == 'missing' ? 'selected' : '' }}>Hilang</option>
+                        </select>
+                    </div>
+                    {{-- ========================================================== --}}
+
+                    {{-- Filter Nama Peminjam (Lebar 3) --}}
+                    <div class="col-md-3">
                         <label for="search" class="form-label small">Nama Peminjam</label>
                         <div class="input-group">
-                            <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama siswa atau guru..." value="{{ request('search') }}">
-                            @if(request('search'))
-                                <a href="{{ route('admin.petugas.reports.borrowings.index', ['month' => request('month'), 'year' => request('year')]) }}" class="btn btn-outline-secondary" title="Hapus Filter Nama">
+                            <input type="text" name="search" id="search" class="form-control" placeholder="Cari nama..." value="{{ request('search') }}">
+                            @if(request('search') || request('status') || request('month'))
+                                <a href="{{ route('admin.petugas.reports.borrowings.index', ['year' => request('year')]) }}" class="btn btn-outline-secondary" title="Reset Filter">
                                     <i class="bi bi-x"></i>
                                 </a>
                             @endif
                         </div>
                     </div>
-                    {{-- Tombol Aksi --}}
+
+                    {{-- Tombol Aksi (Lebar 3) --}}
                     <div class="col-md-3 d-flex gap-2">
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="bi bi-funnel-fill me-1"></i> Filter
@@ -80,13 +97,7 @@
                             <th class="py-3">Kelas / Mapel</th>
                             <th class="py-3 text-start">Buku yang Dipinjam</th>
                             <th class="py-3">Kode Eksemplar</th>
-
-                            {{-- ========================================================== --}}
-                            {{-- 🔥 KOLOM BARU: Status Pengembalian 🔥 --}}
-                            {{-- ========================================================== --}}
                             <th class="py-3">Status</th>
-                            {{-- ========================================================== --}}
-
                             <th class="py-3">Tgl. Pinjam</th>
                             <th class="py-3">Tgl. Kembali</th>
                             <th class="py-3">Petugas Approval</th>
@@ -110,9 +121,6 @@
                                 </td>
                                 <td><span class="badge bg-dark fw-normal">{{ $borrowing->bookCopy->book_code }}</span></td>
 
-                                {{-- ========================================================== --}}
-                                {{-- 🔥 ISI KOLOM BARU 🔥 --}}
-                                {{-- ========================================================== --}}
                                 <td>
                                     @if($borrowing->status == 'missing')
                                         <span class="badge bg-danger">HILANG</span>
@@ -120,7 +128,6 @@
                                         <span class="badge bg-success bg-opacity-75">Dikembalikan</span>
                                     @endif
                                 </td>
-                                {{-- ========================================================== --}}
 
                                 <td>{{ \Carbon\Carbon::parse($borrowing->borrowed_at)->format('d M Y') }}</td>
                                 <td>{{ $borrowing->returned_at ? \Carbon\Carbon::parse($borrowing->returned_at)->format('d M Y') : '-' }}</td>

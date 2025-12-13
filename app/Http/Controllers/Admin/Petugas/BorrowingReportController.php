@@ -19,27 +19,36 @@ class BorrowingReportController extends Controller
         $search = $request->input('search');
         $month = $request->input('month');
         $year = $request->input('year', date('Y'));
+        
+        // Ambil input status dari filter
+        $status = $request->input('status'); 
 
-        // ==========================================================
-        // --- PERUBAHAN: Filter status 'returned' DAN 'missing' ---
-        // ==========================================================
+        // Query dasar
         $borrowingsQuery = Borrowing::with(['user', 'bookCopy.book', 'approvedBy', 'returnedBy'])
-                                      ->whereIn('status', ['returned', 'missing']) // <-- Ambil yang dikembalikan & hilang
                                       ->latest('returned_at');
 
-        // Terapkan filter berdasarkan pencarian nama peminjam
+        // LOGIKA FILTER STATUS
+        if ($status) {
+            // Jika ada filter (misal: 'missing'), cari yang statusnya itu saja
+            $borrowingsQuery->where('status', $status);
+        } else {
+            // Jika filter kosong, tampilkan keduanya (returned & missing)
+            $borrowingsQuery->whereIn('status', ['returned', 'missing']);
+        }
+
+        // Filter pencarian nama
         $borrowingsQuery->when($search, function ($query, $search) {
             return $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");
             });
         });
 
-        // Terapkan filter bulan
+        // Filter bulan
         $borrowingsQuery->when($month, function ($query, $month) {
             return $query->whereMonth('borrowed_at', $month);
         });
         
-        // Terapkan filter tahun
+        // Filter tahun
         $borrowingsQuery->whereYear('borrowed_at', $year);
 
         $borrowings = $borrowingsQuery->paginate(15)->withQueryString();
@@ -52,7 +61,6 @@ class BorrowingReportController extends Controller
      */
     public function showUserHistory(User $user)
     {
-        // Eager load relasi yang dibutuhkan untuk riwayat
         $history = Borrowing::with(['bookCopy.book', 'approvedBy', 'returnedBy'])
                             ->where('user_id', $user->id)
                             ->latest('borrowed_at')
@@ -68,14 +76,20 @@ class BorrowingReportController extends Controller
         $search = $request->input('search');
         $month = $request->input('month');
         $year = $request->input('year', date('Y'));
+        $status = $request->input('status');
 
-        // ==========================================================
-        // --- PERUBAHAN: Filter status 'returned' DAN 'missing' (Sama dgn Index) ---
-        // ==========================================================
+        // Query dasar (harus sama dengan index)
         $borrowingsQuery = Borrowing::with(['user', 'bookCopy.book', 'approvedBy', 'returnedBy'])
-                                      ->whereIn('status', ['returned', 'missing']) // <-- Konsisten dengan index
                                       ->latest('returned_at');
 
+        // Filter Status
+        if ($status) {
+            $borrowingsQuery->where('status', $status);
+        } else {
+            $borrowingsQuery->whereIn('status', ['returned', 'missing']);
+        }
+
+        // Filter Nama, Bulan, Tahun
         $borrowingsQuery->when($search, function ($query, $search) {
             return $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");
@@ -88,31 +102,49 @@ class BorrowingReportController extends Controller
         
         $dataToExport = $borrowingsQuery->get();
 
-        $fileName = 'laporan-peminjaman-' . date('d-m-Y') . '.xlsx';
+        $fileName = 'laporan-peminjaman-' . date('d-m-Y-H-i') . '.xlsx';
         $writer = SimpleExcelWriter::create(storage_path('app/' . $fileName));
 
-        // ==========================================================
-        // --- PERUBAHAN: Tambah Header 'Status Pengembalian' ---
-        // ==========================================================
+        // Header Excel
         $writer->addRow([
-            'Nama Peminjam', 'Role', 'Kelas', 'Judul Buku', 'Kode Eksemplar', 
-            'Tanggal Pinjam', 'Tanggal Kembali', 'Status Pengembalian', // <-- Kolom Baru
+            'Nama Peminjam', 'Role', 'Kelas / Mapel', 'Judul Buku', 'Kode Eksemplar', 
+            'Tanggal Pinjam', 'Tanggal Kembali', 'Status Pengembalian',
             'Petugas Approval', 'Petugas Pengembalian'
         ]);
 
         foreach ($dataToExport as $item) {
-            // Logika Status Text untuk Excel
             $statusText = ($item->status === 'missing') ? 'HILANG' : 'Dikembalikan';
 
+            // ==========================================================
+            // 🔥 LOGIKA PENENTUAN KELAS / MAPEL 🔥
+            // ==========================================================
+            $displayClass = 'N/A';
+
+            if ($item->user) {
+                if ($item->user->role == 'guru') {
+                    // Jika Guru, ambil Subject (Mata Pelajaran)
+                    $displayClass = $item->user->subject ?? 'Guru'; 
+                } else {
+                    // Jika Siswa, gabungkan Kelas + Jurusan
+                    $kelas = $item->user->class;
+                    $jurusan = $item->user->major;
+                    
+                    if (!empty($kelas) || !empty($jurusan)) {
+                        $displayClass = trim("$kelas $jurusan");
+                    }
+                }
+            }
+            // ==========================================================
+
             $writer->addRow([
-                'Nama Peminjam'         => $item->user->name,
-                'Role'                  => ucfirst($item->user->role),
-                'Kelas'                 => $item->user->class_name ?? 'N/A',
-                'Judul Buku'            => $item->bookCopy->book->title,
-                'Kode Eksemplar'        => $item->bookCopy->book_code,
+                'Nama Peminjam'         => $item->user->name ?? 'User Terhapus',
+                'Role'                  => ucfirst($item->user->role ?? '-'),
+                'Kelas / Mapel'         => $displayClass, // Menggunakan hasil logika di atas
+                'Judul Buku'            => $item->bookCopy->book->title ?? '-',
+                'Kode Eksemplar'        => $item->bookCopy->book_code ?? '-',
                 'Tanggal Pinjam'        => Carbon::parse($item->borrowed_at)->format('d-m-Y'),
                 'Tanggal Kembali'       => $item->returned_at ? Carbon::parse($item->returned_at)->format('d-m-Y') : '-',
-                'Status Pengembalian'   => $statusText, // <-- Isi Data Baru
+                'Status Pengembalian'   => $statusText,
                 'Petugas Approval'      => $item->approvedBy->name ?? 'N/A',
                 'Petugas Pengembalian'  => $item->returnedBy->name ?? 'N/A',
             ]);
