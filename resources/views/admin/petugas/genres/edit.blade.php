@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    {{-- TAMBAHAN: Script SweetAlert2 untuk Pop-up Hapus --}}
+    {{-- Script SweetAlert2 untuk Pop-up Hapus --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -19,26 +19,22 @@
         }
         body{ 
             font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Arial; 
-            background:#f8f9fa; /* Latar belakang abu-abu muda */
+            background:#f8f9fa; 
         }
         
-        /* ========================================================== */
-        /* --- DESAIN BARU HEADER --- */
-        /* ========================================================== */
+        /* HEADER STYLE */
         .topbar{ 
-            background: var(--brand-red); /* Warna merah solid (lebih modern) */
+            background: var(--brand-red); 
             color:#fff; 
-            /* Bayangan yang lebih halus */
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         .initials-avatar {
             width: 44px;
             height: 44px;
-            background-color: rgba(255,255,255,0.2); /* Transparan */
+            background-color: rgba(255,255,255,0.2); 
             color: #fff;
             font-weight: 700;
         }
-        /* Style untuk form logout agar terlihat seperti tombol */
         .btn-logout {
             background: none;
             border: 1px solid rgba(255,255,255,0.5);
@@ -53,9 +49,7 @@
             color: #fff;
             border-color: #fff;
         }
-        /* ========================================================== */
 
-        /* Style Bantuan Form */
         label.required::after{ content: " *"; color:#d11; }
         .help-text{ font-size:0.9rem; color:#6c757d; }
     </style>
@@ -65,10 +59,7 @@
     <header class="topbar py-3">
         <div class="container d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
-                
-                {{-- REVISI: Avatar Inisial Nama --}}
                 <div class="rounded-circle d-flex align-items-center justify-content-center initials-avatar">
-                    {{-- Mengambil inisial dari nama petugas yang login --}}
                     {{ Str::upper(substr(Auth::user()->name, 0, 2)) }}
                 </div>
                 <div>
@@ -77,11 +68,6 @@
                 </div>
             </div>
             <div>
-                {{-- 
-                    ==========================================================
-                    --- PERBAIKAN BUG: Mengganti <a> menjadi <form> ---
-                    ==========================================================
-                --}}
                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
                     @csrf
                     <button type="submit" class="btn-logout">
@@ -93,21 +79,16 @@
     </header>
 
     <main class="container py-5">
-        
-        {{-- ========================================================== --}}
-        {{-- ========================================================== --}}
         <div class="row g-4 g-lg-5">
             
             {{-- Kolom Form Utama (Kiri) --}}
             <div class="col-lg-8">
                 
-                {{-- Header Halaman (dipindah dari card) --}}
                 <div class="mb-4">
                     <h1 class="h3 fw-bold text-gray-800">Edit Genre: {{ $genre->name }}</h1>
-                    <p class="text-muted mb-0">Perbarui nama genre buku. Pastikan nama tidak duplikat dan deskriptif.</p>
+                    <p class="text-muted mb-0">Perbarui nama, kode, atau ikon genre buku.</p>
                 </div>
 
-                {{-- Alert Notifikasi --}}
                 @if(session('success'))
                     <div class="alert alert-success d-flex align-items-center" role="alert">
                         <i class="bi bi-check-circle-fill me-2"></i>
@@ -126,10 +107,10 @@
                     </div>
                 @endif
 
-                {{-- Kartu Form (Desain Baru) --}}
                 <div class="card shadow-sm border-0">
                     <div class="card-body p-4 p-md-5">
-                        <form action="{{ route('admin.petugas.genres.update', $genre->id) }}" method="POST" class="needs-validation" novalidate>
+                        {{-- PENTING: Tambahkan enctype="multipart/form-data" --}}
+                        <form action="{{ route('admin.petugas.genres.update', $genre->id) }}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
                             @csrf
                             @method('PUT')
 
@@ -150,8 +131,25 @@
                                        class="form-control form-control-lg @error('name') is-invalid @enderror" placeholder="Contoh: Fiksi, Sejarah">
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
-                                @else
-                                    <div class="form-text help-text">Nama genre maksimal 100 karakter.</div>
+                                @enderror
+                            </div>
+
+                            {{-- TAMBAHAN: Input Edit Icon --}}
+                            <div class="mb-4">
+                                <label for="icon" class="form-label">Ikon Kategori (Opsional)</label>
+                                
+                                {{-- Preview Icon Lama --}}
+                                @if($genre->icon)
+                                    <div class="mb-2">
+                                        <img src="{{ asset('storage/' . $genre->icon) }}" alt="Current Icon" class="img-thumbnail" style="height: 80px; width: 80px; object-fit: cover;">
+                                        <div class="small text-muted mt-1">Icon saat ini</div>
+                                    </div>
+                                @endif
+
+                                <input type="file" id="icon" name="icon" class="form-control @error('icon') is-invalid @enderror" accept="image/*">
+                                <div class="form-text help-text">Biarkan kosong jika tidak ingin mengubah icon. (Format: JPG, PNG, SVG. Max 2MB)</div>
+                                @error('icon')
+                                    <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
@@ -165,7 +163,7 @@
                             </div>
                         </form>
                         
-                        {{-- Form Hapus (terpisah) --}}
+                        {{-- Form Hapus --}}
                         <form action="{{ route('admin.petugas.genres.destroy', $genre->id) }}" method="POST" id="delete-form" class="mt-4 border-top pt-4">
                             @csrf
                             @method('DELETE')
@@ -179,17 +177,14 @@
 
             {{-- Kolom Sidebar (Kanan) --}}
             <div class="col-lg-4">
-                
-                {{-- Kartu Ringkasan (Desain Baru) --}}
                 <div class="card shadow-sm border-start border-danger border-4 mb-4">
                     <div class="card-body">
                         <h6 class="mb-2 fw-bold text-danger">Ringkasan Cepat</h6>
                         <p class="mb-1"><strong>Total Genre:</strong> {{ \App\Models\Genre::count() }}</p>
-                        <p class="mb-0 text-muted small">Gunakan nama singkat dan konsisten untuk memudahkan filter dan laporan.</p>
+                        <p class="mb-0 text-muted small">Icon akan muncul di halaman katalog pengunjung.</p>
                     </div>
                 </div>
 
-                {{-- Kartu Petunjuk (Desain Baru) --}}
                 <div class="card shadow-sm border-start border-primary border-4">
                     <div class="card-body">
                         <h6 class="mb-3 fw-bold text-primary">Petunjuk</h6>
@@ -199,8 +194,8 @@
                                 <span>Nama genre wajib diisi dan unik.</span>
                             </li>
                             <li class="mb-2 d-flex">
-                                <i class="bi bi-check-circle-fill text-primary me-2 mt-1"></i>
-                                <span>Hindari karakter khusus yang tidak perlu.</span>
+                                <i class="bi bi-image text-primary me-2 mt-1"></i>
+                                <span>Gunakan gambar transparan (PNG/SVG) agar lebih rapi.</span>
                             </li>
                             <li class="d-flex">
                                 <i class="bi bi-exclamation-triangle-fill text-warning me-2 mt-1"></i>
@@ -214,11 +209,8 @@
         </div>
     </main>
 
-    {{-- Hapus Modal Lama, ganti dengan SweetAlert --}}
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Validasi Bootstrap
         (function () {
           'use strict'
           var forms = document.querySelectorAll('.needs-validation')
@@ -233,26 +225,23 @@
           })
         })();
 
-        // ==========================================================
-        // --- TAMBAHAN: Script Pop-up Hapus (SweetAlert2) ---
-        // ==========================================================
         const deleteForm = document.getElementById('delete-form');
         if (deleteForm) {
             deleteForm.addEventListener('submit', function (event) {
-                event.preventDefault(); // Hentikan submit
+                event.preventDefault(); 
                 
                 Swal.fire({
                     title: 'Hapus Genre Ini?',
                     text: "Apakah Anda yakin ingin menghapus genre '{{ $genre->name }}'? Tindakan ini tidak dapat dibatalkan.",
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#c62828', // Warna merah tema Anda
+                    confirmButtonColor: '#c62828', 
                     cancelButtonColor: '#6c757d',
                     confirmButtonText: 'Ya, Hapus!',
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        deleteForm.submit(); // Lanjutkan submit jika dikonfirmasi
+                        deleteForm.submit(); 
                     }
                 });
             });

@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Genre extends Model
 {
-    // PASTIKAN BARIS INI ADA
     use HasFactory;
 
     /**
@@ -18,18 +17,15 @@ class Genre extends Model
     protected $fillable = [
         'name',
         'genre_code',
+        'icon', // <-- TAMBAHAN: Agar kolom icon bisa diisi
     ];
 
-    // ==========================================================
-    // --- FUNGSI INI YANG HILANG (PENYEBAB ERROR HAPUS) ---
-    // ==========================================================
     /**
      * Mendefinisikan relasi 'hasMany' (satu-ke-banyak) ke model Book.
      * Satu Genre bisa memiliki banyak Buku.
      */
     public function books()
     {
-        // Ini akan menghubungkan Genre ke Book melalui 'genre_id'
         return $this->hasMany(Book::class);
     }
 }

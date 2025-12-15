@@ -78,9 +78,12 @@
 <body>
     <div class="container-card">
         <h1>Tambah Genre Baru</h1>
-        <form action="{{ route('admin.petugas.genres.store') }}" method="POST">
+        
+        {{-- PENTING: Tambahkan enctype="multipart/form-data" agar bisa upload file --}}
+        <form action="{{ route('admin.petugas.genres.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
+            {{-- Input Kode Genre --}}
             <div class="mb-3">
                 <label for="genre_code" class="form-label">Kode Genre (DDC):</label>
                 <input type="text" id="genre_code" name="genre_code" 
@@ -91,10 +94,22 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
+
+            {{-- Input Nama Genre --}}
             <div class="mb-3">
                 <label for="name" class="form-label">Nama Genre:</label>
                 <input type="text" id="name" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required>
                 @error('name')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            {{-- Input Icon Genre (BARU) --}}
+            <div class="mb-3">
+                <label for="icon" class="form-label">Ikon Kategori (Opsional):</label>
+                <input type="file" id="icon" name="icon" class="form-control @error('icon') is-invalid @enderror" accept="image/*">
+                <div class="form-text text-muted small">Format: JPG, PNG, SVG. Maksimal 2MB.</div>
+                @error('icon')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>

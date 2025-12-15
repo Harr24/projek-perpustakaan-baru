@@ -41,6 +41,8 @@
             background-color: #fef2f2;
             box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
         }
+        
+        /* LOGIKA TAMPILAN ICON DI FILTER */
         .genre-code {
             width: 50px;
             height: 50px;
@@ -53,25 +55,27 @@
             font-size: 1.25rem;
             font-weight: 700;
             margin-bottom: 0.75rem;
+            overflow: hidden; /* Tambahan agar gambar bulat */
+            position: relative;
         }
-
-        /* CSS custom untuk tombol kembali tidak diperlukan lagi */
+        
+        /* Tambahan style untuk gambar di dalam lingkaran filter */
+        .genre-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
         <div class="container">
-            {{-- Tombol Kembali Desktop DIHAPUS dari sini --}}
-
             <a class="navbar-brand fw-bold" href="{{ route('catalog.index') }}" style="color: var(--brand-red);">
                 <i class="bi bi-book-half me-2"></i> Perpustakaan Multicomp
             </a>
 
-            {{-- Tombol Kembali Mobile DIHAPUS dari sini --}}
-
             <div class="d-flex align-items-center ms-auto"> 
-
                 {{-- Quick Search (Desktop) --}}
                 <form action="{{ route('catalog.all') }}" method="GET" class="d-none d-lg-block me-3">
                     <div class="input-group input-group-sm">
@@ -85,7 +89,7 @@
                     <i class="bi bi-search"></i>
                 </a>
 
-                {{-- Tombol Kembali (Dipindah ke sini) --}}
+                {{-- Tombol Kembali --}}
                 <a href="{{ route('catalog.index') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center me-2" title="Kembali ke Beranda">
                     <i class="bi bi-house-door-fill me-1 d-none d-sm-inline"></i> 
                     <span class="d-none d-sm-inline">Beranda</span>
@@ -126,11 +130,23 @@
                         <div class="genre-code" style="background: #e9ecef; color: #495057;">All</div>
                         <div class="small fw-bold">Semua</div>
                     </a>
+                    
+                    {{-- LOOPING GENRE DENGAN LOGIKA ICON --}}
                     @foreach ($genres as $genre)
                         <a href="{{ route('catalog.all', ['genre' => $genre->name, 'search' => request('search')]) }}"
                            class="genre-filter-item {{ request('genre') == $genre->name ? 'active' : '' }}"
                            style="min-width: 120px;">
-                            <div class="genre-code">{{ $genre->genre_code }}</div>
+                            
+                            <div class="genre-code">
+                                @if($genre->icon)
+                                    {{-- Jika ada icon, tampilkan gambarnya --}}
+                                    <img src="{{ asset('storage/' . $genre->icon) }}" alt="{{ $genre->name }}">
+                                @else
+                                    {{-- Fallback: Tampilkan kode genre --}}
+                                    {{ $genre->genre_code }}
+                                @endif
+                            </div>
+                            
                             <div class="small fw-bold text-truncate">{{ $genre->name }}</div>
                         </a>
                     @endforeach

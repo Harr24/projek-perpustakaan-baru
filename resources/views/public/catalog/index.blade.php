@@ -53,12 +53,28 @@
         .search-container .input-group { transition: all 0.3s ease; }
         .search-container .form-control:focus { box-shadow: 0 0 0 0.25rem rgba(198, 40, 40, 0.25); border-color: var(--brand-red); }
         
-        /* SUBJECT CARDS */
+        /* SUBJECT CARDS (GENRE) - UPDATE UNTUK ICON */
         .subject-card { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; border-radius: 12px; background-color: #fff; border: 2px solid #e9ecef; text-decoration: none; color: #212529; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; overflow: hidden; }
         .subject-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(198, 40, 40, 0.1), transparent); transition: left 0.5s ease; }
         .subject-card:hover::before { left: 100%; }
         .subject-card:hover { transform: translateY(-8px) scale(1.05); box-shadow: 0 12px 30px rgba(198, 40, 40, 0.2); border-color: var(--brand-red); }
-        .subject-code { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #fce4ec, #f8bbd0); color: var(--brand-red); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(198, 40, 40, 0.2); }
+        
+        .subject-code { 
+            width: 70px; height: 70px; 
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #fce4ec, #f8bbd0); 
+            color: var(--brand-red); 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.5rem; font-weight: 700; 
+            margin-bottom: 1rem; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.2); 
+            overflow: hidden; /* Tambahan agar gambar tidak keluar */
+            position: relative;
+        }
+        /* Tambahan style untuk gambar di dalam lingkaran */
+        .subject-code img { width: 100%; height: 100%; object-fit: cover; }
+
         .subject-card:hover .subject-code { transform: rotate(360deg) scale(1.1); background: linear-gradient(135deg, var(--brand-red), #e53935); color: white; }
         .subject-name { transition: all 0.3s ease; }
         .subject-card:hover .subject-name { color: var(--brand-red); transform: scale(1.05); }
@@ -74,32 +90,20 @@
         .card-footer { border-top: 1px dashed #e9ecef !important; transition: background-color 0.3s ease; }
         .book-card:hover .card-footer { background-color: #fff5f5; }
         
-        /* ========================================================== */
-        /* 🔥 CSS KHUSUS UNTUK GAMIFIKASI PERINGKAT (BARU) 🔥 */
-        /* ========================================================== */
+        /* GAMIFIKASI PERINGKAT */
         .borrower-card { border: none; transition: all 0.4s ease; border-radius: 16px; position: relative; overflow: visible; background: #fff; }
         .borrower-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important; }
-
-        /* Container untuk Avatar & Badge Peringkat */
         .reader-avatar-container { position: relative; width: 90px; height: 90px; margin: 0 auto 15px; }
-        
         .avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #f8f9fa; transition: all 0.3s ease; }
         .avatar-placeholder { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #fce4ec, #f8bbd0); color: #c62828; font-size: 2rem; font-weight: 600; width: 100%; height: 100%; border-radius: 50%; border: 4px solid #f8f9fa;}
-
-        /* Badge Peringkat (Lingkaran Kecil) */
         .rank-badge { position: absolute; top: -5px; right: -5px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10; border: 2px solid #fff; }
-
-        /* --- WARNA JUARA (Emas, Perak, Perunggu) --- */
         .rank-1 .avatar, .rank-1 .avatar-placeholder { border-color: #FFD700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
         .rank-1 .rank-badge { background: linear-gradient(45deg, #FFD700, #FDB931); }
         .rank-1 .card-title { color: #d4af37 !important; font-weight: 800; text-shadow: 0px 0px 1px rgba(212, 175, 55, 0.3); }
-
         .rank-2 .avatar, .rank-2 .avatar-placeholder { border-color: #C0C0C0; }
         .rank-2 .rank-badge { background: linear-gradient(45deg, #E0E0E0, #B0B0B0); }
-        
         .rank-3 .avatar, .rank-3 .avatar-placeholder { border-color: #CD7F32; }
         .rank-3 .rank-badge { background: linear-gradient(45deg, #CD7F32, #A0522D); }
-        /* ========================================================== */
 
         /* SECTION HEADERS */
         .display-6 { position: relative; display: inline-block; }
@@ -245,7 +249,7 @@
             </div>
         </section>
         
-        {{-- Kategori --}}
+        {{-- Kategori (GENRE) --}}
         <div class="container py-5" id="search-section">
             <div class="text-center mb-5" data-aos="fade-up">
                 <h2 class="fw-bold display-6">Jelajahi Berdasarkan Kategori</h2>
@@ -263,11 +267,23 @@
                     </div>
                 </div>
             </div>
+            
+            {{-- ========================================================== --}}
+            {{-- 🔥 LOGIKA TAMPILKAN ICON GENRE 🔥 --}}
+            {{-- ========================================================== --}}
             <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3" data-aos="fade-up" data-aos-delay="200">
                 @forelse ($genres as $genre)
                     <div class="col">
                         <a href="{{ route('catalog.all', ['genre' => $genre->name]) }}" class="subject-card h-100">
-                            <div class="subject-code">{{ strtoupper(substr($genre->name, 0, 2)) }}</div>
+                            <div class="subject-code">
+                                @if($genre->icon)
+                                    {{-- Jika ada icon, tampilkan gambarnya --}}
+                                    <img src="{{ asset('storage/' . $genre->icon) }}" alt="{{ $genre->name }}">
+                                @else
+                                    {{-- Fallback: Tampilkan inisial --}}
+                                    {{ strtoupper(substr($genre->name, 0, 2)) }}
+                                @endif
+                            </div>
                             <div class="subject-name small fw-bolder text-truncate">{{ $genre->name }}</div>
                         </a>
                     </div>
@@ -275,6 +291,8 @@
                     <div class="col-12 text-center"><p class="text-muted">Genre belum ditambahkan.</p></div>
                 @endforelse
             </div>
+            {{-- ========================================================== --}}
+
         </div>
 
         {{-- Buku Favorit --}}
@@ -365,9 +383,7 @@
         </div>
         @endif
 
-        {{-- ========================================================== --}}
-        {{-- 🔥 LOGIKA PERINGKAT (GAMIFIKASI) - SUDAH DIPERBAIKI 🔥 --}}
-        {{-- ========================================================== --}}
+        {{-- Peringkat Peminjam --}}
         @if(isset($topBorrowers) && $topBorrowers->count() > 0)
         <section class="top-borrowers-section mt-5 py-5" data-aos="fade-up">
             <div class="container">
@@ -380,7 +396,6 @@
                 <div class="row g-4 justify-content-center">
                     @foreach ($topBorrowers as $borrower)
                         @php
-                            // Logika menentukan kelas CSS berdasarkan peringkat
                             $rankClass = '';
                             $rankIcon = '';
                             
@@ -397,15 +412,12 @@
                         @endphp
 
                         <div class="col-md-6 col-lg-4">
-                            {{-- Tambahkan class ranking ($rankClass) ke card ini --}}
                             <div class="card text-center h-100 shadow-sm borrower-card bg-white {{ $rankClass }}">
                                 <div class="card-body p-4 d-flex flex-column align-items-center">
                                     
-                                    {{-- Container Avatar + Badge Peringkat --}}
                                     <div class="reader-avatar-container">
                                         <div class="rank-badge">{!! $rankIcon !!}</div>
 
-                                        {{-- PERBAIKAN UTAMA: Langsung akses properti dari $borrower (karena $borrower adalah User) --}}
                                         @if($borrower->profile_photo)
                                             <img src="{{ asset('storage/' . $borrower->profile_photo) }}" alt="{{ $borrower->name }}" class="avatar mb-3">
                                         @else
@@ -415,13 +427,11 @@
                                         @endif
                                     </div>
                                     
-                                    {{-- PERBAIKAN UTAMA: Akses nama langsung dari $borrower --}}
                                     <h5 class="card-title fw-bold text-danger mb-1 text-truncate w-100" title="{{ $borrower->name }}">
                                         {{ $borrower->name }}
                                     </h5>
                                     
                                     <div class="mb-3">
-                                        {{-- Logika Kelas --}}
                                         @if($borrower->role === 'siswa')
                                             @if($borrower->class == 'Lulus')
                                                 <span class="badge bg-secondary text-uppercase tracking-wide">Alumni</span>
@@ -441,7 +451,6 @@
 
                                     <div class="stats w-100 border-top pt-3 mt-auto">
                                         <div>
-                                            {{-- PERBAIKAN UTAMA: Gunakan borrowings_count --}}
                                             <div class="fw-bolder fs-3 text-primary lh-1">{{ $borrower->borrowings_count }}</div>
                                             <div class="small text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">Buku Dipinjam</div>
                                         </div>
@@ -456,7 +465,7 @@
         </section>
         @endif
 
-        {{-- FOOTER INFO (Kontak & Peta) --}}
+        {{-- FOOTER INFO --}}
         <div class="bg-white py-5 mt-5 shadow-sm">
             <div class="container">
                 <div class="text-center mb-5" data-aos="fade-up">
@@ -469,7 +478,7 @@
                     <div class="col-lg-6">
                         <div class="info-block d-flex align-items-start mb-4">
                             <div class="info-icon"><i class="bi bi-geo-alt-fill"></i></div>
-                            <div class="info-text"><h4 class="info-title">Alamat</h4><p>Jl. Raya Kalimulya, Kp. Kebun Duren, Pd. Rajeg, No.7, Kel. Kalimulya, Kec. Cilodong, Depok, Jawa Barat, Indonesia.<br>Kode Pos: 16413</p></div>
+                            <div class="info-text"><h4 class="info-title">Alamat</h4><p>Jl. Raya Kalimulya, Kp. Kebun Duren, No.7, Kel. Kalimulya, Kec. Cilodong, Depok, Jawa Barat, Indonesia.<br>Kode Pos: 16413</p></div>
                         </div>
                         <div class="info-block d-flex align-items-start mb-4">
                             <div class="info-icon"><i class="bi bi-envelope-fill"></i></div>

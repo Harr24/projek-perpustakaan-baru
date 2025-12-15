@@ -15,22 +15,38 @@
     <div class="alert success" role="status">{{ session('success') }}</div>
   @endif
 
+  @if(session('error'))
+    <div class="alert error" role="status">{{ session('error') }}</div>
+  @endif
+
   <div class="table-wrap" role="table" aria-label="Daftar Genre">
+    {{-- TABLE HEAD --}}
     <div class="table-head">
       <div class="cell col-no">No</div>
-      {{-- PERUBAHAN 1: Menambahkan header kolom Kode Genre --}}
+      <div class="cell col-icon">Icon</div> {{-- Kolom Baru --}}
       <div class="cell col-code">Kode Genre</div>
       <div class="cell col-name">Nama Genre</div>
       <div class="cell col-action">Aksi</div>
     </div>
 
+    {{-- TABLE BODY --}}
     <div class="table-body">
       @forelse ($genres as $genre)
         <div class="row" role="row">
           <div class="cell col-no" data-label="No">{{ $loop->iteration }}</div>
-          {{-- PERUBAHAN 2: Menampilkan data Kode Genre --}}
+          
+          {{-- Kolom Icon --}}
+          <div class="cell col-icon" data-label="Icon">
+            @if($genre->icon)
+                <img src="{{ asset('storage/' . $genre->icon) }}" alt="Icon" class="genre-icon">
+            @else
+                <span class="no-icon">No Icon</span>
+            @endif
+          </div>
+
           <div class="cell col-code" data-label="Kode Genre">{{ $genre->genre_code }}</div>
           <div class="cell col-name" data-label="Nama Genre">{{ $genre->name }}</div>
+          
           <div class="cell col-action" data-label="Aksi">
             <a class="action edit" href="{{ route('admin.petugas.genres.edit', $genre->id) }}" aria-label="Edit {{ $genre->name }}">Edit</a>
 
@@ -74,29 +90,46 @@
   .btn-ghost{background:transparent;color:var(--red);border-color:transparent}
   .alert{padding:10px 14px;border-radius:8px;margin-bottom:12px;font-weight:600}
   .alert.success{background:#eefdf5;color:#065f46;border:1px solid rgba(16,185,129,0.08)}
+  .alert.error{background:#fef2f2;color:#991b1b;border:1px solid rgba(239,68,68,0.08)}
 
   /* Table like layout */
   .table-wrap{background:var(--card);border-radius:var(--radius);padding:8px;border:1px solid #f1f5f9;box-shadow:0 8px 24px rgba(15,23,36,0.04)}
   
-  /* PERUBAHAN 3: Menyesuaikan layout grid untuk kolom baru */
-  .table-head{display:grid;grid-template-columns:80px 120px 1fr 220px;gap:8px;padding:12px 14px;border-bottom:1px solid #f3f4f6;align-items:center}
+  /* GRID LAYOUT UPDATE (5 Kolom: No, Icon, Kode, Nama, Aksi) */
+  .table-head{display:grid;grid-template-columns:50px 80px 100px 1fr 180px;gap:12px;padding:12px 14px;border-bottom:1px solid #f3f4f6;align-items:center}
   
   .table-head .cell{font-weight:700;color:var(--red-dark);font-size:0.95rem}
   .table-body{display:flex;flex-direction:column;gap:10px;padding:12px 6px}
 
-  /* PERUBAHAN 4: Menyesuaikan layout grid untuk kolom baru */
-  .row{display:grid;grid-template-columns:80px 120px 1fr 220px;gap:8px;align-items:center;padding:12px;border-radius:10px;border:1px solid transparent;transition:transform .14s ease,box-shadow .14s ease}
+  /* GRID LAYOUT ROW */
+  .row{display:grid;grid-template-columns:50px 80px 100px 1fr 180px;gap:12px;align-items:center;padding:12px;border-radius:10px;border:1px solid transparent;transition:transform .14s ease,box-shadow .14s ease}
   
   .row:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(15,23,36,0.06)}
   .row.empty{justify-content:center;background:transparent;border:none;box-shadow:none;padding:20px;color:var(--muted);font-weight:600}
 
   .cell{padding:6px 10px}
   .col-no{color:var(--muted);font-weight:600}
-  .col-code{font-weight:700;color:var(--muted)} /* Styling untuk kode genre */
+  .col-code{font-weight:700;color:var(--muted)}
   .col-name{font-weight:700}
   .col-action{display:flex;gap:8px;justify-content:flex-end;align-items:center}
 
-  .action{padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:700;cursor:pointer;border:1px solid transparent}
+  /* Styling Icon */
+  .genre-icon {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #eee;
+  }
+  .no-icon {
+      font-size: 0.75rem;
+      color: #999;
+      background: #f3f4f6;
+      padding: 4px 8px;
+      border-radius: 4px;
+  }
+
+  .action{padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:700;cursor:pointer;border:1px solid transparent;font-size:0.9rem}
   .action.edit{background:transparent;color:var(--red);border-color:rgba(217,83,79,0.06)}
   .action.edit:hover{background:rgba(217,83,79,0.06)}
   .action.delete{background:transparent;color:#ef4444;border-color:rgba(239,68,68,0.06)}
@@ -104,25 +137,27 @@
 
   .inline-form{display:inline;margin:0}
 
-  /* Responsive: convert to stacked cards on small screens */
+  /* Responsive Mobile */
   @media (max-width:800px){
     .table-head{display:none}
-    .row{grid-template-columns:1fr;padding:14px;gap:6px}
+    .row{grid-template-columns:1fr;padding:14px;gap:8px;border-bottom:1px solid #f0f0f0}
     
-    /* PERUBAHAN 5: Menyesuaikan urutan untuk tampilan mobile */
-    .col-no{order:1}
-    .col-code{order:2}
-    .col-name{order:3;font-size:1.05rem}
-    .col-action{order:4;justify-content:flex-start}
+    .col-no{order:1;display:none} /* Sembunyikan No di HP biar ringkas */
+    
+    /* Icon di paling atas */
+    .col-icon{order:1; justify-content:center; display:flex;}
+    .genre-icon{width:60px; height:60px;}
+
+    .col-name{order:2;font-size:1.1rem;text-align:center}
+    .col-code{order:3;text-align:center;font-size:0.9rem}
+    .col-action{order:4;justify-content:center;margin-top:10px}
     
     .cell[data-label]:before{
-      content: attr(data-label);
-      display:block;font-size:0.85rem;color:var(--muted);margin-bottom:6px;font-weight:600
+      /* content: attr(data-label); <-- Hapus label di mobile biar bersih */
+      display:none;
     }
-    .col-action{display:flex;gap:10px}
   }
 
-  /* Focus states & accessibility */
   a:focus, button:focus{outline:3px solid rgba(217,83,79,0.14);outline-offset:3px}
 </style>
 
